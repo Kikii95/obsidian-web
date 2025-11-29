@@ -7,7 +7,6 @@ import "react-pdf/dist/Page/TextLayer.css";
 import { Button } from "@/components/ui/button";
 import {
   Download,
-  ExternalLink,
   ChevronLeft,
   ChevronRight,
   ZoomIn,
@@ -43,10 +42,6 @@ export function PDFViewer({ content, fileName }: PDFViewerProps) {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-  };
-
-  const handleOpenInNewTab = () => {
-    window.open(dataUrl, "_blank");
   };
 
   const goToPrevPage = () => setPageNumber((p) => Math.max(1, p - 1));
@@ -115,15 +110,6 @@ export function PDFViewer({ content, fileName }: PDFViewerProps) {
 
         {/* Actions */}
         <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={handleOpenInNewTab}
-            title="Nouvel onglet"
-          >
-            <ExternalLink className="h-4 w-4" />
-          </Button>
           <Button
             variant="ghost"
             size="icon"

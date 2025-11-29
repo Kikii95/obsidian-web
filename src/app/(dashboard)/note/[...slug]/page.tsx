@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { MarkdownRenderer } from "@/components/viewer/markdown-renderer";
 import { MarkdownEditor } from "@/components/editor/markdown-editor";
@@ -75,7 +75,6 @@ export default function NotePage() {
   const [pendingUnlock, setPendingUnlock] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
-  const contentRef = useRef<HTMLElement>(null);
 
   // Build the file path from slug (decode each segment)
   const slug = params.slug as string[];
@@ -362,44 +361,42 @@ export default function NotePage() {
 
   // Export as PDF
   const handleExportPdf = useCallback(async () => {
-    if (!contentRef.current || !note) return;
+    if (!note) return;
 
     setIsExportingPdf(true);
     try {
-      const html2canvas = (await import("html2canvas")).default;
       const { jsPDF } = await import("jspdf");
-
-      const canvas = await html2canvas(contentRef.current, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#1a1a1a",
-      });
-
-      const imgWidth = 210; // A4 width in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
       const pdf = new jsPDF("p", "mm", "a4");
-      const imgData = canvas.toDataURL("image/png");
-
-      // Handle multi-page if content is long
-      let position = 0;
-      const pageHeight = 297; // A4 height in mm
-      let heightLeft = imgHeight;
-
-      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
 
       const fileName = decodedSlug[decodedSlug.length - 1] || "note";
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const margin = 15;
+      const maxWidth = pageWidth - margin * 2;
+
+      // Title
+      pdf.setFontSize(18);
+      pdf.text(fileName, margin, 20);
+
+      // Content
+      pdf.setFontSize(11);
+      const lines = pdf.splitTextToSize(note.content, maxWidth);
+      let y = 35;
+      const lineHeight = 6;
+      const pageHeight = pdf.internal.pageSize.getHeight();
+
+      for (const line of lines) {
+        if (y + lineHeight > pageHeight - margin) {
+          pdf.addPage();
+          y = margin;
+        }
+        pdf.text(line, margin, y);
+        y += lineHeight;
+      }
+
       pdf.save(`${fileName}.pdf`);
     } catch (err) {
       console.error("PDF export failed:", err);
+      alert("Erreur export PDF");
     } finally {
       setIsExportingPdf(false);
     }
@@ -676,7 +673,7 @@ export default function NotePage() {
                           <FileDown className="h-4 w-4 mr-2" />
                           Télécharger .md
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={handleExportPdf} disabled={isExportingPdf || isEditing}>
+                        <DropdownMenuItem onClick={handleExportPdf} disabled={isExportingPdf}>
                           {isExportingPdf ? (
                             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                           ) : (
@@ -746,7 +743,7 @@ export default function NotePage() {
                         <FileDown className="h-4 w-4 mr-2" />
                         Télécharger .md
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={handleExportPdf} disabled={isExportingPdf || isEditing}>
+                      <DropdownMenuItem onClick={handleExportPdf} disabled={isExportingPdf}>
                         {isExportingPdf ? (
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                         ) : (
@@ -803,7 +800,7 @@ export default function NotePage() {
       )}
 
       {/* Content - Editor or Viewer */}
-      <article ref={contentRef}>
+      <article>
         {isEditing ? (
           <MarkdownEditor
             content={editContent}

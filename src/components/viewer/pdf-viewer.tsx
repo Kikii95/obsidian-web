@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Download, ExternalLink } from "lucide-react";
+import { Download, ExternalLink, FileText } from "lucide-react";
 
 interface PDFViewerProps {
   content: string; // base64
@@ -25,42 +25,30 @@ export function PDFViewer({ content, fileName }: PDFViewerProps) {
   };
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Toolbar */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-border/50 bg-muted/30">
-        <span className="text-sm font-medium truncate max-w-[200px]">
-          {fileName}
-        </span>
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={handleOpenInNewTab}
-            title="Ouvrir dans un nouvel onglet"
-          >
-            <ExternalLink className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={handleDownload}
-            title="Télécharger"
-          >
-            <Download className="h-4 w-4" />
-          </Button>
-        </div>
+    <div className="flex flex-col items-center justify-center gap-6 p-8 h-full">
+      {/* PDF Icon */}
+      <div className="w-32 h-40 bg-red-500/10 rounded-lg flex items-center justify-center border-2 border-red-500/30">
+        <FileText className="h-16 w-16 text-red-500" />
       </div>
 
-      {/* PDF iframe - native browser zoom on mobile */}
-      <div className="flex-1 overflow-hidden">
-        <iframe
-          src={dataUrl}
-          className="w-full h-full border-0"
-          title={fileName}
-        />
+      {/* File name */}
+      <h2 className="text-xl font-semibold text-center">{fileName}</h2>
+
+      {/* Actions */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <Button onClick={handleOpenInNewTab} className="gap-2">
+          <ExternalLink className="h-4 w-4" />
+          Ouvrir le PDF
+        </Button>
+        <Button variant="outline" onClick={handleDownload} className="gap-2">
+          <Download className="h-4 w-4" />
+          Télécharger
+        </Button>
       </div>
+
+      <p className="text-sm text-muted-foreground text-center max-w-md">
+        Les PDFs s&apos;ouvrent dans un nouvel onglet pour une meilleure expérience de lecture.
+      </p>
     </div>
   );
 }

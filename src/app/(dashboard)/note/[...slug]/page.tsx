@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 import { MarkdownRenderer } from "@/components/viewer/markdown-renderer";
 import { MarkdownEditor } from "@/components/editor/markdown-editor";
@@ -26,7 +26,6 @@ import {
   MoreHorizontal,
   Download,
   FileDown,
-  Printer,
   Upload,
   Copy,
   Check,
@@ -75,6 +74,8 @@ export default function NotePage() {
   const [showUnlockPinDialog, setShowUnlockPinDialog] = useState(false);
   const [pendingUnlock, setPendingUnlock] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const contentRef = useRef<HTMLElement>(null);
 
   // Build the file path from slug (decode each segment)
   const slug = params.slug as string[];
@@ -359,10 +360,50 @@ export default function NotePage() {
     URL.revokeObjectURL(url);
   }, [note, decodedSlug]);
 
-  // Print as PDF (uses browser print dialog)
-  const handlePrintPdf = useCallback(() => {
-    window.print();
-  }, []);
+  // Export as PDF
+  const handleExportPdf = useCallback(async () => {
+    if (!contentRef.current || !note) return;
+
+    setIsExportingPdf(true);
+    try {
+      const html2canvas = (await import("html2canvas")).default;
+      const { jsPDF } = await import("jspdf");
+
+      const canvas = await html2canvas(contentRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#1a1a1a",
+      });
+
+      const imgWidth = 210; // A4 width in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      const pdf = new jsPDF("p", "mm", "a4");
+      const imgData = canvas.toDataURL("image/png");
+
+      // Handle multi-page if content is long
+      let position = 0;
+      const pageHeight = 297; // A4 height in mm
+      let heightLeft = imgHeight;
+
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      const fileName = decodedSlug[decodedSlug.length - 1] || "note";
+      pdf.save(`${fileName}.pdf`);
+    } catch (err) {
+      console.error("PDF export failed:", err);
+    } finally {
+      setIsExportingPdf(false);
+    }
+  }, [note, decodedSlug]);
 
   // Copy all content (for mobile)
   const handleCopyAll = useCallback(async () => {
@@ -635,9 +676,13 @@ export default function NotePage() {
                           <FileDown className="h-4 w-4 mr-2" />
                           Télécharger .md
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={handlePrintPdf}>
-                          <Printer className="h-4 w-4 mr-2" />
-                          Imprimer / PDF
+                        <DropdownMenuItem onClick={handleExportPdf} disabled={isExportingPdf || isEditing}>
+                          {isExportingPdf ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <FileDown className="h-4 w-4 mr-2" />
+                          )}
+                          {isExportingPdf ? "Export..." : "Télécharger .pdf"}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -701,9 +746,13 @@ export default function NotePage() {
                         <FileDown className="h-4 w-4 mr-2" />
                         Télécharger .md
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={handlePrintPdf}>
-                        <Printer className="h-4 w-4 mr-2" />
-                        Imprimer / PDF
+                      <DropdownMenuItem onClick={handleExportPdf} disabled={isExportingPdf || isEditing}>
+                        {isExportingPdf ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <FileDown className="h-4 w-4 mr-2" />
+                        )}
+                        {isExportingPdf ? "Export..." : "Télécharger .pdf"}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DeleteNoteDialog
@@ -754,7 +803,7 @@ export default function NotePage() {
       )}
 
       {/* Content - Editor or Viewer */}
-      <article>
+      <article ref={contentRef}>
         {isEditing ? (
           <MarkdownEditor
             content={editContent}

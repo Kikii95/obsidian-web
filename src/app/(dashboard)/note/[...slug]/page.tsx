@@ -320,12 +320,9 @@ export default function NotePage() {
               {crumb.isLast ? (
                 <span className="text-foreground font-medium">{crumb.name}</span>
               ) : (
-                <Link
-                  href={`/note/${crumb.path}`}
-                  className="hover:text-foreground transition-colors"
-                >
+                <span className="text-muted-foreground">
                   {crumb.name}
-                </Link>
+                </span>
               )}
             </div>
           ))}

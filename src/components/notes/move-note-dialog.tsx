@@ -35,7 +35,7 @@ function extractFolders(files: VaultFile[], parentPath = ""): string[] {
   const folders: string[] = [];
 
   for (const file of files) {
-    if (file.type === "folder") {
+    if (file.type === "dir") {
       const fullPath = parentPath ? `${parentPath}/${file.name}` : file.name;
       folders.push(fullPath);
       if (file.children) {

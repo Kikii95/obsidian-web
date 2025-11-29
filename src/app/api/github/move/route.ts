@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { createOctokit, readFile, createFile, deleteFile } from "@/lib/github";
+import { createOctokit, getFileContent, createFile, deleteFile } from "@/lib/github";
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     const octokit = createOctokit(session.accessToken);
 
     // 1. Read the current file content
-    const { content } = await readFile(octokit, oldPath);
+    const { content } = await getFileContent(octokit, oldPath);
 
     // 2. Create the file at the new location
     const createResult = await createFile(

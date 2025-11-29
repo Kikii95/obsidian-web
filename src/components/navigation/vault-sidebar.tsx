@@ -141,7 +141,10 @@ export function VaultSidebar() {
               variant="ghost"
               size="icon"
               className="h-6 w-6"
-              onClick={collapseAllFolders}
+              onClick={(e) => {
+                e.preventDefault();
+                collapseAllFolders();
+              }}
               title="Tout fermer"
             >
               <ChevronsDownUp className="h-3 w-3" />
@@ -150,7 +153,10 @@ export function VaultSidebar() {
               variant="ghost"
               size="icon"
               className="h-6 w-6"
-              onClick={() => expandAllFolders(getAllFolderPaths(tree))}
+              onClick={(e) => {
+                e.preventDefault();
+                expandAllFolders(getAllFolderPaths(tree));
+              }}
               title="Tout ouvrir"
             >
               <ChevronsUpDown className="h-3 w-3" />
@@ -159,7 +165,10 @@ export function VaultSidebar() {
               variant="ghost"
               size="icon"
               className="h-6 w-6"
-              onClick={fetchTree}
+              onClick={(e) => {
+                e.preventDefault();
+                fetchTree();
+              }}
               title="Rafraîchir"
             >
               <RefreshCw className="h-3 w-3" />
@@ -167,7 +176,7 @@ export function VaultSidebar() {
           </div>
       </div>
       {/* Scrollable tree */}
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 min-h-0">
         <div className="p-2">
           <FileTree files={tree} />
         </div>

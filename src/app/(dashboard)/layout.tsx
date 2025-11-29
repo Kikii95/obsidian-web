@@ -20,6 +20,7 @@ import { LogOut, Menu, PanelLeftClose, PanelLeft, Settings, User, Home, Network 
 import { ThemeSwitcher } from "@/components/theme/theme-switcher";
 import { Logo } from "@/components/ui/logo";
 import { NetworkStatus } from "@/components/ui/network-status";
+import { ResizableSidebar } from "@/components/ui/resizable-sidebar";
 
 export default function DashboardLayout({
   children,
@@ -170,15 +171,15 @@ export default function DashboardLayout({
       </header>
 
       {/* Main with Sidebar */}
-      <div className="flex-1 flex">
+      <div className="flex-1 flex overflow-hidden">
         {/* Desktop Sidebar */}
-        <aside
-          className={`hidden md:block border-r border-border/50 bg-sidebar transition-all duration-300 ${
-            sidebarOpen ? "w-64" : "w-0 overflow-hidden"
-          }`}
-        >
-          <VaultSidebar />
-        </aside>
+        {sidebarOpen && (
+          <aside className="hidden md:flex border-r border-border/50 bg-sidebar h-[calc(100vh-3.5rem)]">
+            <ResizableSidebar>
+              <VaultSidebar />
+            </ResizableSidebar>
+          </aside>
+        )}
 
         {/* Content */}
         <main className="flex-1 overflow-auto">{children}</main>

@@ -12,6 +12,7 @@ interface FolderTreePickerProps {
   selectedPath: string;
   onSelect: (path: string) => void;
   currentPath?: string; // Path to exclude (for move dialog)
+  showRoot?: boolean; // Show root option (default true)
 }
 
 const ROOT_VALUE = "__root__";
@@ -21,6 +22,7 @@ export function FolderTreePicker({
   selectedPath,
   onSelect,
   currentPath,
+  showRoot = true,
 }: FolderTreePickerProps) {
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
     new Set(["Projects", "Learning", "Stats", "Resources"])
@@ -60,20 +62,22 @@ export function FolderTreePicker({
   return (
     <div className="border border-border/50 rounded-lg overflow-hidden">
       {/* Root option */}
-      <button
-        onClick={() => onSelect(ROOT_VALUE)}
-        className={cn(
-          "flex items-center gap-2 w-full px-3 py-2 text-sm transition-colors",
-          "hover:bg-muted/50 text-left border-b border-border/30",
-          actualSelectedPath === "" && "bg-primary/10 text-primary"
-        )}
-      >
-        <Folder className="h-4 w-4 text-muted-foreground" />
-        <span className="flex-1">/ (Racine)</span>
-        {actualSelectedPath === "" && (
-          <Check className="h-4 w-4 text-primary" />
-        )}
-      </button>
+      {showRoot && (
+        <button
+          onClick={() => onSelect(ROOT_VALUE)}
+          className={cn(
+            "flex items-center gap-2 w-full px-3 py-2 text-sm transition-colors",
+            "hover:bg-muted/50 text-left border-b border-border/30",
+            actualSelectedPath === "" && "bg-primary/10 text-primary"
+          )}
+        >
+          <Folder className="h-4 w-4 text-muted-foreground" />
+          <span className="flex-1">/ (Racine)</span>
+          {actualSelectedPath === "" && (
+            <Check className="h-4 w-4 text-primary" />
+          )}
+        </button>
+      )}
 
       {/* Scrollable folder tree */}
       <ScrollArea className="h-[250px]">

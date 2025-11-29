@@ -1,15 +1,22 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { FileTree } from "./file-tree";
 import { useVaultStore } from "@/lib/store";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle, FolderTree, RefreshCw, FilePlus, FolderPlus, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
+import { AlertCircle, FolderTree, RefreshCw, FilePlus, FolderPlus, ChevronsDownUp, ChevronsUpDown, MoreHorizontal, FolderPen, FolderX } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { CreateNoteDialog } from "@/components/notes/create-note-dialog";
 import { CreateFolderDialog } from "@/components/notes/create-folder-dialog";
+import { ManageFolderDialog } from "@/components/notes/manage-folder-dialog";
 import type { VaultFile } from "@/types";
 
 // Extract all folder paths from tree recursively
@@ -40,6 +47,8 @@ export function VaultSidebar() {
     collapseAllFolders,
     expandAllFolders,
   } = useVaultStore();
+
+  const [manageFolderMode, setManageFolderMode] = useState<"rename" | "delete" | null>(null);
 
   const fetchTree = async () => {
     if (!session) return;
@@ -134,6 +143,33 @@ export function VaultSidebar() {
           Vault
         </span>
         <div className="flex items-center gap-0.5">
+            {/* Folder management dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  title="Gérer les dossiers"
+                >
+                  <MoreHorizontal className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48">
+                <DropdownMenuItem onClick={() => setManageFolderMode("rename")}>
+                  <FolderPen className="h-4 w-4 mr-2" />
+                  Renommer un dossier
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setManageFolderMode("delete")}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <FolderX className="h-4 w-4 mr-2" />
+                  Supprimer un dossier
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <CreateNoteDialog
               trigger={
                 <Button
@@ -202,6 +238,15 @@ export function VaultSidebar() {
           <FileTree files={tree} />
         </div>
       </ScrollArea>
+
+      {/* Manage folder dialog */}
+      {manageFolderMode && (
+        <ManageFolderDialog
+          mode={manageFolderMode}
+          open={!!manageFolderMode}
+          onOpenChange={(open) => !open && setManageFolderMode(null)}
+        />
+      )}
     </div>
   );
 }

@@ -162,8 +162,8 @@ export function MarkdownEditor({
             completionKeymap: false,
             lintKeymap: false,
           }}
-          height="calc(80vh - 200px)"
-          minHeight="400px"
+          height="calc(90vh - 120px)"
+          minHeight="600px"
         />
       </div>
     </div>

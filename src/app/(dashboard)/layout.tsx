@@ -21,6 +21,7 @@ import { ThemeSwitcher } from "@/components/theme/theme-switcher";
 import { Logo } from "@/components/ui/logo";
 import { NetworkStatus } from "@/components/ui/network-status";
 import { ResizableSidebar } from "@/components/ui/resizable-sidebar";
+import { GlobalLockStatus } from "@/components/lock/global-lock-status";
 
 export default function DashboardLayout({
   children,
@@ -96,6 +97,9 @@ export default function DashboardLayout({
 
           {/* Right side */}
           <div className="flex items-center gap-2">
+            {/* Global Lock Status */}
+            <GlobalLockStatus />
+
             {/* Home button */}
             <Button variant="ghost" size="icon" asChild title="Vault">
               <Link href="/">

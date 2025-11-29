@@ -7,6 +7,7 @@
 import { create } from "zustand";
 
 const PIN_HASH_KEY = "obsidian-web-pin-hash";
+const UNLOCK_EXPIRY_KEY = "obsidian-web-unlock-expiry";
 const UNLOCK_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 
 interface LockState {
@@ -54,6 +55,32 @@ function removeStoredHash(): void {
   localStorage.removeItem(PIN_HASH_KEY);
 }
 
+// Get stored unlock expiry from sessionStorage
+function getStoredUnlockExpiry(): number | null {
+  if (typeof window === "undefined") return null;
+  const stored = sessionStorage.getItem(UNLOCK_EXPIRY_KEY);
+  if (!stored) return null;
+  const expiry = parseInt(stored, 10);
+  // Check if still valid
+  if (Date.now() > expiry) {
+    sessionStorage.removeItem(UNLOCK_EXPIRY_KEY);
+    return null;
+  }
+  return expiry;
+}
+
+// Store unlock expiry in sessionStorage
+function setStoredUnlockExpiry(expiry: number): void {
+  if (typeof window === "undefined") return;
+  sessionStorage.setItem(UNLOCK_EXPIRY_KEY, expiry.toString());
+}
+
+// Remove unlock expiry from sessionStorage
+function removeStoredUnlockExpiry(): void {
+  if (typeof window === "undefined") return;
+  sessionStorage.removeItem(UNLOCK_EXPIRY_KEY);
+}
+
 export const useLockStore = create<LockState>((set, get) => ({
   hasPinConfigured: false,
   isUnlocked: false,
@@ -61,17 +88,22 @@ export const useLockStore = create<LockState>((set, get) => ({
 
   initializeLockState: () => {
     const hash = getStoredHash();
+    const storedExpiry = getStoredUnlockExpiry();
+    const isStillUnlocked = storedExpiry !== null && Date.now() < storedExpiry;
+
     set({
       hasPinConfigured: !!hash,
-      isUnlocked: false,
-      unlockExpiry: null,
+      isUnlocked: isStillUnlocked,
+      unlockExpiry: isStillUnlocked ? storedExpiry : null,
     });
   },
 
   setupPin: async (pin: string) => {
     const hash = await hashPin(pin);
+    const expiry = Date.now() + UNLOCK_TIMEOUT;
     setStoredHash(hash);
-    set({ hasPinConfigured: true, isUnlocked: true, unlockExpiry: Date.now() + UNLOCK_TIMEOUT });
+    setStoredUnlockExpiry(expiry);
+    set({ hasPinConfigured: true, isUnlocked: true, unlockExpiry: expiry });
   },
 
   verifyPin: async (pin: string) => {
@@ -84,24 +116,29 @@ export const useLockStore = create<LockState>((set, get) => ({
   unlock: async (pin: string) => {
     const isValid = await get().verifyPin(pin);
     if (isValid) {
-      set({ isUnlocked: true, unlockExpiry: Date.now() + UNLOCK_TIMEOUT });
+      const expiry = Date.now() + UNLOCK_TIMEOUT;
+      setStoredUnlockExpiry(expiry);
+      set({ isUnlocked: true, unlockExpiry: expiry });
       return true;
     }
     return false;
   },
 
   lock: () => {
+    removeStoredUnlockExpiry();
     set({ isUnlocked: false, unlockExpiry: null });
   },
 
   removePin: () => {
     removeStoredHash();
+    removeStoredUnlockExpiry();
     set({ hasPinConfigured: false, isUnlocked: false, unlockExpiry: null });
   },
 
   checkUnlockExpiry: () => {
     const { unlockExpiry, isUnlocked } = get();
     if (isUnlocked && unlockExpiry && Date.now() > unlockExpiry) {
+      removeStoredUnlockExpiry();
       set({ isUnlocked: false, unlockExpiry: null });
     }
   },

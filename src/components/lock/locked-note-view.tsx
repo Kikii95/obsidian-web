@@ -8,11 +8,10 @@ import { PinDialog } from "./pin-dialog";
 
 interface LockedNoteViewProps {
   noteName: string;
-  onUnlock: () => void;
 }
 
-export function LockedNoteView({ noteName, onUnlock }: LockedNoteViewProps) {
-  const { hasPinConfigured, isUnlocked, initializeLockState, checkUnlockExpiry } = useLockStore();
+export function LockedNoteView({ noteName }: LockedNoteViewProps) {
+  const { hasPinConfigured, initializeLockState, checkUnlockExpiry } = useLockStore();
   const [showPinDialog, setShowPinDialog] = useState(false);
 
   // Initialize lock state on mount
@@ -25,17 +24,6 @@ export function LockedNoteView({ noteName, onUnlock }: LockedNoteViewProps) {
     const interval = setInterval(checkUnlockExpiry, 10000);
     return () => clearInterval(interval);
   }, [checkUnlockExpiry]);
-
-  // If already unlocked, notify parent
-  useEffect(() => {
-    if (isUnlocked) {
-      onUnlock();
-    }
-  }, [isUnlocked, onUnlock]);
-
-  const handleUnlockSuccess = () => {
-    onUnlock();
-  };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] p-8">
@@ -84,7 +72,7 @@ export function LockedNoteView({ noteName, onUnlock }: LockedNoteViewProps) {
 
         {/* Info */}
         <p className="text-xs text-muted-foreground mt-4">
-          Les notes dans le dossier <code>_private</code> sont protégées.
+          Notes avec <code>private: true</code> ou dans <code>_private/</code>
           <br />
           Le déverrouillage reste actif pendant 5 minutes.
         </p>
@@ -94,7 +82,7 @@ export function LockedNoteView({ noteName, onUnlock }: LockedNoteViewProps) {
       <PinDialog
         open={showPinDialog}
         onOpenChange={setShowPinDialog}
-        onSuccess={handleUnlockSuccess}
+        onSuccess={() => setShowPinDialog(false)}
         mode={hasPinConfigured ? "unlock" : "setup"}
       />
     </div>

@@ -32,7 +32,6 @@ import { MoveNoteDialog } from "@/components/notes/move-note-dialog";
 import { RenameNoteDialog } from "@/components/notes/rename-note-dialog";
 import { LockedNoteView } from "@/components/lock/locked-note-view";
 import { useLockStore, isPathLocked } from "@/lib/lock-store";
-import { LockStatus } from "@/components/lock/lock-status";
 
 interface NoteData {
   path: string;
@@ -51,7 +50,6 @@ export default function NotePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFromCache, setIsFromCache] = useState(false);
-  const [wasUnlocked, setWasUnlocked] = useState(false);
 
   // Edit mode state
   const [isEditing, setIsEditing] = useState(false);
@@ -70,7 +68,7 @@ export default function NotePage() {
 
   // Combined lock check: path-based OR frontmatter-based (from API)
   const isNoteLocked = isPathPrivate || (note?.isLocked ?? false);
-  const canViewNote = !isNoteLocked || isUnlocked || wasUnlocked;
+  const canViewNote = !isNoteLocked || isUnlocked;
 
   // Initialize lock state on mount
   useEffect(() => {
@@ -81,7 +79,7 @@ export default function NotePage() {
     if (!filePath) return;
     // For path-based lock, don't fetch until unlocked
     // For frontmatter-based lock, we need to fetch to know
-    if (isPathPrivate && !isUnlocked && !wasUnlocked) return;
+    if (isPathPrivate && !isUnlocked) return;
 
     setIsLoading(true);
     setError(null);
@@ -155,10 +153,10 @@ export default function NotePage() {
   useEffect(() => {
     // For path-based lock: only fetch after unlock
     // For other notes: always fetch (to discover frontmatter locks)
-    if (!isPathPrivate || isUnlocked || wasUnlocked) {
+    if (!isPathPrivate || isUnlocked) {
       fetchNote();
     }
-  }, [filePath, isPathPrivate, isUnlocked, wasUnlocked]);
+  }, [filePath, isPathPrivate, isUnlocked]);
 
   // Track changes
   useEffect(() => {
@@ -325,7 +323,6 @@ export default function NotePage() {
     return (
       <LockedNoteView
         noteName={decodedSlug[decodedSlug.length - 1] || "Note"}
-        onUnlock={() => setWasUnlocked(true)}
       />
     );
   }
@@ -416,9 +413,6 @@ export default function NotePage() {
 
         {/* Edit/View/Save buttons */}
         <div className="flex items-center gap-2 shrink-0">
-          {/* Lock status for private notes */}
-          <LockStatus isLocked={isNoteLocked} />
-
           {/* Cache indicator */}
           {isFromCache && (
             <div

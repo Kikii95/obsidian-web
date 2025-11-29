@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { createOctokit, getFullVaultTree } from "@/lib/github";
-import { filterPrivatePaths } from "@/lib/privacy";
+import { isPrivatePath } from "@/lib/privacy";
 import type { VaultFile } from "@/types";
 
 export async function GET() {
@@ -16,11 +16,14 @@ export async function GET() {
     const octokit = createOctokit(session.accessToken);
     const allFiles = await getFullVaultTree(octokit);
 
-    // Filter out private paths (_private folders, etc.)
-    const files = filterPrivatePaths(allFiles);
+    // Mark private paths as locked (instead of filtering)
+    const filesWithLockStatus = allFiles.map(file => ({
+      ...file,
+      isLocked: isPrivatePath(file.path),
+    }));
 
     // Build tree structure
-    const tree = buildTree(files);
+    const tree = buildTree(filesWithLockStatus);
 
     return NextResponse.json({ tree });
   } catch (error) {
@@ -52,6 +55,7 @@ function buildTree(files: VaultFile[]): VaultFile[] {
           path: currentPath,
           type: "dir",
           children: [],
+          isLocked: isPrivatePath(currentPath),
         };
 
         if (parentPath === "") {
@@ -79,6 +83,7 @@ function buildTree(files: VaultFile[]): VaultFile[] {
           path: file.path,
           type: "dir",
           children: [],
+          isLocked: file.isLocked,
         };
 
         if (parts.length === 1) {
@@ -106,6 +111,7 @@ function buildTree(files: VaultFile[]): VaultFile[] {
         name: file.name,
         path: file.path,
         type: "file",
+        isLocked: file.isLocked,
       };
 
       if (parts.length === 1) {

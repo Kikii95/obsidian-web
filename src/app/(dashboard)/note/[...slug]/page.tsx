@@ -29,6 +29,9 @@ import { useOnlineStatus } from "@/hooks/use-online-status";
 import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
 import { MoveNoteDialog } from "@/components/notes/move-note-dialog";
 import { RenameNoteDialog } from "@/components/notes/rename-note-dialog";
+import { LockedNoteView } from "@/components/lock/locked-note-view";
+import { useLockStore, isPathLocked } from "@/lib/lock-store";
+import { LockStatus } from "@/components/lock/lock-status";
 
 interface NoteData {
   path: string;
@@ -41,11 +44,12 @@ interface NoteData {
 export default function NotePage() {
   const params = useParams();
   const { isOnline } = useOnlineStatus();
+  const { isUnlocked, initializeLockState } = useLockStore();
   const [note, setNote] = useState<NoteData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isPrivate, setIsPrivate] = useState(false);
   const [isFromCache, setIsFromCache] = useState(false);
+  const [wasUnlocked, setWasUnlocked] = useState(false);
 
   // Edit mode state
   const [isEditing, setIsEditing] = useState(false);
@@ -58,12 +62,21 @@ export default function NotePage() {
   const decodedSlug = slug?.map((s) => decodeURIComponent(s)) || [];
   const filePath = decodedSlug.length > 0 ? `${decodedSlug.join("/")}.md` : "";
 
+  // Check if this note is locked (in _private folder)
+  const isNoteLocked = isPathLocked(filePath);
+  const canViewNote = !isNoteLocked || isUnlocked || wasUnlocked;
+
+  // Initialize lock state on mount
+  useEffect(() => {
+    initializeLockState();
+  }, [initializeLockState]);
+
   const fetchNote = async () => {
     if (!filePath) return;
+    if (!canViewNote) return; // Don't fetch if locked
 
     setIsLoading(true);
     setError(null);
-    setIsPrivate(false);
     setIsFromCache(false);
 
     try {
@@ -75,10 +88,6 @@ export default function NotePage() {
         const data = await response.json();
 
         if (!response.ok) {
-          // Check if note is private (403)
-          if (response.status === 403) {
-            setIsPrivate(true);
-          }
           throw new Error(data.error || "Erreur lors du chargement");
         }
 
@@ -112,7 +121,7 @@ export default function NotePage() {
       }
     } catch (err) {
       // If online fetch failed, try cache as fallback
-      if (isOnline && !isPrivate) {
+      if (isOnline) {
         const cached = await getCachedNote(filePath);
         if (cached) {
           setNote({
@@ -136,8 +145,10 @@ export default function NotePage() {
   };
 
   useEffect(() => {
-    fetchNote();
-  }, [filePath]);
+    if (canViewNote) {
+      fetchNote();
+    }
+  }, [filePath, canViewNote]);
 
   // Track changes
   useEffect(() => {
@@ -221,6 +232,16 @@ export default function NotePage() {
     isLast: index === decodedSlug.length - 1,
   }));
 
+  // Show locked view for private notes
+  if (isNoteLocked && !canViewNote) {
+    return (
+      <LockedNoteView
+        noteName={decodedSlug[decodedSlug.length - 1] || "Note"}
+        onUnlock={() => setWasUnlocked(true)}
+      />
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="p-6 max-w-4xl mx-auto">
@@ -239,31 +260,6 @@ export default function NotePage() {
   }
 
   if (error) {
-    // Special display for private notes
-    if (isPrivate) {
-      return (
-        <div className="p-6 max-w-4xl mx-auto">
-          <div className="flex flex-col items-center justify-center gap-4 py-16">
-            <div className="relative">
-              <FileText className="h-12 w-12 text-muted-foreground" />
-              <Lock className="h-5 w-5 text-amber-500 absolute -bottom-1 -right-1" />
-            </div>
-            <h2 className="text-xl font-semibold">Note privée</h2>
-            <p className="text-muted-foreground text-center max-w-md">
-              Cette note est marquée comme privée et ne peut pas être affichée.
-            </p>
-            <div className="text-xs text-muted-foreground/60 bg-muted/50 px-3 py-2 rounded-md">
-              <code>#private</code> ou <code>private: true</code> dans le
-              frontmatter
-            </div>
-            <Button variant="ghost" asChild>
-              <Link href="/">Retour à l&apos;accueil</Link>
-            </Button>
-          </div>
-        </div>
-      );
-    }
-
     return (
       <div className="p-6 max-w-4xl mx-auto">
         <div className="flex flex-col items-center justify-center gap-4 py-16">
@@ -332,6 +328,9 @@ export default function NotePage() {
 
         {/* Edit/View/Save buttons */}
         <div className="flex items-center gap-2 shrink-0">
+          {/* Lock status for private notes */}
+          <LockStatus isLocked={isNoteLocked} />
+
           {/* Cache indicator */}
           {isFromCache && (
             <div

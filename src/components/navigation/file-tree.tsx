@@ -3,7 +3,7 @@
 import { useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronRight, File, Folder, FolderOpen } from "lucide-react";
+import { ChevronRight, File, Folder, FolderOpen, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useVaultStore } from "@/lib/store";
 import type { VaultFile } from "@/types";
@@ -104,6 +104,9 @@ function FileTreeItem({ file, level }: FileTreeItemProps) {
           />
           <span className="shrink-0">{getIcon()}</span>
           <span className="truncate font-medium">{displayName}</span>
+          {file.isLocked && (
+            <Lock className="h-3 w-3 ml-auto shrink-0 text-amber-500" />
+          )}
         </button>
 
         {isExpanded && file.children && file.children.length > 0 && (
@@ -134,6 +137,9 @@ function FileTreeItem({ file, level }: FileTreeItemProps) {
       <div className="w-4 shrink-0" />
       <span className="shrink-0">{getIcon()}</span>
       <span className="truncate">{displayName}</span>
+      {file.isLocked && (
+        <Lock className="h-3 w-3 ml-auto shrink-0 text-amber-500" />
+      )}
     </Link>
   );
 }

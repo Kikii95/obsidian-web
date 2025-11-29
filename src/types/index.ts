@@ -7,6 +7,7 @@ export interface VaultFile {
   sha?: string;
   content?: string;
   children?: VaultFile[];
+  isLocked?: boolean; // True for private/locked notes
 }
 
 export interface VaultNote {

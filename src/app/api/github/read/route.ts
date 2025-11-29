@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { createOctokit, getFileContent } from "@/lib/github";
-import { checkPrivacy } from "@/lib/privacy";
 import matter from "gray-matter";
 
 export async function GET(request: NextRequest) {
@@ -22,18 +21,6 @@ export async function GET(request: NextRequest) {
 
     const octokit = createOctokit(session.accessToken);
     const { content, sha } = await getFileContent(octokit, path);
-
-    // Check if note is private
-    const privacyCheck = checkPrivacy(path, content);
-    if (privacyCheck.isPrivate) {
-      return NextResponse.json(
-        {
-          error: "Cette note est privée",
-          reason: privacyCheck.reason,
-        },
-        { status: 403 }
-      );
-    }
 
     // Parse frontmatter
     const { data: frontmatter, content: markdownContent } = matter(content);

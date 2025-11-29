@@ -6,9 +6,25 @@ import { FileTree } from "./file-tree";
 import { useVaultStore } from "@/lib/store";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle, FolderTree, RefreshCw, FilePlus } from "lucide-react";
+import { AlertCircle, FolderTree, RefreshCw, FilePlus, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CreateNoteDialog } from "@/components/notes/create-note-dialog";
+import type { VaultFile } from "@/types";
+
+// Extract all folder paths from tree recursively
+function getAllFolderPaths(files: VaultFile[], parentPath = ""): string[] {
+  const paths: string[] = [];
+  for (const file of files) {
+    if (file.type === "dir") {
+      const fullPath = parentPath ? `${parentPath}/${file.name}` : file.name;
+      paths.push(fullPath);
+      if (file.children) {
+        paths.push(...getAllFolderPaths(file.children, fullPath));
+      }
+    }
+  }
+  return paths;
+}
 
 export function VaultSidebar() {
   const { data: session } = useSession();
@@ -19,6 +35,8 @@ export function VaultSidebar() {
     setTree,
     setTreeLoading,
     setTreeError,
+    collapseAllFolders,
+    expandAllFolders,
   } = useVaultStore();
 
   const fetchTree = async () => {
@@ -106,7 +124,7 @@ export function VaultSidebar() {
           <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
             Vault
           </span>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             <CreateNoteDialog
               trigger={
                 <Button
@@ -119,6 +137,24 @@ export function VaultSidebar() {
                 </Button>
               }
             />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={collapseAllFolders}
+              title="Tout fermer"
+            >
+              <ChevronsDownUp className="h-3 w-3" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={() => expandAllFolders(getAllFolderPaths(tree))}
+              title="Tout ouvrir"
+            >
+              <ChevronsUpDown className="h-3 w-3" />
+            </Button>
             <Button
               variant="ghost"
               size="icon"

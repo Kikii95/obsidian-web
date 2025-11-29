@@ -38,6 +38,8 @@ interface VaultState {
   setSidebarOpen: (open: boolean) => void;
   toggleFolder: (path: string) => void;
   expandFolder: (path: string) => void;
+  collapseAllFolders: () => void;
+  expandAllFolders: (allPaths: string[]) => void;
 }
 
 export const useVaultStore = create<VaultState>((set) => ({
@@ -97,4 +99,6 @@ export const useVaultStore = create<VaultState>((set) => ({
       newExpanded.add(path);
       return { expandedFolders: newExpanded };
     }),
+  collapseAllFolders: () => set({ expandedFolders: new Set() }),
+  expandAllFolders: (allPaths) => set({ expandedFolders: new Set(allPaths) }),
 }));

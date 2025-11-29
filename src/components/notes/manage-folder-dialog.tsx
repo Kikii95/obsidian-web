@@ -284,9 +284,9 @@ export function ManageFolderDialog({ mode, open, onOpenChange }: ManageFolderDia
                 <div className="flex items-center gap-2 p-3 bg-amber-500/10 rounded-md border border-amber-500/30">
                   <Lock className="h-5 w-5 text-amber-500 shrink-0" />
                   <p className="text-sm text-amber-600 dark:text-amber-400">
-                    <strong>Fichiers verrouillés détectés !</strong>
+                    <strong>Contenu privé détecté !</strong>
                     <br />
-                    <span className="text-xs">Des notes privées seront supprimées (dossier _private ou notes lock).</span>
+                    <span className="text-xs">Ce dossier contient un dossier _private/ qui sera supprimé.</span>
                   </p>
                 </div>
               )}

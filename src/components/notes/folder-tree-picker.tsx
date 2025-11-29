@@ -25,7 +25,7 @@ export function FolderTreePicker({
   showRoot = true,
 }: FolderTreePickerProps) {
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
-    new Set(["Projects", "Learning", "Stats", "Resources"])
+    new Set()
   );
 
   const toggleFolder = (path: string) => {

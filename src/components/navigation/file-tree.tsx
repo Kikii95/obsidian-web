@@ -51,9 +51,12 @@ function FileTreeItem({ file, level }: FileTreeItemProps) {
       .split("/")
       .map((segment) => encodeURIComponent(segment))
       .join("/");
-    // Use /file/ for binary files, /note/ for markdown/canvas
+    // Route based on file type
     if (fileType === 'image' || fileType === 'pdf') {
       return `/file/${encodedPath}`;
+    }
+    if (fileType === 'canvas') {
+      return `/canvas/${encodedPath}`;
     }
     return `/note/${encodedPath}`;
   }, [fileType]);

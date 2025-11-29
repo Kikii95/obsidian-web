@@ -46,7 +46,7 @@ const editorTheme = EditorView.theme({
     borderLeftColor: "var(--primary)",
   },
   ".cm-scroller": {
-    overflow: "auto",
+    overflow: "visible !important",
   },
 });
 
@@ -162,8 +162,8 @@ export function MarkdownEditor({
             completionKeymap: false,
             lintKeymap: false,
           }}
-          height="calc(90vh - 120px)"
-          minHeight="600px"
+          height="auto"
+          minHeight="500px"
         />
       </div>
     </div>

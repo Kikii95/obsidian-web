@@ -66,6 +66,23 @@ function FileTreeItem({ file, level }: FileTreeItemProps) {
   // Get display name (without .md extension)
   const displayName = isMarkdown ? file.name.replace(/\.md$/, "") : file.name;
 
+  // Render indent guides (vertical lines)
+  const renderIndentGuides = () => {
+    if (level === 0) return null;
+    return (
+      <div className="flex shrink-0">
+        {Array.from({ length: level }).map((_, i) => (
+          <div
+            key={i}
+            className="w-4 flex justify-center"
+          >
+            <div className="w-px h-full bg-border/50" />
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   if (isDirectory) {
     return (
       <div>
@@ -78,8 +95,7 @@ function FileTreeItem({ file, level }: FileTreeItemProps) {
             !isExpanded && "text-muted-foreground"
           )}
         >
-          {/* Indent spacer */}
-          {level > 0 && <div className="shrink-0" style={{ width: `${level * 12}px` }} />}
+          {renderIndentGuides()}
           <ChevronRight
             className={cn(
               "h-3 w-3 shrink-0 transition-transform",
@@ -87,7 +103,7 @@ function FileTreeItem({ file, level }: FileTreeItemProps) {
             )}
           />
           <span className="shrink-0">{getIcon()}</span>
-          <span className="truncate">{displayName}</span>
+          <span className="truncate font-medium">{displayName}</span>
         </button>
 
         {isExpanded && file.children && file.children.length > 0 && (
@@ -113,8 +129,9 @@ function FileTreeItem({ file, level }: FileTreeItemProps) {
           : "text-muted-foreground hover:text-foreground"
       )}
     >
-      {/* Indent spacer - files need extra indent to align with folder names */}
-      <div className="shrink-0" style={{ width: `${level * 12 + 16}px` }} />
+      {renderIndentGuides()}
+      {/* Extra spacer to align with folder names (chevron width) */}
+      <div className="w-4 shrink-0" />
       <span className="shrink-0">{getIcon()}</span>
       <span className="truncate">{displayName}</span>
     </Link>

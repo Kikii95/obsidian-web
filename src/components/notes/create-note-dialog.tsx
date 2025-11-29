@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Dialog,
@@ -13,37 +13,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { FilePlus, Loader2, FolderOpen } from "lucide-react";
+import { FilePlus, Loader2 } from "lucide-react";
 import { useVaultStore } from "@/lib/store";
-import type { VaultFile } from "@/types";
+import { FolderTreePicker } from "./folder-tree-picker";
 
 interface CreateNoteDialogProps {
   currentFolder?: string;
   trigger?: React.ReactNode;
-}
-
-// Extract all folder paths from tree recursively
-function extractFolders(files: VaultFile[], parentPath = ""): string[] {
-  const folders: string[] = [];
-
-  for (const file of files) {
-    if (file.type === "dir") {
-      const fullPath = parentPath ? `${parentPath}/${file.name}` : file.name;
-      folders.push(fullPath);
-      if (file.children) {
-        folders.push(...extractFolders(file.children, fullPath));
-      }
-    }
-  }
-
-  return folders;
 }
 
 const ROOT_VALUE = "__root__";
@@ -56,11 +32,6 @@ export function CreateNoteDialog({ currentFolder, trigger }: CreateNoteDialogPro
   const [selectedFolder, setSelectedFolder] = useState(currentFolder || ROOT_VALUE);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Get all folders from tree
-  const folders = useMemo(() => {
-    return extractFolders(tree).sort();
-  }, [tree]);
 
   // Get actual folder path (convert ROOT_VALUE to empty string)
   const actualFolder = selectedFolder === ROOT_VALUE ? "" : selectedFolder;
@@ -114,8 +85,17 @@ export function CreateNoteDialog({ currentFolder, trigger }: CreateNoteDialogPro
     }
   };
 
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
+    if (newOpen) {
+      setSelectedFolder(currentFolder || ROOT_VALUE);
+      setTitle("");
+      setError(null);
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {trigger || (
           <Button variant="outline" size="sm">
@@ -124,7 +104,7 @@ export function CreateNoteDialog({ currentFolder, trigger }: CreateNoteDialogPro
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Créer une nouvelle note</DialogTitle>
           <DialogDescription>
@@ -133,28 +113,7 @@ export function CreateNoteDialog({ currentFolder, trigger }: CreateNoteDialogPro
         </DialogHeader>
 
         <div className="space-y-4 pt-4">
-          {/* Folder selector */}
-          <div className="space-y-2">
-            <Label htmlFor="folder">Dossier</Label>
-            <Select value={selectedFolder} onValueChange={setSelectedFolder}>
-              <SelectTrigger id="folder">
-                <FolderOpen className="h-4 w-4 mr-2 text-muted-foreground" />
-                <SelectValue placeholder="Racine du vault" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ROOT_VALUE}>
-                  <span className="text-muted-foreground">/ (Racine)</span>
-                </SelectItem>
-                {folders.map((folder) => (
-                  <SelectItem key={folder} value={folder}>
-                    {folder}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Title input */}
+          {/* Title input - moved to top for better UX */}
           <div className="space-y-2">
             <Label htmlFor="title">Titre de la note</Label>
             <Input
@@ -169,6 +128,16 @@ export function CreateNoteDialog({ currentFolder, trigger }: CreateNoteDialogPro
               }}
               disabled={isCreating}
               autoFocus
+            />
+          </div>
+
+          {/* Folder tree picker */}
+          <div className="space-y-2">
+            <Label>Dossier de destination</Label>
+            <FolderTreePicker
+              tree={tree}
+              selectedPath={selectedFolder}
+              onSelect={setSelectedFolder}
             />
           </div>
 

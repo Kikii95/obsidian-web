@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Dialog,
@@ -12,16 +12,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { FolderInput, Loader2, FolderOpen } from "lucide-react";
+import { FolderInput, Loader2 } from "lucide-react";
 import { useVaultStore } from "@/lib/store";
-import type { VaultFile } from "@/types";
+import { FolderTreePicker } from "./folder-tree-picker";
 
 interface MoveNoteDialogProps {
   path: string;
@@ -31,23 +24,6 @@ interface MoveNoteDialogProps {
 }
 
 const ROOT_VALUE = "__root__";
-
-// Extract all folder paths from tree recursively
-function extractFolders(files: VaultFile[], parentPath = ""): string[] {
-  const folders: string[] = [];
-
-  for (const file of files) {
-    if (file.type === "dir") {
-      const fullPath = parentPath ? `${parentPath}/${file.name}` : file.name;
-      folders.push(fullPath);
-      if (file.children) {
-        folders.push(...extractFolders(file.children, fullPath));
-      }
-    }
-  }
-
-  return folders;
-}
 
 // Get parent folder from path
 function getParentFolder(path: string): string {
@@ -76,16 +52,6 @@ export function MoveNoteDialog({ path, sha, noteName, trigger }: MoveNoteDialogP
 
   // Get actual folder path (convert ROOT_VALUE to empty string)
   const actualSelectedFolder = selectedFolder === ROOT_VALUE ? "" : selectedFolder;
-
-  // Get all folders from tree
-  const folders = useMemo(() => {
-    return extractFolders(tree).sort();
-  }, [tree]);
-
-  // Filter out current folder from options
-  const availableFolders = useMemo(() => {
-    return folders.filter((f) => f !== currentFolder);
-  }, [folders, currentFolder]);
 
   const handleMove = async () => {
     if (actualSelectedFolder === currentFolder) {
@@ -150,7 +116,7 @@ export function MoveNoteDialog({ path, sha, noteName, trigger }: MoveNoteDialogP
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FolderInput className="h-5 w-5" />
@@ -167,27 +133,15 @@ export function MoveNoteDialog({ path, sha, noteName, trigger }: MoveNoteDialogP
             Emplacement actuel: <code>{path}</code>
           </div>
 
-          {/* Folder selector */}
+          {/* Folder tree picker */}
           <div className="space-y-2">
-            <Label htmlFor="folder">Nouveau dossier</Label>
-            <Select value={selectedFolder} onValueChange={setSelectedFolder}>
-              <SelectTrigger id="folder">
-                <FolderOpen className="h-4 w-4 mr-2 text-muted-foreground" />
-                <SelectValue placeholder="Sélectionner un dossier" />
-              </SelectTrigger>
-              <SelectContent>
-                {currentFolder !== "" && (
-                  <SelectItem value={ROOT_VALUE}>
-                    <span className="text-muted-foreground">/ (Racine)</span>
-                  </SelectItem>
-                )}
-                {availableFolders.map((folder) => (
-                  <SelectItem key={folder} value={folder}>
-                    {folder}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label>Nouveau dossier</Label>
+            <FolderTreePicker
+              tree={tree}
+              selectedPath={selectedFolder}
+              onSelect={setSelectedFolder}
+              currentPath={path}
+            />
           </div>
 
           {/* Preview new path */}

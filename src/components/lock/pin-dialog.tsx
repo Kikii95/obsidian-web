@@ -20,7 +20,7 @@ interface PinDialogProps {
   mode?: "unlock" | "setup" | "change";
 }
 
-const PIN_LENGTH = 4;
+const PIN_LENGTH = 6;
 
 export function PinDialog({ open, onOpenChange, onSuccess, mode = "unlock" }: PinDialogProps) {
   const { hasPinConfigured, setupPin, unlock, verifyPin } = useLockStore();
@@ -79,7 +79,7 @@ export function PinDialog({ open, onOpenChange, onSuccess, mode = "unlock" }: Pi
   const handleSubmit = async (fullPin?: string) => {
     const pinToCheck = fullPin || currentPin.join("");
     if (pinToCheck.length !== PIN_LENGTH) {
-      setError("Entrez un code à 4 chiffres");
+      setError("Entrez un code à 6 chiffres");
       return;
     }
 
@@ -132,7 +132,7 @@ export function PinDialog({ open, onOpenChange, onSuccess, mode = "unlock" }: Pi
   const getDescription = () => {
     if (isSetupMode) {
       return step === "enter"
-        ? "Choisissez un code à 4 chiffres pour protéger vos notes privées"
+        ? "Choisissez un code à 6 chiffres pour protéger vos notes privées"
         : "Entrez à nouveau votre code pour confirmer";
     }
     return "Entrez votre code pour accéder aux notes verrouillées";
@@ -140,7 +140,7 @@ export function PinDialog({ open, onOpenChange, onSuccess, mode = "unlock" }: Pi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xs">
+      <DialogContent className="max-w-sm">
         <DialogHeader className="text-center">
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
             {isSetupMode ? (
@@ -157,7 +157,7 @@ export function PinDialog({ open, onOpenChange, onSuccess, mode = "unlock" }: Pi
 
         <div className="space-y-6 pt-4">
           {/* PIN Input */}
-          <div className="flex justify-center gap-3">
+          <div className="flex justify-center gap-2">
             {currentPin.map((digit, index) => (
               <input
                 key={`${step}-${index}`}
@@ -170,7 +170,7 @@ export function PinDialog({ open, onOpenChange, onSuccess, mode = "unlock" }: Pi
                 onKeyDown={(e) => handleKeyDown(index, e)}
                 disabled={isLoading}
                 className={cn(
-                  "h-14 w-12 rounded-lg border-2 text-center text-2xl font-bold",
+                  "h-12 w-10 rounded-lg border-2 text-center text-xl font-bold",
                   "bg-background transition-colors",
                   "focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",
                   error && "border-destructive",

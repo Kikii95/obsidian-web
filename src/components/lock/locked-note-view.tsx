@@ -59,7 +59,7 @@ export function LockedNoteView({ noteName, onUnlock }: LockedNoteViewProps) {
         {/* Description based on setup state */}
         <p className="text-sm text-muted-foreground">
           {hasPinConfigured
-            ? "Entrez votre code à 4 chiffres pour déverrouiller cette note"
+            ? "Entrez votre code à 6 chiffres pour déverrouiller cette note"
             : "Configurez un code pour accéder aux notes privées"}
         </p>
 

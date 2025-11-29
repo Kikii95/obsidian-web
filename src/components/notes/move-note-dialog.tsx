@@ -30,6 +30,8 @@ interface MoveNoteDialogProps {
   trigger?: React.ReactNode;
 }
 
+const ROOT_VALUE = "__root__";
+
 // Extract all folder paths from tree recursively
 function extractFolders(files: VaultFile[], parentPath = ""): string[] {
   const folders: string[] = [];
@@ -68,8 +70,12 @@ export function MoveNoteDialog({ path, sha, noteName, trigger }: MoveNoteDialogP
   const [error, setError] = useState<string | null>(null);
 
   const currentFolder = getParentFolder(path);
+  const currentFolderValue = currentFolder || ROOT_VALUE;
   const fileName = getFileName(path);
-  const [selectedFolder, setSelectedFolder] = useState(currentFolder);
+  const [selectedFolder, setSelectedFolder] = useState(currentFolderValue);
+
+  // Get actual folder path (convert ROOT_VALUE to empty string)
+  const actualSelectedFolder = selectedFolder === ROOT_VALUE ? "" : selectedFolder;
 
   // Get all folders from tree
   const folders = useMemo(() => {
@@ -82,7 +88,7 @@ export function MoveNoteDialog({ path, sha, noteName, trigger }: MoveNoteDialogP
   }, [folders, currentFolder]);
 
   const handleMove = async () => {
-    if (selectedFolder === currentFolder) {
+    if (actualSelectedFolder === currentFolder) {
       setError("Sélectionnez un dossier différent");
       return;
     }
@@ -91,7 +97,7 @@ export function MoveNoteDialog({ path, sha, noteName, trigger }: MoveNoteDialogP
     setError(null);
 
     try {
-      const newPath = selectedFolder ? `${selectedFolder}/${fileName}` : fileName;
+      const newPath = actualSelectedFolder ? `${actualSelectedFolder}/${fileName}` : fileName;
 
       const response = await fetch("/api/github/move", {
         method: "POST",
@@ -130,7 +136,7 @@ export function MoveNoteDialog({ path, sha, noteName, trigger }: MoveNoteDialogP
   const handleOpenChange = (newOpen: boolean) => {
     setOpen(newOpen);
     if (newOpen) {
-      setSelectedFolder(currentFolder);
+      setSelectedFolder(currentFolderValue);
       setError(null);
     }
   };
@@ -171,7 +177,7 @@ export function MoveNoteDialog({ path, sha, noteName, trigger }: MoveNoteDialogP
               </SelectTrigger>
               <SelectContent>
                 {currentFolder !== "" && (
-                  <SelectItem value="">
+                  <SelectItem value={ROOT_VALUE}>
                     <span className="text-muted-foreground">/ (Racine)</span>
                   </SelectItem>
                 )}
@@ -185,11 +191,11 @@ export function MoveNoteDialog({ path, sha, noteName, trigger }: MoveNoteDialogP
           </div>
 
           {/* Preview new path */}
-          {selectedFolder !== currentFolder && (
+          {actualSelectedFolder !== currentFolder && (
             <div className="text-xs text-muted-foreground bg-primary/10 px-3 py-2 rounded-md">
               Nouveau chemin:{" "}
               <code>
-                {selectedFolder ? `${selectedFolder}/` : ""}
+                {actualSelectedFolder ? `${actualSelectedFolder}/` : ""}
                 {fileName}
               </code>
             </div>
@@ -211,7 +217,7 @@ export function MoveNoteDialog({ path, sha, noteName, trigger }: MoveNoteDialogP
             </Button>
             <Button
               onClick={handleMove}
-              disabled={isMoving || selectedFolder === currentFolder}
+              disabled={isMoving || actualSelectedFolder === currentFolder}
             >
               {isMoving ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />

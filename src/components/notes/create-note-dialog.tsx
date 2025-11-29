@@ -46,12 +46,14 @@ function extractFolders(files: VaultFile[], parentPath = ""): string[] {
   return folders;
 }
 
+const ROOT_VALUE = "__root__";
+
 export function CreateNoteDialog({ currentFolder, trigger }: CreateNoteDialogProps) {
   const router = useRouter();
   const { tree } = useVaultStore();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
-  const [selectedFolder, setSelectedFolder] = useState(currentFolder || "");
+  const [selectedFolder, setSelectedFolder] = useState(currentFolder || ROOT_VALUE);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,6 +61,9 @@ export function CreateNoteDialog({ currentFolder, trigger }: CreateNoteDialogPro
   const folders = useMemo(() => {
     return extractFolders(tree).sort();
   }, [tree]);
+
+  // Get actual folder path (convert ROOT_VALUE to empty string)
+  const actualFolder = selectedFolder === ROOT_VALUE ? "" : selectedFolder;
 
   const handleCreate = async () => {
     if (!title.trim()) {
@@ -71,8 +76,8 @@ export function CreateNoteDialog({ currentFolder, trigger }: CreateNoteDialogPro
 
     try {
       // Build path: folder/title.md or just title.md
-      const path = selectedFolder
-        ? `${selectedFolder}/${title.trim()}.md`
+      const path = actualFolder
+        ? `${actualFolder}/${title.trim()}.md`
         : `${title.trim()}.md`;
 
       const response = await fetch("/api/github/create", {
@@ -99,7 +104,7 @@ export function CreateNoteDialog({ currentFolder, trigger }: CreateNoteDialogPro
 
       setOpen(false);
       setTitle("");
-      setSelectedFolder(currentFolder || "");
+      setSelectedFolder(currentFolder || ROOT_VALUE);
       router.push(`/note/${encodedPath}`);
       router.refresh();
     } catch (err) {
@@ -137,7 +142,7 @@ export function CreateNoteDialog({ currentFolder, trigger }: CreateNoteDialogPro
                 <SelectValue placeholder="Racine du vault" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">
+                <SelectItem value={ROOT_VALUE}>
                   <span className="text-muted-foreground">/ (Racine)</span>
                 </SelectItem>
                 {folders.map((folder) => (
@@ -170,7 +175,7 @@ export function CreateNoteDialog({ currentFolder, trigger }: CreateNoteDialogPro
           {/* Preview path */}
           {title && (
             <div className="text-xs text-muted-foreground bg-muted/50 px-3 py-2 rounded-md">
-              Chemin: <code>{selectedFolder ? `${selectedFolder}/` : ""}{title.trim()}.md</code>
+              Chemin: <code>{actualFolder ? `${actualFolder}/` : ""}{title.trim()}.md</code>
             </div>
           )}
 

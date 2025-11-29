@@ -115,10 +115,9 @@ export function MarkdownEditor({
           completionKeymap: false,
           lintKeymap: false,
         }}
-        style={{
-          minHeight: "400px",
-          maxHeight: "calc(100vh - 300px)",
-        }}
+        height="100%"
+        minHeight="500px"
+        maxHeight="70vh"
       />
     </div>
   );

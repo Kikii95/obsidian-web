@@ -31,6 +31,7 @@ import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
 import { MoveNoteDialog } from "@/components/notes/move-note-dialog";
 import { RenameNoteDialog } from "@/components/notes/rename-note-dialog";
 import { LockedNoteView } from "@/components/lock/locked-note-view";
+import { PinDialog } from "@/components/lock/pin-dialog";
 import { useLockStore, isPathLocked } from "@/lib/lock-store";
 
 interface NoteData {
@@ -57,6 +58,8 @@ export default function NotePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [isTogglingLock, setIsTogglingLock] = useState(false);
+  const [showUnlockPinDialog, setShowUnlockPinDialog] = useState(false);
+  const [pendingUnlock, setPendingUnlock] = useState(false);
 
   // Build the file path from slug (decode each segment)
   const slug = params.slug as string[];
@@ -220,12 +223,22 @@ export default function NotePage() {
   const handleToggleLock = useCallback(async () => {
     if (!note) return;
 
+    // Determine new lock state
+    const currentlyLocked = note.isLocked || false;
+    const newLockState = !currentlyLocked;
+
+    // If removing lock, require PIN verification first
+    if (currentlyLocked && !pendingUnlock) {
+      setPendingUnlock(true);
+      setShowUnlockPinDialog(true);
+      return;
+    }
+
+    // Reset pending state
+    setPendingUnlock(false);
+
     setIsTogglingLock(true);
     try {
-      // Determine new lock state
-      const currentlyLocked = note.isLocked || false;
-      const newLockState = !currentlyLocked;
-
       // Build new frontmatter
       const newFrontmatter = { ...note.frontmatter };
       if (newLockState) {
@@ -292,7 +305,20 @@ export default function NotePage() {
     } finally {
       setIsTogglingLock(false);
     }
-  }, [note]);
+  }, [note, pendingUnlock]);
+
+  // Handle successful PIN verification for unlock
+  const handleUnlockPinSuccess = useCallback(() => {
+    setShowUnlockPinDialog(false);
+    // Continue with the unlock
+    handleToggleLock();
+  }, [handleToggleLock]);
+
+  // Handle PIN dialog close without success
+  const handleUnlockPinCancel = useCallback(() => {
+    setShowUnlockPinDialog(false);
+    setPendingUnlock(false);
+  }, []);
 
   // Keyboard shortcut for save
   useEffect(() => {
@@ -600,6 +626,16 @@ export default function NotePage() {
           </div>
         </div>
       )}
+
+      {/* PIN Dialog for verifying PIN when removing lock from note */}
+      <PinDialog
+        open={showUnlockPinDialog}
+        onOpenChange={(open) => {
+          if (!open) handleUnlockPinCancel();
+        }}
+        onSuccess={handleUnlockPinSuccess}
+        mode="verify"
+      />
     </div>
   );
 }

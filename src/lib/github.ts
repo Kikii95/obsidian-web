@@ -165,9 +165,11 @@ export async function searchInVault(
 
 /**
  * Get recursive tree for the entire vault
+ * @param includeHidden - Include hidden files like .gitkeep (default false)
  */
 export async function getFullVaultTree(
-  octokit: Octokit
+  octokit: Octokit,
+  includeHidden: boolean = false
 ): Promise<VaultFile[]> {
   try {
     const { data: ref } = await octokit.git.getRef({
@@ -186,9 +188,17 @@ export async function getFullVaultTree(
     const files: VaultFile[] = tree.tree
       .filter((item) => {
         if (!item.path) return false;
-        if (item.path.startsWith(".")) return false;
-        if (item.path.includes("/.")) return false;
         if (item.path.includes("node_modules")) return false;
+        // Filter hidden files unless includeHidden is true
+        // But always include .gitkeep for folder operations
+        if (!includeHidden) {
+          const fileName = item.path.split("/").pop() || "";
+          if (fileName === ".gitkeep") {
+            // Always include .gitkeep
+          } else if (item.path.startsWith(".") || item.path.includes("/.")) {
+            return false;
+          }
+        }
         return true;
       })
       .map((item) => ({

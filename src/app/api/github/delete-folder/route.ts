@@ -33,7 +33,7 @@ export async function DELETE(request: NextRequest) {
 
     if (filesToDelete.length === 0) {
       return NextResponse.json(
-        { error: "Dossier vide ou inexistant" },
+        { error: "Ce dossier n'existe pas dans GitHub (peut-être un artefact local)" },
         { status: 404 }
       );
     }

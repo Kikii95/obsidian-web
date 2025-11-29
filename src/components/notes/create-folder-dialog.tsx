@@ -87,7 +87,8 @@ export function CreateFolderDialog({
       setOpen(false);
       setFolderName("");
       setSelectedParent(ROOT_VALUE);
-      triggerTreeRefresh(); // Auto-refresh sidebar
+      // Small delay to let GitHub index the new file before refresh
+      setTimeout(() => triggerTreeRefresh(), 500);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {

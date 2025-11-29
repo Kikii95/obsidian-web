@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2, FolderPen, FolderX, AlertTriangle } from "lucide-react";
 import { useVaultStore } from "@/lib/store";
 import { FolderTreePicker } from "./folder-tree-picker";
+import type { VaultFile } from "@/types";
 
 type ManageMode = "rename" | "delete";
 
@@ -23,12 +24,26 @@ interface ManageFolderDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+// Recursively find a folder in the tree
+function findFolderInTree(tree: VaultFile[], path: string): VaultFile | null {
+  for (const item of tree) {
+    if (item.path === path) return item;
+    if (item.children) {
+      const found = findFolderInTree(item.children, path);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
 export function ManageFolderDialog({ mode, open, onOpenChange }: ManageFolderDialogProps) {
   const { tree, triggerTreeRefresh } = useVaultStore();
   const [selectedFolder, setSelectedFolder] = useState<string>("");
   const [newName, setNewName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmStep, setConfirmStep] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
 
   // Get folder name from path
   const getFolderName = (path: string) => path.split("/").pop() || "";
@@ -37,6 +52,19 @@ export function ManageFolderDialog({ mode, open, onOpenChange }: ManageFolderDia
     parts.pop();
     return parts.join("/");
   };
+
+  // Check if selected folder has children
+  const selectedFolderData = useMemo(() => {
+    if (!selectedFolder) return null;
+    return findFolderInTree(tree, selectedFolder);
+  }, [tree, selectedFolder]);
+
+  const hasChildren = useMemo(() => {
+    return selectedFolderData?.children && selectedFolderData.children.length > 0;
+  }, [selectedFolderData]);
+
+  const folderName = getFolderName(selectedFolder);
+  const isConfirmValid = confirmText.toLowerCase() === folderName.toLowerCase();
 
   const handleRename = async () => {
     if (!selectedFolder || !newName.trim()) {
@@ -86,11 +114,25 @@ export function ManageFolderDialog({ mode, open, onOpenChange }: ManageFolderDia
     }
   };
 
-  const handleDelete = async () => {
+  // First step: check if confirmation needed
+  const handleDeleteFirstStep = () => {
     if (!selectedFolder) {
       setError("Sélectionnez un dossier");
       return;
     }
+
+    if (hasChildren) {
+      // Non-empty folder: require confirmation
+      setConfirmStep(true);
+    } else {
+      // Empty folder: delete directly
+      handleDeleteConfirmed();
+    }
+  };
+
+  // Second step: actually delete
+  const handleDeleteConfirmed = async () => {
+    if (!selectedFolder) return;
 
     setIsLoading(true);
     setError(null);
@@ -122,6 +164,8 @@ export function ManageFolderDialog({ mode, open, onOpenChange }: ManageFolderDia
     setSelectedFolder("");
     setNewName("");
     setError(null);
+    setConfirmStep(false);
+    setConfirmText("");
   };
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -152,71 +196,111 @@ export function ManageFolderDialog({ mode, open, onOpenChange }: ManageFolderDia
             ) : (
               <FolderX className="h-5 w-5" />
             )}
-            {isRenameMode ? "Renommer un dossier" : "Supprimer un dossier"}
+            {isRenameMode
+              ? "Renommer un dossier"
+              : confirmStep
+                ? "⚠️ Confirmation requise"
+                : "Supprimer un dossier"}
           </DialogTitle>
           <DialogDescription>
             {isRenameMode
               ? "Sélectionnez le dossier à renommer"
-              : "Sélectionnez le dossier à supprimer"}
+              : confirmStep
+                ? <>Le dossier <strong>{folderName}</strong> n&apos;est pas vide ! Tapez son nom pour confirmer.</>
+                : "Sélectionnez le dossier à supprimer"}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 pt-4">
-          {/* Folder picker */}
-          <div className="space-y-2">
-            <Label>Dossier</Label>
-            <FolderTreePicker
-              tree={tree}
-              selectedPath={selectedFolder || "__root__"}
-              onSelect={handleFolderSelect}
-              showRoot={false}
-            />
-          </div>
-
-          {/* New name input (rename mode only) */}
-          {isRenameMode && selectedFolder && (
-            <div className="space-y-2">
-              <Label htmlFor="newFolderName">Nouveau nom</Label>
-              <Input
-                id="newFolderName"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !isLoading) {
-                    handleRename();
-                  }
-                }}
-                disabled={isLoading}
-                placeholder="Nom du dossier"
-              />
+          {/* Confirm step for non-empty folder deletion */}
+          {confirmStep ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 p-3 bg-destructive/10 rounded-md">
+                <AlertTriangle className="h-5 w-5 text-destructive shrink-0" />
+                <p className="text-sm text-destructive">
+                  Tous les fichiers seront définitivement supprimés.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  Tapez <strong className="text-foreground">{folderName}</strong> pour confirmer :
+                </p>
+                <Input
+                  value={confirmText}
+                  onChange={(e) => setConfirmText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && isConfirmValid && !isLoading) {
+                      handleDeleteConfirmed();
+                    }
+                  }}
+                  placeholder={folderName}
+                  disabled={isLoading}
+                  autoFocus
+                />
+              </div>
+              <div className="text-xs text-muted-foreground bg-muted/50 px-3 py-2 rounded-md">
+                Chemin: <code>{selectedFolder}</code>
+              </div>
             </div>
-          )}
+          ) : (
+            <>
+              {/* Folder picker */}
+              <div className="space-y-2">
+                <Label>Dossier</Label>
+                <FolderTreePicker
+                  tree={tree}
+                  selectedPath={selectedFolder || "__root__"}
+                  onSelect={handleFolderSelect}
+                  showRoot={false}
+                />
+              </div>
 
-          {/* Preview / Warning */}
-          {selectedFolder && (
-            <div className={`text-xs px-3 py-2 rounded-md ${
-              isRenameMode
-                ? "text-muted-foreground bg-primary/10"
-                : "text-destructive bg-destructive/10"
-            }`}>
-              {isRenameMode ? (
-                <>
-                  Nouveau chemin:{" "}
-                  <code>
-                    {getParentFolder(selectedFolder) ? `${getParentFolder(selectedFolder)}/` : ""}
-                    {newName.trim() || "..."}/
-                  </code>
-                </>
-              ) : (
-                <div className="flex items-start gap-2">
-                  <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
-                  <span>
-                    Tous les fichiers et sous-dossiers de <code>{selectedFolder}</code> seront supprimés.
-                    Cette action est irréversible.
-                  </span>
+              {/* New name input (rename mode only) */}
+              {isRenameMode && selectedFolder && (
+                <div className="space-y-2">
+                  <Label htmlFor="newFolderName">Nouveau nom</Label>
+                  <Input
+                    id="newFolderName"
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !isLoading) {
+                        handleRename();
+                      }
+                    }}
+                    disabled={isLoading}
+                    placeholder="Nom du dossier"
+                  />
                 </div>
               )}
-            </div>
+
+              {/* Preview / Warning */}
+              {selectedFolder && (
+                <div className={`text-xs px-3 py-2 rounded-md ${
+                  isRenameMode
+                    ? "text-muted-foreground bg-primary/10"
+                    : "text-destructive bg-destructive/10"
+                }`}>
+                  {isRenameMode ? (
+                    <>
+                      Nouveau chemin:{" "}
+                      <code>
+                        {getParentFolder(selectedFolder) ? `${getParentFolder(selectedFolder)}/` : ""}
+                        {newName.trim() || "..."}/
+                      </code>
+                    </>
+                  ) : (
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                      <span>
+                        Tous les fichiers et sous-dossiers de <code>{selectedFolder}</code> seront supprimés.
+                        Cette action est irréversible.
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
           )}
 
           {error && (
@@ -228,15 +312,26 @@ export function ManageFolderDialog({ mode, open, onOpenChange }: ManageFolderDia
           <div className="flex justify-end gap-2">
             <Button
               variant="ghost"
-              onClick={() => handleOpenChange(false)}
+              onClick={() => confirmStep ? setConfirmStep(false) : handleOpenChange(false)}
               disabled={isLoading}
             >
-              Annuler
+              {confirmStep ? "Retour" : "Annuler"}
             </Button>
             <Button
               variant={isRenameMode ? "default" : "destructive"}
-              onClick={isRenameMode ? handleRename : handleDelete}
-              disabled={isLoading || !selectedFolder || (isRenameMode && !newName.trim())}
+              onClick={
+                isRenameMode
+                  ? handleRename
+                  : confirmStep
+                    ? handleDeleteConfirmed
+                    : handleDeleteFirstStep
+              }
+              disabled={
+                isLoading ||
+                !selectedFolder ||
+                (isRenameMode && !newName.trim()) ||
+                (confirmStep && !isConfirmValid)
+              }
             >
               {isLoading ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -247,7 +342,11 @@ export function ManageFolderDialog({ mode, open, onOpenChange }: ManageFolderDia
               )}
               {isLoading
                 ? isRenameMode ? "Renommage..." : "Suppression..."
-                : isRenameMode ? "Renommer" : "Supprimer"
+                : isRenameMode
+                  ? "Renommer"
+                  : confirmStep
+                    ? "Supprimer définitivement"
+                    : "Supprimer"
               }
             </Button>
           </div>

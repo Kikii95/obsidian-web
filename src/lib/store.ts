@@ -59,7 +59,7 @@ export const useVaultStore = create<VaultState>((set) => ({
   noteError: null,
 
   sidebarOpen: true,
-  expandedFolders: new Set(["Stats", "Projects", "Learning"]),
+  expandedFolders: new Set<string>(),
 
   // Actions
   setTree: (tree) => set({ tree }),

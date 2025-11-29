@@ -17,7 +17,7 @@ interface PinDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
-  mode?: "unlock" | "setup" | "change";
+  mode?: "unlock" | "setup" | "change" | "verify";
 }
 
 const PIN_LENGTH = 6;
@@ -33,6 +33,7 @@ export function PinDialog({ open, onOpenChange, onSuccess, mode = "unlock" }: Pi
   const confirmInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const isSetupMode = mode === "setup" || (!hasPinConfigured && mode === "unlock");
+  const isVerifyMode = mode === "verify"; // Just verify PIN without global unlock
   const currentPin = step === "enter" ? pin : confirmPin;
   const setCurrentPin = step === "enter" ? setPin : setConfirmPin;
   const currentRefs = step === "enter" ? inputRefs : confirmInputRefs;
@@ -105,8 +106,19 @@ export function PinDialog({ open, onOpenChange, onSuccess, mode = "unlock" }: Pi
             onSuccess?.();
           }
         }
+      } else if (isVerifyMode) {
+        // Verify mode - just check PIN without global unlock
+        const success = await verifyPin(pinToCheck);
+        if (success) {
+          onOpenChange(false);
+          onSuccess?.();
+        } else {
+          setError("Code incorrect");
+          setPin(Array(PIN_LENGTH).fill(""));
+          setTimeout(() => inputRefs.current[0]?.focus(), 100);
+        }
       } else {
-        // Unlock mode
+        // Unlock mode - verify and unlock globally
         const success = await unlock(pinToCheck);
         if (success) {
           onOpenChange(false);
@@ -126,6 +138,9 @@ export function PinDialog({ open, onOpenChange, onSuccess, mode = "unlock" }: Pi
     if (isSetupMode) {
       return step === "enter" ? "Configurer un code" : "Confirmer le code";
     }
+    if (isVerifyMode) {
+      return "Vérification requise";
+    }
     return "Déverrouiller";
   };
 
@@ -134,6 +149,9 @@ export function PinDialog({ open, onOpenChange, onSuccess, mode = "unlock" }: Pi
       return step === "enter"
         ? "Choisissez un code à 6 chiffres pour protéger vos notes privées"
         : "Entrez à nouveau votre code pour confirmer";
+    }
+    if (isVerifyMode) {
+      return "Entrez votre code pour confirmer cette action";
     }
     return "Entrez votre code pour accéder aux notes verrouillées";
   };

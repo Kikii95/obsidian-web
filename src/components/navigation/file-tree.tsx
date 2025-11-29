@@ -1,11 +1,22 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronRight, File, Folder, FolderOpen } from "lucide-react";
+import { ChevronRight, File, Folder, FolderOpen, MoreHorizontal, Pencil, Trash2, FilePlus, FolderPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useVaultStore } from "@/lib/store";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { RenameFolderDialog } from "@/components/notes/rename-folder-dialog";
+import { DeleteFolderDialog } from "@/components/notes/delete-folder-dialog";
+import { CreateNoteDialog } from "@/components/notes/create-note-dialog";
+import { CreateFolderDialog } from "@/components/notes/create-folder-dialog";
 import type { VaultFile } from "@/types";
 
 interface FileTreeProps {
@@ -31,6 +42,10 @@ interface FileTreeItemProps {
 function FileTreeItem({ file, level }: FileTreeItemProps) {
   const pathname = usePathname();
   const { expandedFolders, toggleFolder } = useVaultStore();
+  const [showRenameDialog, setShowRenameDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showCreateNoteDialog, setShowCreateNoteDialog] = useState(false);
+  const [showCreateFolderDialog, setShowCreateFolderDialog] = useState(false);
 
   const isExpanded = expandedFolders.has(file.path);
   const isDirectory = file.type === "dir";
@@ -86,25 +101,85 @@ function FileTreeItem({ file, level }: FileTreeItemProps) {
   if (isDirectory) {
     return (
       <div>
-        <button
-          onClick={() => toggleFolder(file.path)}
-          className={cn(
-            "flex items-center gap-1 w-full py-1.5 text-sm rounded-md transition-colors overflow-hidden",
-            "hover:bg-muted/50 text-left",
-            isExpanded && "text-foreground",
-            !isExpanded && "text-muted-foreground"
-          )}
-        >
-          {renderIndentGuides()}
-          <ChevronRight
+        <div className="group flex items-center">
+          <button
+            onClick={() => toggleFolder(file.path)}
             className={cn(
-              "h-3 w-3 shrink-0 transition-transform",
-              isExpanded && "rotate-90"
+              "flex items-center gap-1 flex-1 py-1.5 text-sm rounded-md transition-colors overflow-hidden",
+              "hover:bg-muted/50 text-left",
+              isExpanded && "text-foreground",
+              !isExpanded && "text-muted-foreground"
             )}
-          />
-          <span className="shrink-0">{getIcon()}</span>
-          <span className="truncate font-medium">{displayName}</span>
-        </button>
+          >
+            {renderIndentGuides()}
+            <ChevronRight
+              className={cn(
+                "h-3 w-3 shrink-0 transition-transform",
+                isExpanded && "rotate-90"
+              )}
+            />
+            <span className="shrink-0">{getIcon()}</span>
+            <span className="truncate font-medium">{displayName}</span>
+          </button>
+
+          {/* Folder actions dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-muted rounded transition-opacity"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MoreHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={() => setShowCreateNoteDialog(true)}>
+                <FilePlus className="h-4 w-4 mr-2" />
+                Nouvelle note ici
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowCreateFolderDialog(true)}>
+                <FolderPlus className="h-4 w-4 mr-2" />
+                Nouveau sous-dossier
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setShowRenameDialog(true)}>
+                <Pencil className="h-4 w-4 mr-2" />
+                Renommer
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setShowDeleteDialog(true)}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Supprimer
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* Dialogs (controlled mode) */}
+        <RenameFolderDialog
+          path={file.path}
+          currentName={file.name}
+          open={showRenameDialog}
+          onOpenChange={setShowRenameDialog}
+        />
+        <DeleteFolderDialog
+          path={file.path}
+          folderName={file.name}
+          open={showDeleteDialog}
+          onOpenChange={setShowDeleteDialog}
+        />
+        <CreateNoteDialog
+          currentFolder={file.path}
+          open={showCreateNoteDialog}
+          onOpenChange={setShowCreateNoteDialog}
+        />
+        <CreateFolderDialog
+          defaultParent={file.path}
+          open={showCreateFolderDialog}
+          onOpenChange={setShowCreateFolderDialog}
+        />
 
         {isExpanded && file.children && file.children.length > 0 && (
           <FileTree files={file.children} level={level + 1} />

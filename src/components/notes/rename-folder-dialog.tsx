@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
@@ -13,31 +12,35 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FolderPlus, Loader2 } from "lucide-react";
+import { Pencil, Loader2, FolderPen } from "lucide-react";
 import { useVaultStore } from "@/lib/store";
-import { FolderTreePicker } from "./folder-tree-picker";
 
-interface CreateFolderDialogProps {
+interface RenameFolderDialogProps {
+  path: string;
+  currentName: string;
   trigger?: React.ReactNode;
-  defaultParent?: string;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
 
-const ROOT_VALUE = "__root__";
+// Get parent folder from path
+function getParentFolder(path: string): string {
+  const parts = path.split("/");
+  parts.pop();
+  return parts.join("/");
+}
 
-export function CreateFolderDialog({
+export function RenameFolderDialog({
+  path,
+  currentName,
   trigger,
-  defaultParent,
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
-}: CreateFolderDialogProps) {
-  const router = useRouter();
-  const { tree, triggerTreeRefresh } = useVaultStore();
+}: RenameFolderDialogProps) {
+  const { triggerTreeRefresh } = useVaultStore();
   const [internalOpen, setInternalOpen] = useState(false);
-  const [folderName, setFolderName] = useState("");
-  const [selectedParent, setSelectedParent] = useState(defaultParent || ROOT_VALUE);
-  const [isCreating, setIsCreating] = useState(false);
+  const [newName, setNewName] = useState(currentName);
+  const [isRenaming, setIsRenaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Use controlled or uncontrolled mode
@@ -45,13 +48,18 @@ export function CreateFolderDialog({
   const open = isControlled ? controlledOpen : internalOpen;
   const setOpen = isControlled ? controlledOnOpenChange! : setInternalOpen;
 
-  const actualParent = selectedParent === ROOT_VALUE ? "" : selectedParent;
+  const parentFolder = getParentFolder(path);
 
-  const handleCreate = async () => {
-    const trimmedName = folderName.trim();
+  const handleRename = async () => {
+    const trimmedName = newName.trim();
 
     if (!trimmedName) {
-      setError("Le nom du dossier est requis");
+      setError("Le nom est requis");
+      return;
+    }
+
+    if (trimmedName === currentName) {
+      setError("Le nom est identique");
       return;
     }
 
@@ -61,45 +69,42 @@ export function CreateFolderDialog({
       return;
     }
 
-    setIsCreating(true);
+    setIsRenaming(true);
     setError(null);
 
     try {
-      // Create folder by creating a .gitkeep file inside it
-      const folderPath = actualParent
-        ? `${actualParent}/${trimmedName}`
+      const newPath = parentFolder
+        ? `${parentFolder}/${trimmedName}`
         : trimmedName;
 
-      const response = await fetch("/api/github/create-folder", {
+      const response = await fetch("/api/github/rename-folder", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          path: folderPath,
+          oldPath: path,
+          newPath,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Erreur lors de la création");
+        throw new Error(data.error || "Erreur lors du renommage");
       }
 
       setOpen(false);
-      setFolderName("");
-      setSelectedParent(ROOT_VALUE);
-      triggerTreeRefresh(); // Auto-refresh sidebar
+      triggerTreeRefresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
-      setIsCreating(false);
+      setIsRenaming(false);
     }
   };
 
   const handleOpenChange = (newOpen: boolean) => {
     setOpen(newOpen);
     if (newOpen) {
-      setFolderName("");
-      setSelectedParent(defaultParent || ROOT_VALUE);
+      setNewName(currentName);
       setError(null);
     }
   };
@@ -108,53 +113,47 @@ export function CreateFolderDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button variant="outline" size="sm">
-            <FolderPlus className="h-4 w-4 mr-2" />
-            Nouveau dossier
+          <Button variant="ghost" size="sm">
+            <Pencil className="h-4 w-4" />
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>Créer un nouveau dossier</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <FolderPen className="h-5 w-5" />
+            Renommer le dossier
+          </DialogTitle>
           <DialogDescription>
-            Choisissez un emplacement et un nom pour le dossier
+            Entrez un nouveau nom pour ce dossier
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 pt-4">
-          {/* Folder name */}
           <div className="space-y-2">
-            <Label htmlFor="folderName">Nom du dossier</Label>
+            <Label htmlFor="folderName">Nouveau nom</Label>
             <Input
               id="folderName"
-              value={folderName}
-              onChange={(e) => setFolderName(e.target.value)}
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && !isCreating) {
-                  handleCreate();
+                if (e.key === "Enter" && !isRenaming) {
+                  handleRename();
                 }
               }}
-              disabled={isCreating}
+              disabled={isRenaming}
               autoFocus
-              placeholder="Mon nouveau dossier"
-            />
-          </div>
-
-          {/* Parent folder picker */}
-          <div className="space-y-2">
-            <Label>Dossier parent</Label>
-            <FolderTreePicker
-              tree={tree}
-              selectedPath={selectedParent}
-              onSelect={setSelectedParent}
+              placeholder="Nom du dossier"
             />
           </div>
 
           {/* Preview */}
-          {folderName.trim() && (
-            <div className="text-xs text-muted-foreground bg-muted/50 px-3 py-2 rounded-md">
-              Chemin: <code>{actualParent ? `${actualParent}/` : ""}{folderName.trim()}/</code>
+          {newName.trim() && newName.trim() !== currentName && (
+            <div className="text-xs text-muted-foreground bg-primary/10 px-3 py-2 rounded-md">
+              Nouveau chemin:{" "}
+              <code>
+                {parentFolder ? `${parentFolder}/` : ""}{newName.trim()}/
+              </code>
             </div>
           )}
 
@@ -168,20 +167,20 @@ export function CreateFolderDialog({
             <Button
               variant="ghost"
               onClick={() => setOpen(false)}
-              disabled={isCreating}
+              disabled={isRenaming}
             >
               Annuler
             </Button>
             <Button
-              onClick={handleCreate}
-              disabled={isCreating || !folderName.trim()}
+              onClick={handleRename}
+              disabled={isRenaming || !newName.trim() || newName.trim() === currentName}
             >
-              {isCreating ? (
+              {isRenaming ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
-                <FolderPlus className="h-4 w-4 mr-2" />
+                <FolderPen className="h-4 w-4 mr-2" />
               )}
-              {isCreating ? "Création..." : "Créer"}
+              {isRenaming ? "Renommage..." : "Renommer"}
             </Button>
           </div>
         </div>

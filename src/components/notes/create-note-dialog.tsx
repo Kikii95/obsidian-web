@@ -20,18 +20,30 @@ import { FolderTreePicker } from "./folder-tree-picker";
 interface CreateNoteDialogProps {
   currentFolder?: string;
   trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const ROOT_VALUE = "__root__";
 
-export function CreateNoteDialog({ currentFolder, trigger }: CreateNoteDialogProps) {
+export function CreateNoteDialog({
+  currentFolder,
+  trigger,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+}: CreateNoteDialogProps) {
   const router = useRouter();
-  const { tree } = useVaultStore();
-  const [open, setOpen] = useState(false);
+  const { tree, triggerTreeRefresh } = useVaultStore();
+  const [internalOpen, setInternalOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [selectedFolder, setSelectedFolder] = useState(currentFolder || ROOT_VALUE);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Use controlled or uncontrolled mode
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = isControlled ? controlledOnOpenChange! : setInternalOpen;
 
   // Get actual folder path (convert ROOT_VALUE to empty string)
   const actualFolder = selectedFolder === ROOT_VALUE ? "" : selectedFolder;
@@ -76,8 +88,8 @@ export function CreateNoteDialog({ currentFolder, trigger }: CreateNoteDialogPro
       setOpen(false);
       setTitle("");
       setSelectedFolder(currentFolder || ROOT_VALUE);
+      triggerTreeRefresh(); // Auto-refresh sidebar
       router.push(`/note/${encodedPath}`);
-      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {

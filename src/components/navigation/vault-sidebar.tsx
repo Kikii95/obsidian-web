@@ -33,6 +33,7 @@ export function VaultSidebar() {
     tree,
     isLoadingTree,
     treeError,
+    treeRefreshTrigger,
     setTree,
     setTreeLoading,
     setTreeError,
@@ -69,6 +70,13 @@ export function VaultSidebar() {
       fetchTree();
     }
   }, [session]);
+
+  // Auto-refresh when treeRefreshTrigger changes (from create/rename/move/delete)
+  useEffect(() => {
+    if (session && treeRefreshTrigger > 0) {
+      fetchTree();
+    }
+  }, [treeRefreshTrigger]);
 
   if (isLoadingTree) {
     return (

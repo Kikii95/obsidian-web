@@ -6,6 +6,7 @@ interface VaultState {
   tree: VaultFile[];
   isLoadingTree: boolean;
   treeError: string | null;
+  treeRefreshTrigger: number; // Increment to trigger refresh
 
   // Current note
   currentPath: string | null;
@@ -40,6 +41,7 @@ interface VaultState {
   expandFolder: (path: string) => void;
   collapseAllFolders: () => void;
   expandAllFolders: (allPaths: string[]) => void;
+  triggerTreeRefresh: () => void;
 }
 
 export const useVaultStore = create<VaultState>((set) => ({
@@ -47,6 +49,7 @@ export const useVaultStore = create<VaultState>((set) => ({
   tree: [],
   isLoadingTree: false,
   treeError: null,
+  treeRefreshTrigger: 0,
 
   currentPath: null,
   currentContent: null,
@@ -101,4 +104,5 @@ export const useVaultStore = create<VaultState>((set) => ({
     }),
   collapseAllFolders: () => set({ expandedFolders: new Set() }),
   expandAllFolders: (allPaths) => set({ expandedFolders: new Set(allPaths) }),
+  triggerTreeRefresh: () => set((state) => ({ treeRefreshTrigger: state.treeRefreshTrigger + 1 })),
 }));

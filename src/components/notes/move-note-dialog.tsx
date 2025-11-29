@@ -40,7 +40,7 @@ function getFileName(path: string): string {
 
 export function MoveNoteDialog({ path, sha, noteName, trigger }: MoveNoteDialogProps) {
   const router = useRouter();
-  const { tree } = useVaultStore();
+  const { tree, triggerTreeRefresh } = useVaultStore();
   const [open, setOpen] = useState(false);
   const [isMoving, setIsMoving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -89,8 +89,8 @@ export function MoveNoteDialog({ path, sha, noteName, trigger }: MoveNoteDialogP
         .join("/");
 
       setOpen(false);
+      triggerTreeRefresh(); // Auto-refresh sidebar
       router.push(`/note/${encodedPath}`);
-      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {

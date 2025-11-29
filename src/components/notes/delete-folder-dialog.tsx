@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
@@ -11,32 +10,43 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Trash2, Loader2, AlertTriangle } from "lucide-react";
+import { Trash2, Loader2, AlertTriangle, FolderX } from "lucide-react";
 import { useVaultStore } from "@/lib/store";
 
-interface DeleteNoteDialogProps {
+interface DeleteFolderDialogProps {
   path: string;
-  sha: string;
-  noteName: string;
+  folderName: string;
   trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function DeleteNoteDialog({ path, sha, noteName, trigger }: DeleteNoteDialogProps) {
-  const router = useRouter();
+export function DeleteFolderDialog({
+  path,
+  folderName,
+  trigger,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+}: DeleteFolderDialogProps) {
   const { triggerTreeRefresh } = useVaultStore();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Use controlled or uncontrolled mode
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = isControlled ? controlledOnOpenChange! : setInternalOpen;
 
   const handleDelete = async () => {
     setIsDeleting(true);
     setError(null);
 
     try {
-      const response = await fetch("/api/github/delete", {
+      const response = await fetch("/api/github/delete-folder", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ path, sha }),
+        body: JSON.stringify({ path }),
       });
 
       const data = await response.json();
@@ -46,8 +56,7 @@ export function DeleteNoteDialog({ path, sha, noteName, trigger }: DeleteNoteDia
       }
 
       setOpen(false);
-      triggerTreeRefresh(); // Auto-refresh sidebar
-      router.push("/");
+      triggerTreeRefresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
@@ -67,17 +76,25 @@ export function DeleteNoteDialog({ path, sha, noteName, trigger }: DeleteNoteDia
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-destructive">
-            <AlertTriangle className="h-5 w-5" />
-            Supprimer la note
+            <FolderX className="h-5 w-5" />
+            Supprimer le dossier
           </DialogTitle>
           <DialogDescription>
-            Êtes-vous sûr de vouloir supprimer <strong>{noteName}</strong> ?
+            Êtes-vous sûr de vouloir supprimer <strong>{folderName}</strong> ?
+            <br />
+            <span className="text-destructive font-medium">
+              Tous les fichiers et sous-dossiers seront supprimés.
+            </span>
             <br />
             Cette action est irréversible.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 pt-4">
+          <div className="text-xs text-muted-foreground bg-muted/50 px-3 py-2 rounded-md">
+            Chemin: <code>{path}</code>
+          </div>
+
           {error && (
             <p className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
               {error}
@@ -100,7 +117,7 @@ export function DeleteNoteDialog({ path, sha, noteName, trigger }: DeleteNoteDia
               {isDeleting ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
-                <Trash2 className="h-4 w-4 mr-2" />
+                <FolderX className="h-4 w-4 mr-2" />
               )}
               {isDeleting ? "Suppression..." : "Supprimer"}
             </Button>

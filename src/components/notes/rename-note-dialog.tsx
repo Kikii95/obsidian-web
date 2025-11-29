@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Pencil, Loader2 } from "lucide-react";
+import { useVaultStore } from "@/lib/store";
 
 interface RenameNoteDialogProps {
   path: string;
@@ -31,6 +32,7 @@ function getParentFolder(path: string): string {
 
 export function RenameNoteDialog({ path, sha, currentName, trigger }: RenameNoteDialogProps) {
   const router = useRouter();
+  const { triggerTreeRefresh } = useVaultStore();
   const [open, setOpen] = useState(false);
   const [newName, setNewName] = useState(currentName);
   const [isRenaming, setIsRenaming] = useState(false);
@@ -89,8 +91,8 @@ export function RenameNoteDialog({ path, sha, currentName, trigger }: RenameNote
         .join("/");
 
       setOpen(false);
+      triggerTreeRefresh(); // Auto-refresh sidebar
       router.push(`/note/${encodedPath}`);
-      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {

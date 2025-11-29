@@ -1,0 +1,71 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { createOctokit, getFileContent } from "@/lib/github";
+import { checkPrivacy } from "@/lib/privacy";
+import matter from "gray-matter";
+
+export async function GET(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.accessToken) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    }
+
+    const searchParams = request.nextUrl.searchParams;
+    const path = searchParams.get("path");
+
+    if (!path) {
+      return NextResponse.json({ error: "Path requis" }, { status: 400 });
+    }
+
+    const octokit = createOctokit(session.accessToken);
+    const { content, sha } = await getFileContent(octokit, path);
+
+    // Check if note is private
+    const privacyCheck = checkPrivacy(path, content);
+    if (privacyCheck.isPrivate) {
+      return NextResponse.json(
+        {
+          error: "Cette note est privée",
+          reason: privacyCheck.reason,
+        },
+        { status: 403 }
+      );
+    }
+
+    // Parse frontmatter
+    const { data: frontmatter, content: markdownContent } = matter(content);
+
+    // Extract wikilinks from content
+    const wikilinks = extractWikilinks(markdownContent);
+
+    return NextResponse.json({
+      path,
+      content: markdownContent,
+      rawContent: content,
+      sha,
+      frontmatter,
+      wikilinks,
+    });
+  } catch (error) {
+    console.error("Error reading file:", error);
+    return NextResponse.json(
+      { error: "Erreur lors de la lecture du fichier" },
+      { status: 500 }
+    );
+  }
+}
+
+function extractWikilinks(content: string): string[] {
+  const regex = /\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g;
+  const links: string[] = [];
+  let match;
+
+  while ((match = regex.exec(content)) !== null) {
+    links.push(match[1]);
+  }
+
+  return [...new Set(links)];
+}

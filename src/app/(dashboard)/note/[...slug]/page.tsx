@@ -20,11 +20,13 @@ import {
   Lock,
   CloudOff,
   Trash2,
+  FolderInput,
 } from "lucide-react";
 import Link from "next/link";
 import { cacheNote, getCachedNote } from "@/lib/note-cache";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
+import { MoveNoteDialog } from "@/components/notes/move-note-dialog";
 
 interface NoteData {
   path: string;
@@ -386,20 +388,37 @@ export default function NotePage() {
                 Éditer
               </Button>
               {isOnline && !isFromCache && (
-                <DeleteNoteDialog
-                  path={note.path}
-                  sha={note.sha}
-                  noteName={decodedSlug[decodedSlug.length - 1]}
-                  trigger={
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  }
-                />
+                <>
+                  <MoveNoteDialog
+                    path={note.path}
+                    sha={note.sha}
+                    noteName={decodedSlug[decodedSlug.length - 1]}
+                    trigger={
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        title="Déplacer la note"
+                      >
+                        <FolderInput className="h-4 w-4" />
+                      </Button>
+                    }
+                  />
+                  <DeleteNoteDialog
+                    path={note.path}
+                    sha={note.sha}
+                    noteName={decodedSlug[decodedSlug.length - 1]}
+                    trigger={
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        title="Supprimer la note"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    }
+                  />
+                </>
               )}
             </>
           )}

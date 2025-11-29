@@ -11,7 +11,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -20,12 +19,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FilePlus, Loader2, FolderOpen } from "lucide-react";
+import { FolderInput, Loader2, FolderOpen } from "lucide-react";
 import { useVaultStore } from "@/lib/store";
 import type { VaultFile } from "@/types";
 
-interface CreateNoteDialogProps {
-  currentFolder?: string;
+interface MoveNoteDialogProps {
+  path: string;
+  sha: string;
+  noteName: string;
   trigger?: React.ReactNode;
 }
 
@@ -46,101 +47,135 @@ function extractFolders(files: VaultFile[], parentPath = ""): string[] {
   return folders;
 }
 
-export function CreateNoteDialog({ currentFolder, trigger }: CreateNoteDialogProps) {
+// Get parent folder from path
+function getParentFolder(path: string): string {
+  const parts = path.split("/");
+  parts.pop(); // Remove filename
+  return parts.join("/");
+}
+
+// Get filename from path
+function getFileName(path: string): string {
+  const parts = path.split("/");
+  return parts[parts.length - 1];
+}
+
+export function MoveNoteDialog({ path, sha, noteName, trigger }: MoveNoteDialogProps) {
   const router = useRouter();
   const { tree } = useVaultStore();
   const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [selectedFolder, setSelectedFolder] = useState(currentFolder || "");
-  const [isCreating, setIsCreating] = useState(false);
+  const [isMoving, setIsMoving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const currentFolder = getParentFolder(path);
+  const fileName = getFileName(path);
+  const [selectedFolder, setSelectedFolder] = useState(currentFolder);
 
   // Get all folders from tree
   const folders = useMemo(() => {
     return extractFolders(tree).sort();
   }, [tree]);
 
-  const handleCreate = async () => {
-    if (!title.trim()) {
-      setError("Le titre est requis");
+  // Filter out current folder from options
+  const availableFolders = useMemo(() => {
+    return folders.filter((f) => f !== currentFolder);
+  }, [folders, currentFolder]);
+
+  const handleMove = async () => {
+    if (selectedFolder === currentFolder) {
+      setError("Sélectionnez un dossier différent");
       return;
     }
 
-    setIsCreating(true);
+    setIsMoving(true);
     setError(null);
 
     try {
-      // Build path: folder/title.md or just title.md
-      const path = selectedFolder
-        ? `${selectedFolder}/${title.trim()}.md`
-        : `${title.trim()}.md`;
+      const newPath = selectedFolder ? `${selectedFolder}/${fileName}` : fileName;
 
-      const response = await fetch("/api/github/create", {
+      const response = await fetch("/api/github/move", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          path,
-          title: title.trim(),
+          oldPath: path,
+          newPath,
+          sha,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Erreur lors de la création");
+        throw new Error(data.error || "Erreur lors du déplacement");
       }
 
-      // Navigate to the new note
-      const notePath = data.path.replace(".md", "");
+      // Navigate to the new note location
+      const notePath = newPath.replace(".md", "");
       const encodedPath = notePath
         .split("/")
         .map((s: string) => encodeURIComponent(s))
         .join("/");
 
       setOpen(false);
-      setTitle("");
-      setSelectedFolder(currentFolder || "");
       router.push(`/note/${encodedPath}`);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
-      setIsCreating(false);
+      setIsMoving(false);
+    }
+  };
+
+  // Reset selected folder when dialog opens
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
+    if (newOpen) {
+      setSelectedFolder(currentFolder);
+      setError(null);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button variant="outline" size="sm">
-            <FilePlus className="h-4 w-4 mr-2" />
-            Nouvelle note
+          <Button variant="ghost" size="sm">
+            <FolderInput className="h-4 w-4" />
           </Button>
         )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Créer une nouvelle note</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <FolderInput className="h-5 w-5" />
+            Déplacer la note
+          </DialogTitle>
           <DialogDescription>
-            Choisissez un emplacement et un titre pour votre note
+            Déplacer <strong>{noteName}</strong> vers un autre dossier
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 pt-4">
+          {/* Current location */}
+          <div className="text-xs text-muted-foreground bg-muted/50 px-3 py-2 rounded-md">
+            Emplacement actuel: <code>{path}</code>
+          </div>
+
           {/* Folder selector */}
           <div className="space-y-2">
-            <Label htmlFor="folder">Dossier</Label>
+            <Label htmlFor="folder">Nouveau dossier</Label>
             <Select value={selectedFolder} onValueChange={setSelectedFolder}>
               <SelectTrigger id="folder">
                 <FolderOpen className="h-4 w-4 mr-2 text-muted-foreground" />
-                <SelectValue placeholder="Racine du vault" />
+                <SelectValue placeholder="Sélectionner un dossier" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">
-                  <span className="text-muted-foreground">/ (Racine)</span>
-                </SelectItem>
-                {folders.map((folder) => (
+                {currentFolder !== "" && (
+                  <SelectItem value="">
+                    <span className="text-muted-foreground">/ (Racine)</span>
+                  </SelectItem>
+                )}
+                {availableFolders.map((folder) => (
                   <SelectItem key={folder} value={folder}>
                     {folder}
                   </SelectItem>
@@ -149,28 +184,14 @@ export function CreateNoteDialog({ currentFolder, trigger }: CreateNoteDialogPro
             </Select>
           </div>
 
-          {/* Title input */}
-          <div className="space-y-2">
-            <Label htmlFor="title">Titre de la note</Label>
-            <Input
-              id="title"
-              placeholder="Ma nouvelle note"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !isCreating) {
-                  handleCreate();
-                }
-              }}
-              disabled={isCreating}
-              autoFocus
-            />
-          </div>
-
-          {/* Preview path */}
-          {title && (
-            <div className="text-xs text-muted-foreground bg-muted/50 px-3 py-2 rounded-md">
-              Chemin: <code>{selectedFolder ? `${selectedFolder}/` : ""}{title.trim()}.md</code>
+          {/* Preview new path */}
+          {selectedFolder !== currentFolder && (
+            <div className="text-xs text-muted-foreground bg-primary/10 px-3 py-2 rounded-md">
+              Nouveau chemin:{" "}
+              <code>
+                {selectedFolder ? `${selectedFolder}/` : ""}
+                {fileName}
+              </code>
             </div>
           )}
 
@@ -184,17 +205,20 @@ export function CreateNoteDialog({ currentFolder, trigger }: CreateNoteDialogPro
             <Button
               variant="ghost"
               onClick={() => setOpen(false)}
-              disabled={isCreating}
+              disabled={isMoving}
             >
               Annuler
             </Button>
-            <Button onClick={handleCreate} disabled={isCreating || !title.trim()}>
-              {isCreating ? (
+            <Button
+              onClick={handleMove}
+              disabled={isMoving || selectedFolder === currentFolder}
+            >
+              {isMoving ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
-                <FilePlus className="h-4 w-4 mr-2" />
+                <FolderInput className="h-4 w-4 mr-2" />
               )}
-              {isCreating ? "Création..." : "Créer"}
+              {isMoving ? "Déplacement..." : "Déplacer"}
             </Button>
           </div>
         </div>

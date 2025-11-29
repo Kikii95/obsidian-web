@@ -1,11 +1,27 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ForceGraph } from "@/components/graph/force-graph";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle, RefreshCw, Network, ArrowLeft } from "lucide-react";
+import { AlertCircle, RefreshCw, Network, ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
+
+// Lazy load ForceGraph component (D3.js is ~500kb)
+const ForceGraph = dynamic(
+  () => import("@/components/graph/force-graph").then((mod) => mod.ForceGraph),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+          <p className="text-sm text-muted-foreground">Chargement du graphe...</p>
+        </div>
+      </div>
+    ),
+  }
+);
 
 interface GraphData {
   nodes: Array<{

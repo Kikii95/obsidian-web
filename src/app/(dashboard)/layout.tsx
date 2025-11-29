@@ -51,7 +51,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="h-screen flex flex-col overflow-hidden">
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-sm">
         <div className="flex h-14 items-center justify-between px-4">
@@ -176,9 +176,9 @@ export default function DashboardLayout({
 
       {/* Main with Sidebar */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Desktop Sidebar */}
+        {/* Desktop Sidebar - sticky to stay fixed while main content scrolls */}
         {sidebarOpen && (
-          <aside className="hidden md:flex border-r border-border/50 bg-sidebar h-[calc(100vh-3.5rem)]">
+          <aside className="hidden md:flex flex-shrink-0 border-r border-border/50 bg-sidebar sticky top-0 h-full">
             <ResizableSidebar>
               <VaultSidebar />
             </ResizableSidebar>

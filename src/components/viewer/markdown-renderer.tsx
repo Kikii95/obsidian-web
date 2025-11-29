@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
@@ -8,6 +9,41 @@ import rehypeHighlight from "rehype-highlight";
 import Link from "next/link";
 import { wikilinkToPath } from "@/lib/wikilinks";
 import { cn } from "@/lib/utils";
+import { Copy, Check } from "lucide-react";
+
+// Code block wrapper with copy button
+function CodeBlockWrapper({ children, code }: { children: React.ReactNode; code: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  }, [code]);
+
+  return (
+    <div className="relative group">
+      <button
+        onClick={handleCopy}
+        className={cn(
+          "absolute top-2 right-2 p-1.5 rounded-md transition-all z-10",
+          "opacity-0 group-hover:opacity-100 focus:opacity-100",
+          copied
+            ? "bg-green-500/20 text-green-400"
+            : "bg-muted/80 hover:bg-muted text-muted-foreground hover:text-foreground"
+        )}
+        title={copied ? "Copié !" : "Copier le code"}
+      >
+        {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+      </button>
+      {children}
+    </div>
+  );
+}
 
 interface MarkdownRendererProps {
   content: string;
@@ -115,7 +151,7 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
               </code>
             );
           },
-          // Custom pre for code blocks
+          // Custom pre for code blocks with copy button
           pre: ({ children, node, ...props }) => {
             // Check if this contains a dataview/tasks block by looking at children
             const codeElement = node?.children?.[0];
@@ -127,13 +163,29 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
               return <>{children}</>;
             }
 
+            // Extract text content for copy functionality
+            const extractText = (node: unknown): string => {
+              if (!node) return "";
+              if (typeof node === "string") return node;
+              if (Array.isArray(node)) return node.map(extractText).join("");
+              if (typeof node === "object" && node !== null) {
+                const n = node as { children?: unknown; value?: string };
+                if ("value" in n) return n.value || "";
+                if ("children" in n) return extractText(n.children);
+              }
+              return "";
+            };
+            const codeText = extractText(codeElement).replace(/\n$/, "");
+
             return (
-              <pre
-                className="bg-muted/50 border border-border/50 rounded-lg p-4 overflow-x-auto"
-                {...props}
-              >
-                {children}
-              </pre>
+              <CodeBlockWrapper code={codeText}>
+                <pre
+                  className="bg-muted/50 border border-border/50 rounded-lg p-4 pr-12 overflow-x-auto"
+                  {...props}
+                >
+                  {children}
+                </pre>
+              </CodeBlockWrapper>
             );
           },
           // Custom headings with anchor links

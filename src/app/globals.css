@@ -514,9 +514,38 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
+  html, body {
     @apply bg-background text-foreground;
+    overflow-x: hidden;
+    max-width: 100vw;
   }
+}
+
+/* Code blocks - Obsidian style with horizontal scroll */
+pre {
+  @apply overflow-x-auto max-w-full rounded-lg;
+  -webkit-overflow-scrolling: touch;
+}
+
+pre code {
+  @apply block min-w-max;
+}
+
+/* Inline code */
+:not(pre) > code {
+  @apply px-1.5 py-0.5 rounded bg-muted text-sm;
+  word-break: break-word;
+}
+
+/* Tables - horizontal scroll like Obsidian */
+.prose table {
+  @apply block overflow-x-auto max-w-full;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Images - prevent overflow */
+.prose img {
+  @apply max-w-full h-auto;
 }
 
 /* Glow Effects - Dynamic based on theme */

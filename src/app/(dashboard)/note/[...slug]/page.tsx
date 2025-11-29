@@ -23,7 +23,21 @@ import {
   Trash2,
   FolderInput,
   TextCursorInput,
+  MoreHorizontal,
+  Download,
+  FileDown,
+  Printer,
+  Upload,
+  Copy,
+  Check,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { cacheNote, getCachedNote } from "@/lib/note-cache";
 import { useOnlineStatus } from "@/hooks/use-online-status";
@@ -60,6 +74,7 @@ export default function NotePage() {
   const [isTogglingLock, setIsTogglingLock] = useState(false);
   const [showUnlockPinDialog, setShowUnlockPinDialog] = useState(false);
   const [pendingUnlock, setPendingUnlock] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   // Build the file path from slug (decode each segment)
   const slug = params.slug as string[];
@@ -329,6 +344,38 @@ export default function NotePage() {
     setPendingUnlock(false);
   }, []);
 
+  // Export as Markdown
+  const handleExportMd = useCallback(() => {
+    if (!note) return;
+    const fileName = decodedSlug[decodedSlug.length - 1] || "note";
+    const blob = new Blob([note.content], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${fileName}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [note, decodedSlug]);
+
+  // Print as PDF (uses browser print dialog)
+  const handlePrintPdf = useCallback(() => {
+    window.print();
+  }, []);
+
+  // Copy all content (for mobile)
+  const handleCopyAll = useCallback(async () => {
+    if (!note) return;
+    try {
+      await navigator.clipboard.writeText(isEditing ? editContent : note.content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  }, [note, isEditing, editContent]);
+
   // Keyboard shortcut for save
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -424,21 +471,21 @@ export default function NotePage() {
     "Sans titre";
 
   return (
-    <div className={`p-6 mx-auto ${isEditing ? "max-w-6xl" : "max-w-4xl"}`}>
+    <div className={`p-4 sm:p-6 mx-auto ${isEditing ? "max-w-6xl" : "max-w-4xl"}`}>
       {/* Header with breadcrumb and actions */}
-      <div className="flex items-start justify-between gap-4 mb-6">
+      <div className="flex items-start justify-between gap-2 sm:gap-4 mb-6">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-1 text-sm text-muted-foreground flex-wrap">
-          <Link href="/" className="hover:text-foreground transition-colors">
+        <nav className="flex items-center gap-1 text-sm text-muted-foreground flex-wrap min-w-0 overflow-hidden">
+          <Link href="/" className="hover:text-foreground transition-colors shrink-0">
             Vault
           </Link>
           {breadcrumbs?.map((crumb) => (
-            <div key={crumb.path} className="flex items-center gap-1">
-              <ChevronRight className="h-3 w-3" />
+            <div key={crumb.path} className="flex items-center gap-1 min-w-0">
+              <ChevronRight className="h-3 w-3 shrink-0" />
               {crumb.isLast ? (
-                <span className="text-foreground font-medium">{crumb.name}</span>
+                <span className="text-foreground font-medium truncate">{crumb.name}</span>
               ) : (
-                <span className="text-muted-foreground">
+                <span className="text-muted-foreground truncate">
                   {crumb.name}
                 </span>
               )}
@@ -447,7 +494,7 @@ export default function NotePage() {
         </nav>
 
         {/* Edit/View/Save buttons */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           {/* Cache indicator */}
           {isFromCache && (
             <div
@@ -504,68 +551,177 @@ export default function NotePage() {
               </Button>
               {isOnline && !isFromCache && (
                 <>
-                  <RenameNoteDialog
-                    path={note.path}
-                    sha={note.sha}
-                    currentName={decodedSlug[decodedSlug.length - 1]}
-                    trigger={
+                  {/* Desktop: show all buttons */}
+                  <div className="hidden sm:flex items-center gap-1">
+                    <RenameNoteDialog
+                      path={note.path}
+                      sha={note.sha}
+                      currentName={decodedSlug[decodedSlug.length - 1]}
+                      trigger={
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          title="Renommer la note"
+                        >
+                          <TextCursorInput className="h-4 w-4" />
+                        </Button>
+                      }
+                    />
+                    <MoveNoteDialog
+                      path={note.path}
+                      sha={note.sha}
+                      noteName={decodedSlug[decodedSlug.length - 1]}
+                      trigger={
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          title="Déplacer la note"
+                        >
+                          <FolderInput className="h-4 w-4" />
+                        </Button>
+                      }
+                    />
+                    {!isPathPrivate && (
                       <Button
                         variant="ghost"
                         size="sm"
-                        title="Renommer la note"
+                        onClick={handleToggleLock}
+                        disabled={isTogglingLock}
+                        title={note.isLocked ? "Déverrouiller la note" : "Verrouiller la note"}
+                        className={note.isLocked ? "text-amber-500 hover:text-amber-500 hover:bg-amber-500/10" : ""}
                       >
-                        <TextCursorInput className="h-4 w-4" />
+                        {isTogglingLock ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : note.isLocked ? (
+                          <LockOpen className="h-4 w-4" />
+                        ) : (
+                          <Lock className="h-4 w-4" />
+                        )}
                       </Button>
-                    }
-                  />
-                  <MoveNoteDialog
-                    path={note.path}
-                    sha={note.sha}
-                    noteName={decodedSlug[decodedSlug.length - 1]}
-                    trigger={
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        title="Déplacer la note"
-                      >
-                        <FolderInput className="h-4 w-4" />
+                    )}
+                    <DeleteNoteDialog
+                      path={note.path}
+                      sha={note.sha}
+                      noteName={decodedSlug[decodedSlug.length - 1]}
+                      trigger={
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          title="Supprimer la note"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      }
+                    />
+                    {/* Export dropdown */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" title="Exporter">
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={handleCopyAll}>
+                          {copied ? (
+                            <Check className="h-4 w-4 mr-2 text-green-500" />
+                          ) : (
+                            <Copy className="h-4 w-4 mr-2" />
+                          )}
+                          {copied ? "Copié !" : "Copier tout"}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={handleExportMd}>
+                          <FileDown className="h-4 w-4 mr-2" />
+                          Télécharger .md
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={handlePrintPdf}>
+                          <Printer className="h-4 w-4 mr-2" />
+                          Imprimer / PDF
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+
+                  {/* Mobile: dropdown menu */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild className="sm:hidden">
+                      <Button variant="ghost" size="sm">
+                        <MoreHorizontal className="h-4 w-4" />
                       </Button>
-                    }
-                  />
-                  {/* Lock/Unlock toggle - only for non-path-locked notes */}
-                  {!isPathPrivate && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleToggleLock}
-                      disabled={isTogglingLock}
-                      title={note.isLocked ? "Déverrouiller la note" : "Verrouiller la note"}
-                      className={note.isLocked ? "text-amber-500 hover:text-amber-500 hover:bg-amber-500/10" : ""}
-                    >
-                      {isTogglingLock ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : note.isLocked ? (
-                        <LockOpen className="h-4 w-4" />
-                      ) : (
-                        <Lock className="h-4 w-4" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <RenameNoteDialog
+                        path={note.path}
+                        sha={note.sha}
+                        currentName={decodedSlug[decodedSlug.length - 1]}
+                        trigger={
+                          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                            <TextCursorInput className="h-4 w-4 mr-2" />
+                            Renommer
+                          </DropdownMenuItem>
+                        }
+                      />
+                      <MoveNoteDialog
+                        path={note.path}
+                        sha={note.sha}
+                        noteName={decodedSlug[decodedSlug.length - 1]}
+                        trigger={
+                          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                            <FolderInput className="h-4 w-4 mr-2" />
+                            Déplacer
+                          </DropdownMenuItem>
+                        }
+                      />
+                      {!isPathPrivate && (
+                        <DropdownMenuItem
+                          onClick={handleToggleLock}
+                          disabled={isTogglingLock}
+                        >
+                          {isTogglingLock ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : note.isLocked ? (
+                            <LockOpen className="h-4 w-4 mr-2" />
+                          ) : (
+                            <Lock className="h-4 w-4 mr-2" />
+                          )}
+                          {note.isLocked ? "Déverrouiller" : "Verrouiller"}
+                        </DropdownMenuItem>
                       )}
-                    </Button>
-                  )}
-                  <DeleteNoteDialog
-                    path={note.path}
-                    sha={note.sha}
-                    noteName={decodedSlug[decodedSlug.length - 1]}
-                    trigger={
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        title="Supprimer la note"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    }
-                  />
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleCopyAll}>
+                        {copied ? (
+                          <Check className="h-4 w-4 mr-2 text-green-500" />
+                        ) : (
+                          <Copy className="h-4 w-4 mr-2" />
+                        )}
+                        {copied ? "Copié !" : "Copier tout"}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleExportMd}>
+                        <FileDown className="h-4 w-4 mr-2" />
+                        Télécharger .md
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handlePrintPdf}>
+                        <Printer className="h-4 w-4 mr-2" />
+                        Imprimer / PDF
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DeleteNoteDialog
+                        path={note.path}
+                        sha={note.sha}
+                        noteName={decodedSlug[decodedSlug.length - 1]}
+                        trigger={
+                          <DropdownMenuItem
+                            onSelect={(e) => e.preventDefault()}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Supprimer
+                          </DropdownMenuItem>
+                        }
+                      />
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </>
               )}
             </>

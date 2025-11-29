@@ -373,13 +373,18 @@ export default function NotePage() {
       const margin = 15;
       const maxWidth = pageWidth - margin * 2;
 
+      // Remove emojis (jsPDF doesn't support unicode well)
+      const removeEmojis = (text: string) =>
+        text.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F000}-\u{1F02F}]|[\u{1F0A0}-\u{1F0FF}]|[\u{1F100}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{1FA00}-\u{1FAFF}]/gu, "");
+
       // Title
       pdf.setFontSize(18);
-      pdf.text(fileName, margin, 20);
+      pdf.text(removeEmojis(fileName), margin, 20);
 
       // Content
       pdf.setFontSize(11);
-      const lines = pdf.splitTextToSize(note.content, maxWidth);
+      const cleanContent = removeEmojis(note.content);
+      const lines = pdf.splitTextToSize(cleanContent, maxWidth);
       let y = 35;
       const lineHeight = 6;
       const pageHeight = pdf.internal.pageSize.getHeight();

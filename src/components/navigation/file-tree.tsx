@@ -70,13 +70,13 @@ function FileTreeItem({ file, level }: FileTreeItemProps) {
   const renderIndentGuides = () => {
     if (level === 0) return null;
     return (
-      <div className="flex shrink-0">
+      <div className="flex shrink-0 self-stretch">
         {Array.from({ length: level }).map((_, i) => (
           <div
             key={i}
             className="w-4 flex justify-center"
           >
-            <div className="w-px h-full bg-border/50" />
+            <div className="w-px bg-border/40 min-h-[24px]" />
           </div>
         ))}
       </div>

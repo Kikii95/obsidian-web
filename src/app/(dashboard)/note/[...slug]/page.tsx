@@ -21,12 +21,14 @@ import {
   CloudOff,
   Trash2,
   FolderInput,
+  TextCursorInput,
 } from "lucide-react";
 import Link from "next/link";
 import { cacheNote, getCachedNote } from "@/lib/note-cache";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
 import { MoveNoteDialog } from "@/components/notes/move-note-dialog";
+import { RenameNoteDialog } from "@/components/notes/rename-note-dialog";
 
 interface NoteData {
   path: string;
@@ -386,6 +388,20 @@ export default function NotePage() {
               </Button>
               {isOnline && !isFromCache && (
                 <>
+                  <RenameNoteDialog
+                    path={note.path}
+                    sha={note.sha}
+                    currentName={decodedSlug[decodedSlug.length - 1]}
+                    trigger={
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        title="Renommer la note"
+                      >
+                        <TextCursorInput className="h-4 w-4" />
+                      </Button>
+                    }
+                  />
                   <MoveNoteDialog
                     path={note.path}
                     sha={note.sha}

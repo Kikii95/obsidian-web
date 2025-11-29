@@ -6,9 +6,10 @@ import { FileTree } from "./file-tree";
 import { useVaultStore } from "@/lib/store";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle, FolderTree, RefreshCw, FilePlus, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
+import { AlertCircle, FolderTree, RefreshCw, FilePlus, FolderPlus, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CreateNoteDialog } from "@/components/notes/create-note-dialog";
+import { CreateFolderDialog } from "@/components/notes/create-folder-dialog";
 import type { VaultFile } from "@/types";
 
 // Extract all folder paths from tree recursively
@@ -134,6 +135,18 @@ export function VaultSidebar() {
                   title="Nouvelle note"
                 >
                   <FilePlus className="h-3 w-3" />
+                </Button>
+              }
+            />
+            <CreateFolderDialog
+              trigger={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  title="Nouveau dossier"
+                >
+                  <FolderPlus className="h-3 w-3" />
                 </Button>
               }
             />

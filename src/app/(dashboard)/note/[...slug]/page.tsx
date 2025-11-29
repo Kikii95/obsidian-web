@@ -39,6 +39,7 @@ interface NoteData {
   sha: string;
   frontmatter: Record<string, unknown>;
   wikilinks: string[];
+  isLocked?: boolean; // From API (path OR frontmatter)
 }
 
 export default function NotePage() {
@@ -62,8 +63,11 @@ export default function NotePage() {
   const decodedSlug = slug?.map((s) => decodeURIComponent(s)) || [];
   const filePath = decodedSlug.length > 0 ? `${decodedSlug.join("/")}.md` : "";
 
-  // Check if this note is locked (in _private folder)
-  const isNoteLocked = isPathLocked(filePath);
+  // Check if path is in _private folder (quick check before fetch)
+  const isPathPrivate = isPathLocked(filePath);
+
+  // Combined lock check: path-based OR frontmatter-based (from API)
+  const isNoteLocked = isPathPrivate || (note?.isLocked ?? false);
   const canViewNote = !isNoteLocked || isUnlocked || wasUnlocked;
 
   // Initialize lock state on mount
@@ -73,7 +77,9 @@ export default function NotePage() {
 
   const fetchNote = async () => {
     if (!filePath) return;
-    if (!canViewNote) return; // Don't fetch if locked
+    // For path-based lock, don't fetch until unlocked
+    // For frontmatter-based lock, we need to fetch to know
+    if (isPathPrivate && !isUnlocked && !wasUnlocked) return;
 
     setIsLoading(true);
     setError(null);
@@ -145,10 +151,12 @@ export default function NotePage() {
   };
 
   useEffect(() => {
-    if (canViewNote) {
+    // For path-based lock: only fetch after unlock
+    // For other notes: always fetch (to discover frontmatter locks)
+    if (!isPathPrivate || isUnlocked || wasUnlocked) {
       fetchNote();
     }
-  }, [filePath, canViewNote]);
+  }, [filePath, isPathPrivate, isUnlocked, wasUnlocked]);
 
   // Track changes
   useEffect(() => {

@@ -107,7 +107,7 @@ export const useLockStore = create<LockState>((set, get) => ({
   },
 }));
 
-// Hook to check if a specific note/path is locked
+// Check if path is in a private folder
 export function isPathLocked(path: string): boolean {
   const segments = path.toLowerCase().split("/");
   return segments.some(
@@ -116,4 +116,30 @@ export function isPathLocked(path: string): boolean {
       segment.startsWith("_private.") ||
       segment === "private"
   );
+}
+
+// Check if note is locked based on frontmatter
+export function isFrontmatterLocked(frontmatter: Record<string, unknown> | null): boolean {
+  if (!frontmatter) return false;
+
+  // Check private: true
+  if (frontmatter.private === true) return true;
+  if (frontmatter.lock === true) return true;
+  if (frontmatter.locked === true) return true;
+
+  // Check tags for #private or #lock
+  const tags = frontmatter.tags;
+  if (Array.isArray(tags)) {
+    const lockTags = ["private", "lock", "locked"];
+    return tags.some(tag =>
+      lockTags.includes(String(tag).toLowerCase().replace("#", ""))
+    );
+  }
+
+  return false;
+}
+
+// Combined check: path OR frontmatter
+export function isNoteLocked(path: string, frontmatter: Record<string, unknown> | null): boolean {
+  return isPathLocked(path) || isFrontmatterLocked(frontmatter);
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { createOctokit, getFileContent } from "@/lib/github";
+import { isNoteLocked } from "@/lib/lock-store";
 import matter from "gray-matter";
 
 export async function GET(request: NextRequest) {
@@ -28,6 +29,9 @@ export async function GET(request: NextRequest) {
     // Extract wikilinks from content
     const wikilinks = extractWikilinks(markdownContent);
 
+    // Check if note is locked (path OR frontmatter)
+    const isLocked = isNoteLocked(path, frontmatter);
+
     return NextResponse.json({
       path,
       content: markdownContent,
@@ -35,6 +39,7 @@ export async function GET(request: NextRequest) {
       sha,
       frontmatter,
       wikilinks,
+      isLocked,
     });
   } catch (error) {
     console.error("Error reading file:", error);

@@ -6,8 +6,9 @@ import { FileTree } from "./file-tree";
 import { useVaultStore } from "@/lib/store";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle, FolderTree, RefreshCw } from "lucide-react";
+import { AlertCircle, FolderTree, RefreshCw, FilePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CreateNoteDialog } from "@/components/notes/create-note-dialog";
 
 export function VaultSidebar() {
   const { data: session } = useSession();
@@ -105,15 +106,29 @@ export function VaultSidebar() {
           <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
             Vault
           </span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={fetchTree}
-            title="Rafraîchir"
-          >
-            <RefreshCw className="h-3 w-3" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <CreateNoteDialog
+              trigger={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  title="Nouvelle note"
+                >
+                  <FilePlus className="h-3 w-3" />
+                </Button>
+              }
+            />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={fetchTree}
+              title="Rafraîchir"
+            >
+              <RefreshCw className="h-3 w-3" />
+            </Button>
+          </div>
         </div>
         <FileTree files={tree} />
       </div>

@@ -19,10 +19,12 @@ import {
   Loader2,
   Lock,
   CloudOff,
+  Trash2,
 } from "lucide-react";
 import Link from "next/link";
 import { cacheNote, getCachedNote } from "@/lib/note-cache";
 import { useOnlineStatus } from "@/hooks/use-online-status";
+import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
 
 interface NoteData {
   path: string;
@@ -368,20 +370,38 @@ export default function NotePage() {
               </Button>
             </>
           ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleStartEdit}
-              disabled={!isOnline || isFromCache}
-              title={
-                !isOnline || isFromCache
-                  ? "Édition désactivée hors ligne"
-                  : undefined
-              }
-            >
-              <Pencil className="h-4 w-4 mr-1" />
-              Éditer
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleStartEdit}
+                disabled={!isOnline || isFromCache}
+                title={
+                  !isOnline || isFromCache
+                    ? "Édition désactivée hors ligne"
+                    : undefined
+                }
+              >
+                <Pencil className="h-4 w-4 mr-1" />
+                Éditer
+              </Button>
+              {isOnline && !isFromCache && (
+                <DeleteNoteDialog
+                  path={note.path}
+                  sha={note.sha}
+                  noteName={decodedSlug[decodedSlug.length - 1]}
+                  trigger={
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  }
+                />
+              )}
+            </>
           )}
         </div>
       </div>

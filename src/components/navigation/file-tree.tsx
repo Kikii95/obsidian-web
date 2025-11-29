@@ -105,7 +105,7 @@ function FileTreeItem({ file, level }: FileTreeItemProps) {
           <span className="shrink-0">{getIcon()}</span>
           <span className="truncate font-medium">{displayName}</span>
           {file.isLocked && (
-            <Lock className="h-3 w-3 ml-auto shrink-0 text-amber-500" />
+            <Lock className="h-3.5 w-3.5 ml-1 shrink-0 text-amber-500" />
           )}
         </button>
 
@@ -138,7 +138,7 @@ function FileTreeItem({ file, level }: FileTreeItemProps) {
       <span className="shrink-0">{getIcon()}</span>
       <span className="truncate">{displayName}</span>
       {file.isLocked && (
-        <Lock className="h-3 w-3 ml-auto shrink-0 text-amber-500" />
+        <Lock className="h-3.5 w-3.5 ml-1 shrink-0 text-amber-500" />
       )}
     </Link>
   );

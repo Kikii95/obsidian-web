@@ -11,9 +11,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, FolderPen, FolderX, AlertTriangle } from "lucide-react";
+import { Loader2, FolderPen, FolderX, AlertTriangle, Lock } from "lucide-react";
 import { useVaultStore } from "@/lib/store";
+import { useLockStore } from "@/lib/lock-store";
 import { FolderTreePicker } from "./folder-tree-picker";
+import { PinDialog } from "@/components/lock/pin-dialog";
 import type { VaultFile } from "@/types";
 
 type ManageMode = "rename" | "delete";
@@ -36,14 +38,42 @@ function findFolderInTree(tree: VaultFile[], path: string): VaultFile | null {
   return null;
 }
 
+// Check if folder has real content (not just .gitkeep)
+function hasRealContent(folder: VaultFile): boolean {
+  if (!folder.children) return false;
+  for (const child of folder.children) {
+    if (child.type === "dir") {
+      // Recursively check subfolders
+      if (hasRealContent(child)) return true;
+    } else if (child.name !== ".gitkeep") {
+      // Real file found
+      return true;
+    }
+  }
+  return false;
+}
+
+// Check if folder contains any locked files (recursively)
+function containsLockedFiles(folder: VaultFile): boolean {
+  if (!folder.children) return false;
+  for (const child of folder.children) {
+    if (child.isLocked) return true;
+    if (child.type === "dir" && containsLockedFiles(child)) return true;
+  }
+  return false;
+}
+
 export function ManageFolderDialog({ mode, open, onOpenChange }: ManageFolderDialogProps) {
   const { tree, triggerTreeRefresh } = useVaultStore();
+  const { hasPinConfigured } = useLockStore();
   const [selectedFolder, setSelectedFolder] = useState<string>("");
   const [newName, setNewName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmStep, setConfirmStep] = useState(false);
   const [confirmText, setConfirmText] = useState("");
+  const [showPinDialog, setShowPinDialog] = useState(false);
+  const [pinVerified, setPinVerified] = useState(false);
 
   // Get folder name from path
   const getFolderName = (path: string) => path.split("/").pop() || "";
@@ -59,8 +89,16 @@ export function ManageFolderDialog({ mode, open, onOpenChange }: ManageFolderDia
     return findFolderInTree(tree, selectedFolder);
   }, [tree, selectedFolder]);
 
+  // Has real content (not just .gitkeep)
   const hasChildren = useMemo(() => {
-    return selectedFolderData?.children && selectedFolderData.children.length > 0;
+    if (!selectedFolderData) return false;
+    return hasRealContent(selectedFolderData);
+  }, [selectedFolderData]);
+
+  // Contains locked files
+  const hasLockedFiles = useMemo(() => {
+    if (!selectedFolderData) return false;
+    return containsLockedFiles(selectedFolderData);
   }, [selectedFolderData]);
 
   const folderName = getFolderName(selectedFolder);
@@ -121,11 +159,29 @@ export function ManageFolderDialog({ mode, open, onOpenChange }: ManageFolderDia
       return;
     }
 
+    // If folder contains locked files and PIN is configured, require PIN first
+    if (hasLockedFiles && hasPinConfigured && !pinVerified) {
+      setShowPinDialog(true);
+      return;
+    }
+
     if (hasChildren) {
       // Non-empty folder: require confirmation
       setConfirmStep(true);
     } else {
       // Empty folder: delete directly
+      handleDeleteConfirmed();
+    }
+  };
+
+  // Handle PIN verification success
+  const handlePinSuccess = () => {
+    setShowPinDialog(false);
+    setPinVerified(true);
+    // Continue with delete flow
+    if (hasChildren) {
+      setConfirmStep(true);
+    } else {
       handleDeleteConfirmed();
     }
   };
@@ -166,6 +222,8 @@ export function ManageFolderDialog({ mode, open, onOpenChange }: ManageFolderDia
     setError(null);
     setConfirmStep(false);
     setConfirmText("");
+    setShowPinDialog(false);
+    setPinVerified(false);
   };
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -179,6 +237,7 @@ export function ManageFolderDialog({ mode, open, onOpenChange }: ManageFolderDia
     // Don't allow selecting root
     if (path === "__root__") return;
     setSelectedFolder(path);
+    setPinVerified(false); // Reset PIN verification when changing folder
     if (mode === "rename") {
       setNewName(getFolderName(path));
     }
@@ -221,6 +280,14 @@ export function ManageFolderDialog({ mode, open, onOpenChange }: ManageFolderDia
                   Tous les fichiers seront définitivement supprimés.
                 </p>
               </div>
+              {hasLockedFiles && (
+                <div className="flex items-center gap-2 p-3 bg-amber-500/10 rounded-md">
+                  <Lock className="h-5 w-5 text-amber-500 shrink-0" />
+                  <p className="text-sm text-amber-500">
+                    ⚠️ Ce dossier contient des fichiers verrouillés !
+                  </p>
+                </div>
+              )}
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">
                   Tapez <strong className="text-foreground">{folderName}</strong> pour confirmer :
@@ -352,6 +419,16 @@ export function ManageFolderDialog({ mode, open, onOpenChange }: ManageFolderDia
           </div>
         </div>
       </DialogContent>
+
+      {/* PIN Dialog for folders with locked files */}
+      <PinDialog
+        open={showPinDialog}
+        onOpenChange={(open) => {
+          if (!open) setShowPinDialog(false);
+        }}
+        onSuccess={handlePinSuccess}
+        mode="verify"
+      />
     </Dialog>
   );
 }

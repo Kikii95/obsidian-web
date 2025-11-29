@@ -3,9 +3,10 @@
 import { useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronRight, File, Folder, FolderOpen, Lock } from "lucide-react";
+import { ChevronRight, File, Folder, FolderOpen, Lock, Image, FileText, LayoutDashboard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useVaultStore } from "@/lib/store";
+import { getFileType, isViewableFile } from "@/lib/file-types";
 import type { VaultFile } from "@/types";
 
 interface FileTreeProps {
@@ -34,24 +35,33 @@ function FileTreeItem({ file, level }: FileTreeItemProps) {
 
   const isExpanded = expandedFolders.has(file.path);
   const isDirectory = file.type === "dir";
-  const isMarkdown = file.name.endsWith(".md");
+  const fileType = getFileType(file.name);
+  const isViewable = isViewableFile(file.name);
 
   // Build the URL path for this file
-  const getNotePath = useCallback((filePath: string) => {
-    // Remove .md extension for URL
-    const pathWithoutExt = filePath.replace(/\.md$/, "");
+  const getFilePath = useCallback((filePath: string) => {
+    // Remove extension for URL (md, canvas)
+    const pathWithoutExt = filePath
+      .replace(/\.md$/, "")
+      .replace(/\.canvas$/, "")
+      .replace(/\.pdf$/, "")
+      .replace(/\.(png|jpg|jpeg|gif|svg|webp|bmp|ico)$/i, "");
     // Encode each segment separately to preserve slashes
     const encodedPath = pathWithoutExt
       .split("/")
       .map((segment) => encodeURIComponent(segment))
       .join("/");
+    // Use /file/ for binary files, /note/ for markdown/canvas
+    if (fileType === 'image' || fileType === 'pdf') {
+      return `/file/${encodedPath}`;
+    }
     return `/note/${encodedPath}`;
-  }, []);
+  }, [fileType]);
 
-  const notePath = getNotePath(file.path);
-  const isActive = pathname === notePath;
+  const filePath = getFilePath(file.path);
+  const isActive = pathname === filePath;
 
-  // Get icon based on file type and folder name
+  // Get icon based on file type
   const getIcon = () => {
     if (isDirectory) {
       return isExpanded ? (
@@ -60,11 +70,25 @@ function FileTreeItem({ file, level }: FileTreeItemProps) {
         <Folder className="h-4 w-4 text-muted-foreground" />
       );
     }
-    return <File className="h-4 w-4 text-muted-foreground" />;
+    switch (fileType) {
+      case 'image':
+        return <Image className="h-4 w-4 text-emerald-500" />;
+      case 'pdf':
+        return <FileText className="h-4 w-4 text-red-500" />;
+      case 'canvas':
+        return <LayoutDashboard className="h-4 w-4 text-purple-500" />;
+      default:
+        return <File className="h-4 w-4 text-muted-foreground" />;
+    }
   };
 
-  // Get display name (without .md extension)
-  const displayName = isMarkdown ? file.name.replace(/\.md$/, "") : file.name;
+  // Get display name (without extension for known types)
+  const getDisplayName = () => {
+    if (fileType === 'markdown') return file.name.replace(/\.md$/, "");
+    if (fileType === 'canvas') return file.name.replace(/\.canvas$/, "");
+    return file.name;
+  };
+  const displayName = getDisplayName();
 
   // Render indent guides (vertical lines)
   const renderIndentGuides = () => {
@@ -116,14 +140,14 @@ function FileTreeItem({ file, level }: FileTreeItemProps) {
     );
   }
 
-  // Only show markdown files
-  if (!isMarkdown) {
+  // Only show viewable files (markdown, images, pdf, canvas)
+  if (!isViewable) {
     return null;
   }
 
   return (
     <Link
-      href={notePath}
+      href={filePath}
       className={cn(
         "flex items-center gap-1 w-full py-1.5 text-sm rounded-md transition-all overflow-hidden",
         "hover:bg-muted/50",

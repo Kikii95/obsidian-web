@@ -1,0 +1,167 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import Link from "next/link";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { AlertCircle, ChevronRight, RefreshCw, Image, FileText } from "lucide-react";
+import { ImageViewer } from "@/components/viewer/image-viewer";
+import { PDFViewer } from "@/components/viewer/pdf-viewer";
+import { getFileType } from "@/lib/file-types";
+
+interface BinaryFileData {
+  path: string;
+  content: string; // base64
+  sha: string;
+  size: number;
+  mimeType: string;
+}
+
+export default function FilePage() {
+  const params = useParams();
+  const [file, setFile] = useState<BinaryFileData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Build the file path from slug
+  const slug = params.slug as string[];
+  const decodedSlug = slug?.map((s) => decodeURIComponent(s)) || [];
+
+  // Try different extensions to find the file
+  const possibleExtensions = [".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".bmp", ".ico", ".pdf"];
+
+  const fetchFile = async () => {
+    if (decodedSlug.length === 0) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    // Try each extension until we find the file
+    for (const ext of possibleExtensions) {
+      const filePath = `${decodedSlug.join("/")}${ext}`;
+
+      try {
+        const response = await fetch(
+          `/api/github/binary?path=${encodeURIComponent(filePath)}`
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          setFile(data);
+          setIsLoading(false);
+          return;
+        }
+      } catch {
+        // Try next extension
+      }
+    }
+
+    setError("Fichier non trouvé");
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    fetchFile();
+  }, [params.slug]);
+
+  // Build breadcrumb
+  const breadcrumbs = decodedSlug?.map((part, index) => ({
+    name: part,
+    path: decodedSlug.slice(0, index + 1).join("/"),
+    isLast: index === decodedSlug.length - 1,
+  }));
+
+  const fileName = file ? file.path.split("/").pop() || "file" : decodedSlug[decodedSlug.length - 1] || "file";
+  const fileType = file ? getFileType(file.path) : null;
+
+  if (isLoading) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
+          <Skeleton className="h-4 w-20" />
+          <ChevronRight className="h-3 w-3" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+        <Skeleton className="h-[60vh] w-full" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto">
+        <div className="flex flex-col items-center justify-center gap-4 py-16">
+          <AlertCircle className="h-12 w-12 text-destructive" />
+          <h2 className="text-xl font-semibold">Erreur de chargement</h2>
+          <p className="text-muted-foreground text-center max-w-md">{error}</p>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={fetchFile}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Réessayer
+            </Button>
+            <Button variant="ghost" asChild>
+              <Link href="/">Retour à l&apos;accueil</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!file) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto">
+        <div className="flex flex-col items-center justify-center gap-4 py-16">
+          <Image className="h-12 w-12 text-muted-foreground" />
+          <h2 className="text-xl font-semibold">Fichier non trouvé</h2>
+          <Button variant="ghost" asChild>
+            <Link href="/">Retour à l&apos;accueil</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-full flex flex-col">
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-1 text-sm px-4 py-3 border-b border-border/50 shrink-0 overflow-x-auto">
+        <Link
+          href="/"
+          className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
+        >
+          Vault
+        </Link>
+        {breadcrumbs?.map((crumb, index) => (
+          <div key={index} className="flex items-center gap-1 shrink-0">
+            <ChevronRight className="h-3 w-3 text-muted-foreground" />
+            {crumb.isLast ? (
+              <span className="font-medium flex items-center gap-1.5">
+                {fileType === "image" && <Image className="h-4 w-4 text-emerald-500" />}
+                {fileType === "pdf" && <FileText className="h-4 w-4 text-red-500" />}
+                {crumb.name}
+              </span>
+            ) : (
+              <span className="text-muted-foreground">{crumb.name}</span>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Viewer */}
+      <div className="flex-1 min-h-0">
+        {fileType === "image" && (
+          <ImageViewer
+            content={file.content}
+            mimeType={file.mimeType}
+            fileName={fileName}
+          />
+        )}
+        {fileType === "pdf" && (
+          <PDFViewer content={file.content} fileName={fileName} />
+        )}
+      </div>
+    </div>
+  );
+}

@@ -281,10 +281,12 @@ export function ManageFolderDialog({ mode, open, onOpenChange }: ManageFolderDia
                 </p>
               </div>
               {hasLockedFiles && (
-                <div className="flex items-center gap-2 p-3 bg-amber-500/10 rounded-md">
+                <div className="flex items-center gap-2 p-3 bg-amber-500/10 rounded-md border border-amber-500/30">
                   <Lock className="h-5 w-5 text-amber-500 shrink-0" />
-                  <p className="text-sm text-amber-500">
-                    ⚠️ Ce dossier contient des fichiers verrouillés !
+                  <p className="text-sm text-amber-600 dark:text-amber-400">
+                    <strong>Fichiers verrouillés détectés !</strong>
+                    <br />
+                    <span className="text-xs">Des notes privées seront supprimées (dossier _private ou notes lock).</span>
                   </p>
                 </div>
               )}

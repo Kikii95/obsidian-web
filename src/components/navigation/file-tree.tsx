@@ -72,20 +72,21 @@ function FileTreeItem({ file, level }: FileTreeItemProps) {
         <button
           onClick={() => toggleFolder(file.path)}
           className={cn(
-            "flex items-center gap-1 w-full px-2 py-1.5 text-sm rounded-md transition-colors",
+            "flex items-center gap-1 w-full py-1.5 text-sm rounded-md transition-colors overflow-hidden",
             "hover:bg-muted/50 text-left",
             isExpanded && "text-foreground",
             !isExpanded && "text-muted-foreground"
           )}
-          style={{ paddingLeft: `${level * 12 + 8}px` }}
         >
+          {/* Indent spacer */}
+          {level > 0 && <div className="shrink-0" style={{ width: `${level * 12}px` }} />}
           <ChevronRight
             className={cn(
-              "h-3 w-3 transition-transform",
+              "h-3 w-3 shrink-0 transition-transform",
               isExpanded && "rotate-90"
             )}
           />
-          {getIcon()}
+          <span className="shrink-0">{getIcon()}</span>
           <span className="truncate">{displayName}</span>
         </button>
 
@@ -105,15 +106,16 @@ function FileTreeItem({ file, level }: FileTreeItemProps) {
     <Link
       href={notePath}
       className={cn(
-        "flex items-center gap-2 px-2 py-1.5 text-sm rounded-md transition-all",
+        "flex items-center gap-1 w-full py-1.5 text-sm rounded-md transition-all overflow-hidden",
         "hover:bg-muted/50",
         isActive
           ? "bg-primary/10 text-primary font-medium"
           : "text-muted-foreground hover:text-foreground"
       )}
-      style={{ paddingLeft: `${level * 12 + 20}px` }}
     >
-      {getIcon()}
+      {/* Indent spacer - files need extra indent to align with folder names */}
+      <div className="shrink-0" style={{ width: `${level * 12 + 16}px` }} />
+      <span className="shrink-0">{getIcon()}</span>
       <span className="truncate">{displayName}</span>
     </Link>
   );

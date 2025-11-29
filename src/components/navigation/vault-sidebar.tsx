@@ -118,13 +118,13 @@ export function VaultSidebar() {
   }
 
   return (
-    <ScrollArea className="h-full">
-      <div className="p-2">
-        <div className="flex items-center justify-between px-2 py-2 mb-2">
-          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            Vault
-          </span>
-          <div className="flex items-center gap-0.5">
+    <div className="h-full flex flex-col">
+      {/* Sticky header */}
+      <div className="flex items-center justify-between px-3 py-2 border-b border-border/50 shrink-0">
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          Vault
+        </span>
+        <div className="flex items-center gap-0.5">
             <CreateNoteDialog
               trigger={
                 <Button
@@ -165,9 +165,13 @@ export function VaultSidebar() {
               <RefreshCw className="h-3 w-3" />
             </Button>
           </div>
-        </div>
-        <FileTree files={tree} />
       </div>
-    </ScrollArea>
+      {/* Scrollable tree */}
+      <ScrollArea className="flex-1">
+        <div className="p-2">
+          <FileTree files={tree} />
+        </div>
+      </ScrollArea>
+    </div>
   );
 }

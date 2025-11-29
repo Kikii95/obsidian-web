@@ -306,7 +306,7 @@ export default function NotePage() {
     "Sans titre";
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className={`p-6 mx-auto ${isEditing ? "max-w-6xl" : "max-w-4xl"}`}>
       {/* Header with breadcrumb and actions */}
       <div className="flex items-start justify-between gap-4 mb-6">
         {/* Breadcrumb */}

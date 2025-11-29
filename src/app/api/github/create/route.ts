@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { createOctokit, createFile } from "@/lib/github";
-import { isPrivatePath } from "@/lib/privacy";
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,14 +19,6 @@ export async function POST(request: NextRequest) {
 
     // Ensure path ends with .md
     const filePath = path.endsWith(".md") ? path : `${path}.md`;
-
-    // Check if trying to create in private folder
-    if (isPrivatePath(filePath)) {
-      return NextResponse.json(
-        { error: "Impossible de créer dans un dossier privé" },
-        { status: 403 }
-      );
-    }
 
     // Build initial content
     const initialContent = content || `# ${title || "Nouvelle note"}\n\n`;

@@ -153,6 +153,15 @@ export default function NotePage() {
     }
   };
 
+  // Reset note state when navigating to a different note
+  useEffect(() => {
+    setNote(null);
+    setError(null);
+    setIsLoading(true);
+    setIsEditing(false);
+    setHasChanges(false);
+  }, [filePath]);
+
   useEffect(() => {
     // For path-based lock: only fetch after unlock
     // For other notes: always fetch (to discover frontmatter locks)

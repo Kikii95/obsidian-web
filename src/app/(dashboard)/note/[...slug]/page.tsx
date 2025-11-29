@@ -18,6 +18,7 @@ import {
   X,
   Loader2,
   Lock,
+  LockOpen,
   CloudOff,
   Trash2,
   FolderInput,
@@ -57,6 +58,7 @@ export default function NotePage() {
   const [editContent, setEditContent] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [isTogglingLock, setIsTogglingLock] = useState(false);
 
   // Build the file path from slug (decode each segment)
   const slug = params.slug as string[];
@@ -214,6 +216,84 @@ export default function NotePage() {
       setEditContent(note.content);
     }
     setIsEditing(true);
+  }, [note]);
+
+  // Toggle lock status by modifying frontmatter
+  const handleToggleLock = useCallback(async () => {
+    if (!note) return;
+
+    setIsTogglingLock(true);
+    try {
+      // Determine new lock state
+      const currentlyLocked = note.isLocked || false;
+      const newLockState = !currentlyLocked;
+
+      // Build new frontmatter
+      const newFrontmatter = { ...note.frontmatter };
+      if (newLockState) {
+        newFrontmatter.private = true;
+      } else {
+        delete newFrontmatter.private;
+        delete newFrontmatter.lock;
+        delete newFrontmatter.locked;
+        // Also remove private/lock tags if present
+        if (Array.isArray(newFrontmatter.tags)) {
+          const filteredTags = (newFrontmatter.tags as unknown[]).filter(
+            (tag: unknown) => !["private", "lock", "locked"].includes(String(tag).toLowerCase())
+          );
+          if (filteredTags.length === 0) {
+            delete newFrontmatter.tags;
+          } else {
+            newFrontmatter.tags = filteredTags;
+          }
+        }
+      }
+
+      // Build new content with frontmatter
+      const frontmatterLines = Object.entries(newFrontmatter).map(([key, value]) => {
+        if (Array.isArray(value)) {
+          return `${key}:\n${value.map(v => `  - ${v}`).join("\n")}`;
+        }
+        if (typeof value === "string" && (value.includes(":") || value.includes("#"))) {
+          return `${key}: "${value}"`;
+        }
+        return `${key}: ${value}`;
+      });
+
+      const newRawContent = Object.keys(newFrontmatter).length > 0
+        ? `---\n${frontmatterLines.join("\n")}\n---\n\n${note.content}`
+        : note.content;
+
+      // Save to GitHub
+      const response = await fetch("/api/github/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          path: note.path,
+          content: newRawContent,
+          sha: note.sha,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Erreur lors de la sauvegarde");
+      }
+
+      // Update local state
+      setNote({
+        ...note,
+        sha: data.sha,
+        frontmatter: newFrontmatter,
+        isLocked: newLockState,
+      });
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur lors du changement de verrou");
+    } finally {
+      setIsTogglingLock(false);
+    }
   }, [note]);
 
   // Keyboard shortcut for save
@@ -423,6 +503,25 @@ export default function NotePage() {
                       </Button>
                     }
                   />
+                  {/* Lock/Unlock toggle - only for non-path-locked notes */}
+                  {!isPathPrivate && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleToggleLock}
+                      disabled={isTogglingLock}
+                      title={note.isLocked ? "Déverrouiller la note" : "Verrouiller la note"}
+                      className={note.isLocked ? "text-amber-500 hover:text-amber-500 hover:bg-amber-500/10" : ""}
+                    >
+                      {isTogglingLock ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : note.isLocked ? (
+                        <LockOpen className="h-4 w-4" />
+                      ) : (
+                        <Lock className="h-4 w-4" />
+                      )}
+                    </Button>
+                  )}
                   <DeleteNoteDialog
                     path={note.path}
                     sha={note.sha}

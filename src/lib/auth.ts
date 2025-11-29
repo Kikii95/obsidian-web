@@ -1,15 +1,17 @@
 import { NextAuthOptions } from "next-auth";
 import GithubProvider from "next-auth/providers/github";
 
+// Allowed users (empty = allow all)
 const allowedUsers = (process.env.ALLOWED_USERS || "")
   .split(",")
-  .map((u) => u.trim().toLowerCase());
+  .map((u) => u.trim().toLowerCase())
+  .filter((u) => u.length > 0);
 
 export const authOptions: NextAuthOptions = {
   providers: [
     GithubProvider({
-      clientId: process.env.GITHUB_CLIENT_ID!,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+      clientId: process.env.GITHUB_ID || process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_SECRET || process.env.GITHUB_CLIENT_SECRET!,
       authorization: {
         params: {
           scope: "read:user user:email repo",
@@ -19,6 +21,11 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
+      // If no allowed users configured, allow everyone
+      if (allowedUsers.length === 0) {
+        return true;
+      }
+
       // Check if user is in allowed list
       const githubUsername = (profile as { login?: string })?.login?.toLowerCase();
 

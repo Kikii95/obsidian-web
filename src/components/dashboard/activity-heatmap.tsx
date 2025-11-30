@@ -217,25 +217,26 @@ function ActivityHeatmapComponent() {
         </Select>
       </div>
 
-      {/* Heatmap container */}
-      <div className="flex-1 flex flex-col justify-center overflow-hidden">
-        {/* Month labels - positioned above grid */}
-        <div className="relative h-4 mb-1" style={{ width: `${totalGridWidth}px` }}>
-          {monthLabels.map((label, idx) => (
-            <span
-              key={idx}
-              className="absolute text-[9px] text-muted-foreground whitespace-nowrap"
-              style={{
-                left: `${label.weekIndex * (cellSize + cellGap)}px`,
-              }}
-            >
-              {label.month}
-            </span>
-          ))}
-        </div>
+      {/* Heatmap container - centered */}
+      <div className="flex-1 flex flex-col justify-center items-center overflow-hidden">
+        <div>
+          {/* Month labels - positioned above grid */}
+          <div className="relative h-4 mb-1" style={{ width: `${totalGridWidth}px` }}>
+            {monthLabels.map((label, idx) => (
+              <span
+                key={idx}
+                className="absolute text-[9px] text-muted-foreground whitespace-nowrap"
+                style={{
+                  left: `${label.weekIndex * (cellSize + cellGap)}px`,
+                }}
+              >
+                {label.month}
+              </span>
+            ))}
+          </div>
 
-        {/* Heatmap grid */}
-        <div className="flex" style={{ gap: `${cellGap}px` }}>
+          {/* Heatmap grid */}
+          <div className="flex" style={{ gap: `${cellGap}px` }}>
           {weeks.map((week, weekIdx) => (
             <div key={weekIdx} className="flex flex-col" style={{ gap: `${cellGap}px` }}>
               {week.map((day, dayIdx) => (
@@ -254,6 +255,7 @@ function ActivityHeatmapComponent() {
               ))}
             </div>
           ))}
+          </div>
         </div>
       </div>
 

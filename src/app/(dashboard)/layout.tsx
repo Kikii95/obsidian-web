@@ -16,13 +16,15 @@ import {
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { VaultSidebar } from "@/components/navigation/vault-sidebar";
 import { useVaultStore } from "@/lib/store";
-import { LogOut, Menu, PanelLeftClose, PanelLeft, Settings, User, Home, Network } from "lucide-react";
+import { LogOut, Menu, PanelLeftClose, PanelLeft, Settings, User, Home, Network, Tag } from "lucide-react";
 import { ThemeSwitcher } from "@/components/theme/theme-switcher";
 import { Logo } from "@/components/ui/logo";
 import { NetworkStatus } from "@/components/ui/network-status";
 import { ResizableSidebar } from "@/components/ui/resizable-sidebar";
 import { GlobalLockStatus } from "@/components/lock/global-lock-status";
 import { HeaderDateTime } from "@/components/ui/header-date-time";
+import { QuickSwitcher } from "@/components/navigation/quick-switcher";
+import { DailyNoteButton } from "@/components/navigation/daily-note-button";
 
 export default function DashboardLayout({
   children,
@@ -119,10 +121,20 @@ export default function DashboardLayout({
               </Link>
             </Button>
 
+            {/* Daily Note button */}
+            <DailyNoteButton />
+
             {/* Graph button */}
             <Button variant="ghost" size="icon" asChild title="Graph View">
               <Link href="/graph">
                 <Network className="h-5 w-5" />
+              </Link>
+            </Button>
+
+            {/* Tags button */}
+            <Button variant="ghost" size="icon" asChild title="Tags">
+              <Link href="/tags">
+                <Tag className="h-5 w-5" />
               </Link>
             </Button>
 
@@ -209,6 +221,9 @@ export default function DashboardLayout({
 
       {/* Network Status Indicator */}
       <NetworkStatus />
+
+      {/* Quick Switcher (Ctrl+P) */}
+      <QuickSwitcher />
     </div>
   );
 }

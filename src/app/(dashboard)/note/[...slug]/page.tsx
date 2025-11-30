@@ -23,7 +23,7 @@ const MarkdownEditor = dynamic(
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, ChevronRight, FileText, RefreshCw } from "lucide-react";
-import { NoteBreadcrumb, NoteToolbar, NoteWikilinks } from "@/components/note";
+import { NoteBreadcrumb, NoteToolbar, NoteWikilinks, NoteBacklinks } from "@/components/note";
 import { LockedNoteView } from "@/components/lock/locked-note-view";
 import { PinDialog } from "@/components/lock/pin-dialog";
 import { useOnlineStatus } from "@/hooks/use-online-status";
@@ -255,6 +255,11 @@ export default function NotePage() {
       {/* Wikilinks section */}
       {!editor.isEditing && note.wikilinks && (
         <NoteWikilinks wikilinks={note.wikilinks} />
+      )}
+
+      {/* Backlinks section */}
+      {!editor.isEditing && (
+        <NoteBacklinks notePath={filePath} />
       )}
 
       {/* PIN Dialog for verifying PIN when removing lock */}

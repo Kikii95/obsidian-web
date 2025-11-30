@@ -27,11 +27,13 @@ import {
   Check,
   Pin,
   PinOff,
+  History,
 } from "lucide-react";
 import { usePinnedStore } from "@/lib/pinned-store";
 import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
 import { MoveNoteDialog } from "@/components/notes/move-note-dialog";
 import { RenameNoteDialog } from "@/components/notes/rename-note-dialog";
+import { NoteHistory } from "./note-history";
 import type { NoteData } from "@/services/github-client";
 
 interface NoteToolbarProps {
@@ -248,6 +250,16 @@ export const NoteToolbar = memo(function NoteToolbar({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* History button */}
+            <NoteHistory
+              notePath={note.path}
+              trigger={
+                <Button variant="ghost" size="sm" title="Historique">
+                  <History className="h-4 w-4" />
+                </Button>
+              }
+            />
           </div>
 
           {/* Mobile: dropdown menu */}
@@ -322,6 +334,16 @@ export const NoteToolbar = memo(function NoteToolbar({
                 )}
                 {isExportingPdf ? "Export..." : "Télécharger .pdf"}
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <NoteHistory
+                notePath={note.path}
+                trigger={
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    <History className="h-4 w-4 mr-2" />
+                    Historique
+                  </DropdownMenuItem>
+                }
+              />
               <DropdownMenuSeparator />
               <DeleteNoteDialog
                 path={note.path}

@@ -28,7 +28,7 @@ A modern web-based viewer for Obsidian vaults, powered by GitHub as the backend 
 - **iOS Ready** — Apple touch icons, splash screens
 
 ### Customization
-- **11 Color Themes** — Magenta, Ocean, Forest, Sunset, Turquoise, and more
+- **12 Color Themes** — Magenta, Ocean, Forest, Sunset, Turquoise, Mono, and more
 - **Theme Persistence** — localStorage-based preference saving
 - **Responsive Design** — Mobile-first with dropdown actions on small screens
 
@@ -124,13 +124,22 @@ src/
 │   ├── notes/             # CRUD dialogs
 │   ├── ui/                # shadcn/ui components
 │   └── viewer/            # Markdown, image, PDF, canvas viewers
-├── hooks/                 # Custom React hooks
+├── hooks/                 # Custom React hooks (7 hooks)
+│   ├── use-note-data.ts   # Note fetching + offline cache
+│   ├── use-note-editor.ts # Editor state management
+│   ├── use-note-export.ts # MD/PDF export
+│   └── ...                # See docs/ARCHITECTURE.md
+├── services/              # API clients
+│   └── github-client.ts   # Centralized GitHub API
 ├── lib/                   # Utilities
-│   ├── github.ts          # GitHub API helpers
+│   ├── github.ts          # Server-side GitHub (Octokit)
 │   ├── note-cache.ts      # Offline cache
+│   ├── tree-cache.ts      # Tree cache for offline nav
 │   ├── store.ts           # Zustand store
 │   └── utils.ts           # General utilities
-└── types/                 # TypeScript types
+├── types/                 # TypeScript types
+└── docs/                  # Documentation
+    └── ARCHITECTURE.md    # Architecture & patterns
 ```
 
 ## Scripts
@@ -157,6 +166,16 @@ pnpm lint      # Run ESLint
 docker build -t obsidian-web .
 docker run -p 3000:3000 --env-file .env.local obsidian-web
 ```
+
+## Architecture
+
+For detailed information about the codebase architecture, custom hooks, and optimization patterns, see **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**.
+
+Key highlights:
+- **7 Custom Hooks** — Extracted from monolithic components
+- **Centralized API Client** — `githubClient` for all GitHub operations
+- **Offline-first** — Cache API for notes and file tree
+- **React.memo** — Optimized heavy components (ForceGraph, MarkdownRenderer)
 
 ## Contributing
 

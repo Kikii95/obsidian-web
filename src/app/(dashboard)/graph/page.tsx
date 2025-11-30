@@ -4,9 +4,10 @@ import { useEffect, useState, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle, RefreshCw, Network, ArrowLeft, Loader2 } from "lucide-react";
+import { AlertCircle, RefreshCw, Network, ArrowLeft, Loader2, Settings } from "lucide-react";
 import Link from "next/link";
 import { githubClient } from "@/services/github-client";
+import { useSettingsStore } from "@/lib/settings-store";
 
 // Lazy load ForceGraph component (D3.js is ~500kb)
 const ForceGraph = dynamic(
@@ -40,9 +41,11 @@ interface GraphData {
 }
 
 export default function GraphPage() {
+  const { settings } = useSettingsStore();
   const [graphData, setGraphData] = useState<GraphData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [loadingProgress, setLoadingProgress] = useState(0);
 
   const fetchGraph = useCallback(async () => {
     setIsLoading(true);
@@ -153,10 +156,15 @@ export default function GraphPage() {
           </div>
         </div>
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
-          <span>{graphData.connectedNotes} notes connectées</span>
-          <span>•</span>
+          <span className="hidden sm:inline">{graphData.connectedNotes} notes connectées</span>
+          <span className="hidden sm:inline">•</span>
           <span>{graphData.links.length} liens</span>
-          <Button variant="ghost" size="sm" onClick={fetchGraph}>
+          <Button variant="ghost" size="sm" asChild title="Paramètres du graph">
+            <Link href="/settings">
+              <Settings className="h-4 w-4" />
+            </Link>
+          </Button>
+          <Button variant="ghost" size="sm" onClick={fetchGraph} title="Rafraîchir">
             <RefreshCw className="h-4 w-4" />
           </Button>
         </div>
@@ -164,7 +172,12 @@ export default function GraphPage() {
 
       {/* Graph */}
       <div className="flex-1 overflow-hidden">
-        <ForceGraph nodes={graphData.nodes} links={graphData.links} />
+        <ForceGraph
+          nodes={graphData.nodes}
+          links={graphData.links}
+          forceStrength={settings.graphForceStrength}
+          linkDistance={settings.graphLinkDistance}
+        />
       </div>
 
       {/* Legend */}

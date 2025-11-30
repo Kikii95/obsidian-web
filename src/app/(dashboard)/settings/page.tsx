@@ -43,19 +43,12 @@ import { useSettingsStore, type UserSettings } from "@/lib/settings-store";
 import { useVaultStore } from "@/lib/store";
 import type { VaultFile } from "@/types";
 
-// Get all folder paths from tree
-function getAllFolderPaths(files: VaultFile[], prefix = ""): string[] {
-  const paths: string[] = [];
-  for (const file of files) {
-    if (file.type === "dir") {
-      const path = prefix ? `${prefix}/${file.name}` : file.name;
-      paths.push(path);
-      if (file.children) {
-        paths.push(...getAllFolderPaths(file.children, path));
-      }
-    }
-  }
-  return paths;
+// Get top-level folder names from tree
+function getTopLevelFolders(files: VaultFile[]): string[] {
+  return files
+    .filter((f) => f.type === "dir")
+    .map((f) => f.name)
+    .sort();
 }
 
 export default function SettingsPage() {
@@ -72,8 +65,8 @@ export default function SettingsPage() {
   });
   const [isClearing, setIsClearing] = useState(false);
 
-  // Get available folders for default expanded
-  const availableFolders = getAllFolderPaths(tree);
+  // Get top-level folders only (cleaner UI)
+  const topLevelFolders = getTopLevelFolders(tree);
 
   useEffect(() => {
     loadCacheStats();
@@ -187,18 +180,24 @@ export default function SettingsPage() {
               Dossiers dépliés par défaut
             </Label>
             <p className="text-sm text-muted-foreground mb-3">
-              Ces dossiers seront automatiquement ouverts au chargement
+              Dossiers racine à ouvrir automatiquement au chargement
             </p>
-            {availableFolders.length === 0 ? (
+            {topLevelFolders.length === 0 ? (
               <p className="text-sm text-muted-foreground italic">
                 Chargez d'abord le vault pour voir les dossiers disponibles
               </p>
             ) : (
-              <div className="max-h-48 overflow-y-auto space-y-1 border border-border rounded-lg p-2">
-                {availableFolders.slice(0, 20).map((folder) => (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {topLevelFolders.map((folder) => (
                   <label
                     key={folder}
-                    className="flex items-center gap-2 p-2 rounded hover:bg-muted/50 cursor-pointer"
+                    className={`
+                      flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all
+                      ${settings.defaultExpandedFolders.includes(folder)
+                        ? "border-primary bg-primary/10"
+                        : "border-border hover:border-primary/50"
+                      }
+                    `}
                   >
                     <input
                       type="checkbox"
@@ -209,12 +208,12 @@ export default function SettingsPage() {
                     <span className="text-sm truncate">{folder}</span>
                   </label>
                 ))}
-                {availableFolders.length > 20 && (
-                  <p className="text-xs text-muted-foreground p-2">
-                    +{availableFolders.length - 20} autres dossiers...
-                  </p>
-                )}
               </div>
+            )}
+            {settings.defaultExpandedFolders.length > 0 && (
+              <p className="text-xs text-muted-foreground mt-2">
+                {settings.defaultExpandedFolders.length} dossier(s) sélectionné(s)
+              </p>
             )}
           </div>
         </CardContent>

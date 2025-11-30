@@ -358,28 +358,38 @@ export default function HomePage() {
               </div>
             ) : (
               <div className="space-y-1">
-                {pinnedNotes.map((note) => (
-                  <div
-                    key={note.path}
-                    className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50 group"
-                  >
-                    <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <Link
-                      href={getNoteUrl(note.path)}
-                      className="flex-1 text-sm truncate hover:text-primary"
+                {pinnedNotes.map((note) => {
+                  const folder = note.path.includes("/")
+                    ? note.path.substring(0, note.path.lastIndexOf("/"))
+                    : "";
+                  return (
+                    <div
+                      key={note.path}
+                      className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50 group"
                     >
-                      {note.name}
-                    </Link>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100"
-                      onClick={() => unpinNote(note.path)}
-                    >
-                      <PinOff className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ))}
+                      <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <Link
+                        href={getNoteUrl(note.path)}
+                        className="flex-1 min-w-0 hover:text-primary"
+                      >
+                        <span className="text-sm block truncate">{note.name}</span>
+                        {folder && (
+                          <span className="text-xs text-muted-foreground truncate block">
+                            {folder}
+                          </span>
+                        )}
+                      </Link>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 opacity-0 group-hover:opacity-100 shrink-0"
+                        onClick={() => unpinNote(note.path)}
+                      >
+                        <PinOff className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </CardContent>
@@ -406,19 +416,29 @@ export default function HomePage() {
               </div>
             ) : (
               <div className="space-y-1">
-                {recentNotes.map((note) => (
-                  <Link
-                    key={note.path}
-                    href={getNoteUrl(note.path)}
-                    className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50 group"
-                  >
-                    <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <span className="flex-1 text-sm truncate group-hover:text-primary">
-                      {note.name}
-                    </span>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100" />
-                  </Link>
-                ))}
+                {recentNotes.map((note) => {
+                  const folder = note.path.includes("/")
+                    ? note.path.substring(0, note.path.lastIndexOf("/"))
+                    : "";
+                  return (
+                    <Link
+                      key={note.path}
+                      href={getNoteUrl(note.path)}
+                      className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50 group"
+                    >
+                      <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <div className="flex-1 min-w-0 group-hover:text-primary">
+                        <span className="text-sm block truncate">{note.name}</span>
+                        {folder && (
+                          <span className="text-xs text-muted-foreground truncate block">
+                            {folder}
+                          </span>
+                        )}
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 shrink-0" />
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </CardContent>

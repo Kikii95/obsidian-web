@@ -24,9 +24,16 @@ interface GraphLink {
 interface ForceGraphProps {
   nodes: GraphNode[];
   links: GraphLink[];
+  forceStrength?: number;
+  linkDistance?: number;
 }
 
-export const ForceGraph = memo(function ForceGraph({ nodes, links }: ForceGraphProps) {
+export const ForceGraph = memo(function ForceGraph({
+  nodes,
+  links,
+  forceStrength = -200,
+  linkDistance = 80,
+}: ForceGraphProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const router = useRouter();
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
@@ -69,13 +76,13 @@ export const ForceGraph = memo(function ForceGraph({ nodes, links }: ForceGraphP
 
     svg.call(zoom);
 
-    // Create force simulation
+    // Create force simulation with configurable forces
     const simulation = d3.forceSimulation<GraphNode>(nodes)
       .force("link", d3.forceLink<GraphNode, GraphLink>(links)
         .id(d => d.id)
-        .distance(80)
+        .distance(linkDistance)
       )
-      .force("charge", d3.forceManyBody().strength(-200))
+      .force("charge", d3.forceManyBody().strength(forceStrength))
       .force("center", d3.forceCenter(width / 2, height / 2))
       .force("collision", d3.forceCollide().radius(30));
 
@@ -174,7 +181,7 @@ export const ForceGraph = memo(function ForceGraph({ nodes, links }: ForceGraphP
     return () => {
       simulation.stop();
     };
-  }, [nodes, links, dimensions, router]);
+  }, [nodes, links, dimensions, router, forceStrength, linkDistance]);
 
   return (
     <div className="relative w-full h-full">

@@ -200,9 +200,9 @@ export const ForceGraph = memo(function ForceGraph({
         className="bg-background"
       />
       {hoveredNode && (
-        <div className="absolute top-4 left-4 bg-card border border-border rounded-lg p-3 shadow-lg max-w-xs">
-          <p className="font-medium text-sm">{hoveredNode.name}</p>
-          <p className="text-xs text-muted-foreground mt-1">
+        <div className="absolute top-4 left-4 bg-card border border-border rounded-lg p-3 shadow-lg max-w-xs overflow-hidden">
+          <p className="font-medium text-sm truncate">{hoveredNode.name}</p>
+          <p className="text-xs text-muted-foreground mt-1 break-all">
             {hoveredNode.path}
           </p>
           <p className="text-xs text-primary mt-1">

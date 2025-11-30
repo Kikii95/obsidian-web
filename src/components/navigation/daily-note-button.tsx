@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Calendar, Loader2 } from "lucide-react";
 import { encodePathSegments } from "@/lib/path-utils";
+import { useSettingsStore } from "@/lib/settings-store";
 
 // Get today's date formatted as YYYY-MM-DD
 function getTodayDate(): string {
@@ -44,20 +45,21 @@ tags: [daily]
 `;
 }
 
-// Daily notes folder (customizable later via settings)
-const DAILY_NOTES_FOLDER = "Daily";
-
 export function DailyNoteButton() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { settings } = useSettingsStore();
+
+  // Get daily notes folder from settings (default: "Daily")
+  const dailyFolder = settings.dailyNotesFolder || "Daily";
 
   const handleClick = useCallback(async () => {
     setIsLoading(true);
 
     try {
       const today = getTodayDate();
-      const notePath = `${DAILY_NOTES_FOLDER}/${today}.md`;
-      const noteRoute = `/note/${encodePathSegments(`${DAILY_NOTES_FOLDER}/${today}`)}`;
+      const notePath = `${dailyFolder}/${today}.md`;
+      const noteRoute = `/note/${encodePathSegments(`${dailyFolder}/${today}`)}`;
 
       // First, try to read the note (check if it exists)
       const readRes = await fetch(
@@ -95,7 +97,7 @@ export function DailyNoteButton() {
     } finally {
       setIsLoading(false);
     }
-  }, [router]);
+  }, [router, dailyFolder]);
 
   return (
     <Button

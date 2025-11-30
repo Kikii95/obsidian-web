@@ -815,6 +815,21 @@ export default function SettingsPage() {
               Délai après la dernière frappe avant sauvegarde auto
             </p>
           </div>
+
+          {/* Daily Notes Folder */}
+          <div className="space-y-2">
+            <Label>Dossier des Daily Notes</Label>
+            <Input
+              value={settings.dailyNotesFolder ?? "Daily"}
+              onChange={(e) =>
+                updateSettings({ dailyNotesFolder: e.target.value })
+              }
+              placeholder="Daily"
+            />
+            <p className="text-sm text-muted-foreground">
+              Chemin du dossier où créer les notes quotidiennes (ex: Daily, Journal/Daily)
+            </p>
+          </div>
         </CardContent>
       </Card>
 

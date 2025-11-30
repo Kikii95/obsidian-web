@@ -48,6 +48,9 @@ export interface UserSettings {
   // General
   dateFormat: DateFormat; // Date format (fr, en, iso)
   autoSaveDelay: number; // Auto-save delay in seconds (0 = disabled)
+
+  // Daily Notes
+  dailyNotesFolder: string; // Folder path for daily notes (e.g. "Daily", "Journal/Daily")
 }
 
 interface SettingsState {
@@ -98,6 +101,9 @@ const defaultSettings: UserSettings = {
   // General
   dateFormat: "fr",
   autoSaveDelay: 0, // Disabled by default
+
+  // Daily Notes
+  dailyNotesFolder: "Daily",
 };
 
 export const useSettingsStore = create<SettingsState>()(

@@ -31,10 +31,10 @@ export const NoteBreadcrumb = memo(function NoteBreadcrumb({
     <nav className="flex items-center gap-1 text-sm text-muted-foreground flex-wrap min-w-0 overflow-hidden">
       <Link
         href="/folder"
-        className="hover:text-foreground transition-colors shrink-0 flex items-center gap-1"
+        className="hover:text-foreground transition-colors shrink-0"
+        title="Vault"
       >
         <Home className="h-3.5 w-3.5" />
-        <span className="hidden sm:inline">Vault</span>
       </Link>
       {items.map((crumb, index) => (
         <div key={crumb.path} className="flex items-center gap-1 min-w-0">

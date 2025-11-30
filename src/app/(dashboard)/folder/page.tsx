@@ -44,9 +44,8 @@ export default function FolderRootPage() {
       <div className="max-w-4xl mx-auto">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-1 text-sm text-muted-foreground mb-6">
-          <span className="flex items-center gap-1 text-foreground font-medium">
+          <span className="flex items-center gap-1 text-foreground font-medium" title="Vault">
             <Home className="h-3.5 w-3.5" />
-            Vault
           </span>
         </nav>
 

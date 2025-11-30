@@ -119,9 +119,9 @@ export default function FolderPage() {
                 <Link
                   href={crumb.path}
                   className="hover:text-foreground transition-colors flex items-center gap-1"
+                  title={i === 0 ? "Vault" : undefined}
                 >
-                  {i === 0 && <Home className="h-3.5 w-3.5" />}
-                  <span className={i === 0 ? "hidden sm:inline" : ""}>{crumb.name}</span>
+                  {i === 0 ? <Home className="h-3.5 w-3.5" /> : crumb.name}
                 </Link>
               )}
             </span>

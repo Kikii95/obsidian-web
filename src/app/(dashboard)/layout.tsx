@@ -52,8 +52,16 @@ export default function DashboardLayout({
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
+      {/* Skip to main content link for keyboard users */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none"
+      >
+        Aller au contenu principal
+      </a>
+
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-sm">
+      <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-sm" role="banner">
         <div className="flex h-14 items-center justify-between px-4">
           {/* Left side */}
           <div className="flex items-center gap-2">
@@ -178,7 +186,11 @@ export default function DashboardLayout({
       <div className="flex-1 flex overflow-hidden">
         {/* Desktop Sidebar - sticky to stay fixed while main content scrolls */}
         {sidebarOpen && (
-          <aside className="hidden md:flex flex-shrink-0 border-r border-border/50 bg-sidebar sticky top-0 h-full">
+          <aside
+            className="hidden md:flex flex-shrink-0 border-r border-border/50 bg-sidebar sticky top-0 h-full"
+            role="navigation"
+            aria-label="Explorateur de fichiers"
+          >
             <ResizableSidebar>
               <VaultSidebar />
             </ResizableSidebar>
@@ -186,7 +198,9 @@ export default function DashboardLayout({
         )}
 
         {/* Content */}
-        <main className="flex-1 overflow-auto">{children}</main>
+        <main id="main-content" className="flex-1 overflow-auto" role="main">
+          {children}
+        </main>
       </div>
 
       {/* Network Status Indicator */}

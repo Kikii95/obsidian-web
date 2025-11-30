@@ -2,14 +2,27 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, ChevronRight, RefreshCw, Image, FileText } from "lucide-react";
+import { AlertCircle, ChevronRight, RefreshCw, Image, FileText, Loader2 } from "lucide-react";
 import { ImageViewer } from "@/components/viewer/image-viewer";
-import { PDFViewer } from "@/components/viewer/pdf-viewer";
 import { getFileType } from "@/lib/file-types";
 import { githubClient, type BinaryFileData } from "@/services/github-client";
+
+// Lazy load PDFViewer (react-pdf is heavy ~500kb)
+const PDFViewer = dynamic(
+  () => import("@/components/viewer/pdf-viewer").then((mod) => mod.PDFViewer),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-full w-full flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    ),
+  }
+);
 
 const SUPPORTED_EXTENSIONS = [".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".bmp", ".ico", ".pdf"];
 

@@ -42,6 +42,9 @@ export function NetworkStatus() {
 
   return (
     <div
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
       className={cn(
         "fixed bottom-4 left-1/2 -translate-x-1/2 z-50",
         "px-4 py-2 rounded-full backdrop-blur-md shadow-lg",
@@ -59,8 +62,9 @@ export function NetworkStatus() {
           <button
             onClick={() => setDismissed(true)}
             className="ml-2 hover:text-white transition-colors"
+            aria-label="Masquer la notification"
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4" aria-hidden="true" />
           </button>
         </>
       ) : (

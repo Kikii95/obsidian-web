@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
@@ -15,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FolderPlus, Loader2 } from "lucide-react";
 import { useVaultStore } from "@/lib/store";
+import { githubClient } from "@/services/github-client";
 import { FolderTreePicker } from "./folder-tree-picker";
 
 interface CreateFolderDialogProps {
@@ -32,7 +32,6 @@ export function CreateFolderDialog({
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
 }: CreateFolderDialogProps) {
-  const router = useRouter();
   const { tree, triggerTreeRefresh } = useVaultStore();
   const [internalOpen, setInternalOpen] = useState(false);
   const [folderName, setFolderName] = useState("");
@@ -70,19 +69,7 @@ export function CreateFolderDialog({
         ? `${actualParent}/${trimmedName}`
         : trimmedName;
 
-      const response = await fetch("/api/github/create-folder", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          path: folderPath,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Erreur lors de la création");
-      }
+      await githubClient.createFolder(folderPath);
 
       setOpen(false);
       setFolderName("");

@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FilePlus, Loader2 } from "lucide-react";
 import { useVaultStore } from "@/lib/store";
+import { githubClient } from "@/services/github-client";
 import { FolderTreePicker } from "./folder-tree-picker";
 
 interface CreateNoteDialogProps {
@@ -63,20 +64,9 @@ export function CreateNoteDialog({
         ? `${actualFolder}/${title.trim()}.md`
         : `${title.trim()}.md`;
 
-      const response = await fetch("/api/github/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          path,
-          title: title.trim(),
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Erreur lors de la création");
-      }
+      // Create note with default content
+      const content = `# ${title.trim()}\n\n`;
+      const data = await githubClient.createNote(path, content);
 
       // Navigate to the new note
       const notePath = data.path.replace(".md", "");
@@ -88,7 +78,7 @@ export function CreateNoteDialog({
       setOpen(false);
       setTitle("");
       setSelectedFolder(currentFolder || ROOT_VALUE);
-      triggerTreeRefresh(); // Auto-refresh sidebar
+      triggerTreeRefresh();
       router.push(`/note/${encodedPath}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");

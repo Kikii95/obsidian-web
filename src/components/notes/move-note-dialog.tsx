@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { FolderInput, Loader2 } from "lucide-react";
 import { useVaultStore } from "@/lib/store";
+import { githubClient } from "@/services/github-client";
 import { FolderTreePicker } from "./folder-tree-picker";
 
 interface MoveNoteDialogProps {
@@ -65,21 +66,7 @@ export function MoveNoteDialog({ path, sha, noteName, trigger }: MoveNoteDialogP
     try {
       const newPath = actualSelectedFolder ? `${actualSelectedFolder}/${fileName}` : fileName;
 
-      const response = await fetch("/api/github/move", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          oldPath: path,
-          newPath,
-          sha,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Erreur lors du déplacement");
-      }
+      await githubClient.moveNote(path, newPath, sha);
 
       // Navigate to the new note location
       const notePath = newPath.replace(".md", "");
@@ -89,7 +76,7 @@ export function MoveNoteDialog({ path, sha, noteName, trigger }: MoveNoteDialogP
         .join("/");
 
       setOpen(false);
-      triggerTreeRefresh(); // Auto-refresh sidebar
+      triggerTreeRefresh();
       router.push(`/note/${encodedPath}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");

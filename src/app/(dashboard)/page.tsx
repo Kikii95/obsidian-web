@@ -1,17 +1,37 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, FolderOpen, Sparkles, Network, CheckCircle2, Loader2 } from "lucide-react";
+import { githubClient } from "@/services/github-client";
+import type { VaultFile } from "@/types";
 
 interface VaultStats {
   notes: number;
   folders: number;
   links: number;
   loading: boolean;
+}
+
+// Count notes and folders recursively
+function countItems(items: VaultFile[]): { notes: number; folders: number } {
+  let notes = 0;
+  let folders = 0;
+  for (const item of items) {
+    if (item.type === "file") notes++;
+    else if (item.type === "dir") {
+      folders++;
+      if (item.children) {
+        const sub = countItems(item.children);
+        notes += sub.notes;
+        folders += sub.folders;
+      }
+    }
+  }
+  return { notes, folders };
 }
 
 export default function HomePage() {
@@ -23,50 +43,30 @@ export default function HomePage() {
     loading: true,
   });
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        // Fetch tree for notes/folders count
-        const treeRes = await fetch("/api/github/tree");
-        const treeData = await treeRes.json();
+  const fetchStats = useCallback(async () => {
+    try {
+      // Parallel fetch: tree + graph simultaneously (-200ms latency)
+      const [tree, graph] = await Promise.all([
+        githubClient.getTree(),
+        githubClient.getGraph(),
+      ]);
 
-        if (treeRes.ok && treeData.tree) {
-          const countItems = (items: { type: string; children?: unknown[] }[]): { notes: number; folders: number } => {
-            let notes = 0;
-            let folders = 0;
-            for (const item of items) {
-              if (item.type === "file") notes++;
-              else if (item.type === "dir") {
-                folders++;
-                if (item.children) {
-                  const sub = countItems(item.children as { type: string; children?: unknown[] }[]);
-                  notes += sub.notes;
-                  folders += sub.folders;
-                }
-              }
-            }
-            return { notes, folders };
-          };
-          const counts = countItems(treeData.tree);
+      const counts = countItems(tree);
 
-          // Fetch graph for links count
-          const graphRes = await fetch("/api/github/graph");
-          const graphData = await graphRes.json();
-
-          setStats({
-            notes: counts.notes,
-            folders: counts.folders,
-            links: graphRes.ok ? graphData.links?.length || 0 : 0,
-            loading: false,
-          });
-        }
-      } catch {
-        setStats(prev => ({ ...prev, loading: false }));
-      }
-    };
-
-    fetchStats();
+      setStats({
+        notes: counts.notes,
+        folders: counts.folders,
+        links: graph.links?.length || 0,
+        loading: false,
+      });
+    } catch {
+      setStats(prev => ({ ...prev, loading: false }));
+    }
   }, []);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
 
   return (
     <div className="container mx-auto p-6 max-w-4xl">
@@ -186,7 +186,7 @@ export default function HomePage() {
             <Badge className="bg-green-500/20 text-green-400 border-green-500/30">✓ Mode Offline</Badge>
             <Badge className="bg-green-500/20 text-green-400 border-green-500/30">✓ Notes Privées</Badge>
             <Badge className="bg-green-500/20 text-green-400 border-green-500/30">✓ PWA iOS</Badge>
-            <Badge className="bg-green-500/20 text-green-400 border-green-500/30">✓ 11 Thèmes</Badge>
+            <Badge className="bg-green-500/20 text-green-400 border-green-500/30">✓ 12 Thèmes</Badge>
             <Badge variant="secondary" className="opacity-60">◌ Recherche</Badge>
             <Badge variant="secondary" className="opacity-60">◌ Création Notes</Badge>
           </div>

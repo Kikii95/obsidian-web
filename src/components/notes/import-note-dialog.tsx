@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Upload, FileText, Loader2, AlertCircle, Check } from "lucide-react";
 import { useVaultStore } from "@/lib/store";
+import { githubClient } from "@/services/github-client";
 import { FolderTreePicker } from "./folder-tree-picker";
 
 const ROOT_VALUE = "__root__";
@@ -76,20 +77,7 @@ export function ImportNoteDialog({ trigger }: ImportNoteDialogProps) {
         ? `${targetFolder}/${fileName}.md`
         : `${fileName}.md`;
 
-      const response = await fetch("/api/github/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          path,
-          content,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Erreur lors de l'import");
-      }
+      await githubClient.createNote(path, content);
 
       setSuccess(true);
       triggerTreeRefresh();

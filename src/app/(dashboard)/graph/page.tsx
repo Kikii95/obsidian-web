@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, RefreshCw, Network, ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { githubClient } from "@/services/github-client";
 
 // Lazy load ForceGraph component (D3.js is ~500kb)
 const ForceGraph = dynamic(
@@ -43,29 +44,23 @@ export default function GraphPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchGraph = async () => {
+  const fetchGraph = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await fetch("/api/github/graph");
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Erreur lors du chargement");
-      }
-
-      setGraphData(data);
+      const data = await githubClient.getGraph();
+      setGraphData(data as GraphData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchGraph();
-  }, []);
+  }, [fetchGraph]);
 
   if (isLoading) {
     return (

@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2, FolderPen, FolderX, AlertTriangle, Lock } from "lucide-react";
 import { useVaultStore } from "@/lib/store";
 import { useLockStore } from "@/lib/lock-store";
+import { githubClient } from "@/services/github-client";
 import { FolderTreePicker } from "./folder-tree-picker";
 import { PinDialog } from "@/components/lock/pin-dialog";
 import type { VaultFile } from "@/types";
@@ -127,20 +128,7 @@ export function ManageFolderDialog({ mode, open, onOpenChange }: ManageFolderDia
       const parent = getParentFolder(selectedFolder);
       const newPath = parent ? `${parent}/${newName.trim()}` : newName.trim();
 
-      const response = await fetch("/api/github/rename-folder", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          oldPath: selectedFolder,
-          newPath,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Erreur lors du renommage");
-      }
+      await githubClient.renameFolder(selectedFolder, newPath);
 
       onOpenChange(false);
       triggerTreeRefresh();
@@ -194,17 +182,7 @@ export function ManageFolderDialog({ mode, open, onOpenChange }: ManageFolderDia
     setError(null);
 
     try {
-      const response = await fetch("/api/github/delete-folder", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ path: selectedFolder }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Erreur lors de la suppression");
-      }
+      await githubClient.deleteFolder(selectedFolder);
 
       onOpenChange(false);
       triggerTreeRefresh();

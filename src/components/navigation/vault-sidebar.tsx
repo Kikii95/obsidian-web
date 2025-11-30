@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { FileTree } from "./file-tree";
 import { useVaultStore } from "@/lib/store";
@@ -18,6 +18,7 @@ import { CreateNoteDialog } from "@/components/notes/create-note-dialog";
 import { CreateFolderDialog } from "@/components/notes/create-folder-dialog";
 import { ManageFolderDialog } from "@/components/notes/manage-folder-dialog";
 import { ImportNoteDialog } from "@/components/notes/import-note-dialog";
+import { githubClient } from "@/services/github-client";
 import type { VaultFile } from "@/types";
 
 // Extract all folder paths from tree recursively
@@ -51,21 +52,15 @@ export function VaultSidebar() {
 
   const [manageFolderMode, setManageFolderMode] = useState<"rename" | "delete" | null>(null);
 
-  const fetchTree = async () => {
+  const fetchTree = useCallback(async () => {
     if (!session) return;
 
     setTreeLoading(true);
     setTreeError(null);
 
     try {
-      const response = await fetch("/api/github/tree");
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Erreur lors du chargement");
-      }
-
-      setTree(data.tree);
+      const tree = await githubClient.getTree();
+      setTree(tree);
     } catch (error) {
       setTreeError(
         error instanceof Error ? error.message : "Erreur inconnue"
@@ -73,20 +68,20 @@ export function VaultSidebar() {
     } finally {
       setTreeLoading(false);
     }
-  };
+  }, [session, setTree, setTreeLoading, setTreeError]);
 
   useEffect(() => {
     if (session && tree.length === 0) {
       fetchTree();
     }
-  }, [session]);
+  }, [session, tree.length, fetchTree]);
 
   // Auto-refresh when treeRefreshTrigger changes (from create/rename/move/delete)
   useEffect(() => {
     if (session && treeRefreshTrigger > 0) {
       fetchTree();
     }
-  }, [treeRefreshTrigger]);
+  }, [session, treeRefreshTrigger, fetchTree]);
 
   if (isLoadingTree) {
     return (

@@ -13,6 +13,7 @@ import {
   LayoutDashboard,
   Loader2,
 } from "lucide-react";
+import { githubClient } from "@/services/github-client";
 import type { ObsidianCanvasData } from "@/types/canvas";
 
 // Lazy load CanvasViewer (React Flow is heavy)
@@ -53,16 +54,8 @@ export default function CanvasPage() {
     setError(null);
 
     try {
-      const response = await fetch(
-        `/api/github/canvas?path=${encodeURIComponent(filePath)}`
-      );
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Erreur lors du chargement");
-      }
-
-      setCanvas(data);
+      const data = await githubClient.readCanvas(filePath);
+      setCanvas(data as CanvasData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
@@ -78,21 +71,11 @@ export default function CanvasPage() {
     async (newData: ObsidianCanvasData) => {
       if (!canvas) return;
 
-      const response = await fetch("/api/github/canvas", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          path: canvas.path,
-          data: newData,
-          sha: canvas.sha,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Erreur lors de la sauvegarde");
-      }
+      const result = await githubClient.saveCanvas(
+        canvas.path,
+        newData,
+        canvas.sha
+      );
 
       // Update local state with new sha
       setCanvas((prev) =>

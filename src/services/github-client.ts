@@ -15,8 +15,10 @@ interface NoteData {
 }
 
 interface GraphData {
-  nodes: Array<{ id: string; name: string; type: string }>;
+  nodes: Array<{ id: string; name: string; path: string; linkCount: number }>;
   links: Array<{ source: string; target: string }>;
+  totalNotes: number;
+  connectedNotes: number;
 }
 
 interface ApiError extends Error {
@@ -162,16 +164,29 @@ export const githubClient = {
   },
 
   /**
+   * Read canvas data
+   */
+  async readCanvas(path: string): Promise<{
+    path: string;
+    data: unknown;
+    sha: string;
+  }> {
+    return apiFetch<{ path: string; data: unknown; sha: string }>(
+      `/api/github/canvas?path=${encodeURIComponent(path)}`
+    );
+  },
+
+  /**
    * Save canvas data
    */
   async saveCanvas(
     path: string,
-    content: string,
+    data: unknown,
     sha: string
   ): Promise<{ sha: string }> {
     return apiFetch<{ sha: string }>("/api/github/canvas", {
       method: "POST",
-      body: JSON.stringify({ path, content, sha }),
+      body: JSON.stringify({ path, data, sha }),
     });
   },
 };

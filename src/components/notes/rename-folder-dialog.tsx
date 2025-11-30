@@ -12,8 +12,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Pencil, Loader2, FolderPen } from "lucide-react";
+import { Loader2, FolderPen, Pencil } from "lucide-react";
 import { useVaultStore } from "@/lib/store";
+import { githubClient } from "@/services/github-client";
 
 interface RenameFolderDialogProps {
   path: string;
@@ -77,20 +78,7 @@ export function RenameFolderDialog({
         ? `${parentFolder}/${trimmedName}`
         : trimmedName;
 
-      const response = await fetch("/api/github/rename-folder", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          oldPath: path,
-          newPath,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Erreur lors du renommage");
-      }
+      await githubClient.renameFolder(path, newPath);
 
       setOpen(false);
       triggerTreeRefresh();

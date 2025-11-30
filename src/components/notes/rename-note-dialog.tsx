@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Pencil, Loader2 } from "lucide-react";
 import { useVaultStore } from "@/lib/store";
+import { githubClient } from "@/services/github-client";
 
 interface RenameNoteDialogProps {
   path: string;
@@ -67,21 +68,7 @@ export function RenameNoteDialog({ path, sha, currentName, trigger }: RenameNote
         ? `${parentFolder}/${trimmedName}.md`
         : `${trimmedName}.md`;
 
-      const response = await fetch("/api/github/move", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          oldPath: path,
-          newPath,
-          sha,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Erreur lors du renommage");
-      }
+      await githubClient.moveNote(path, newPath, sha);
 
       // Navigate to the renamed note
       const notePath = newPath.replace(".md", "");
@@ -91,7 +78,7 @@ export function RenameNoteDialog({ path, sha, currentName, trigger }: RenameNote
         .join("/");
 
       setOpen(false);
-      triggerTreeRefresh(); // Auto-refresh sidebar
+      triggerTreeRefresh();
       router.push(`/note/${encodedPath}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");

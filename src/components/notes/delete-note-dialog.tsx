@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Trash2, Loader2, AlertTriangle } from "lucide-react";
 import { useVaultStore } from "@/lib/store";
+import { githubClient } from "@/services/github-client";
 
 interface DeleteNoteDialogProps {
   path: string;
@@ -33,20 +34,9 @@ export function DeleteNoteDialog({ path, sha, noteName, trigger }: DeleteNoteDia
     setError(null);
 
     try {
-      const response = await fetch("/api/github/delete", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ path, sha }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Erreur lors de la suppression");
-      }
-
+      await githubClient.deleteNote(path, sha);
       setOpen(false);
-      triggerTreeRefresh(); // Auto-refresh sidebar
+      triggerTreeRefresh();
       router.push("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");

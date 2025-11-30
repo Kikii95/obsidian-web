@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, memo, useMemo } from "react";
+import { useEffect, useState, memo, useMemo, useRef } from "react";
 import { githubClient } from "@/services/github-client";
 import { Flame, Calendar, TrendingUp, Loader2 } from "lucide-react";
 import {
@@ -33,23 +33,26 @@ const PERIOD_OPTIONS: { value: PeriodOption; label: string }[] = [
   { value: "365", label: "1 an" },
 ];
 
-// Cell size based on period (smaller period = bigger cells)
-const CELL_SIZES: Record<PeriodOption, { size: number; gap: number }> = {
-  "30": { size: 18, gap: 3 },
-  "90": { size: 14, gap: 2 },
-  "180": { size: 12, gap: 2 },
-  "365": { size: 10, gap: 2 },
-};
-
-const MONTH_NAMES = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"];
+const MONTH_NAMES_SHORT = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
+const MONTH_NAMES_FULL = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"];
 
 function ActivityHeatmapComponent() {
   const [data, setData] = useState<ActivityData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [period, setPeriod] = useState<PeriodOption>("90");
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
 
-  const { size: cellSize, gap: cellGap } = CELL_SIZES[period];
+  // Measure container width
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      setContainerWidth(entries[0].contentRect.width);
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const fetchActivity = async () => {
@@ -67,23 +70,24 @@ function ActivityHeatmapComponent() {
     fetchActivity();
   }, [period]);
 
-  // Generate grid of days with month info
-  const { grid, monthLabels } = useMemo(() => {
-    if (!data) return { grid: [], monthLabels: [] };
+  // Generate weeks grid with month labels
+  const { weeks, monthLabels, cellSize, cellGap } = useMemo(() => {
+    if (!data || containerWidth === 0) return { weeks: [], monthLabels: [], cellSize: 10, cellGap: 2 };
 
     const days = parseInt(period);
     const activityMap = new Map(
       data.activity.map((a) => [a.date, a.count])
     );
 
-    const result: Array<{ date: string; count: number; dayOfWeek: number; month: number }> = [];
+    // Build days array
+    const allDays: Array<{ date: string; count: number; dayOfWeek: number; month: number }> = [];
     const today = new Date();
 
     for (let i = days - 1; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
       const dateStr = date.toISOString().split("T")[0];
-      result.push({
+      allDays.push({
         date: dateStr,
         count: activityMap.get(dateStr) || 0,
         dayOfWeek: date.getDay(),
@@ -91,26 +95,59 @@ function ActivityHeatmapComponent() {
       });
     }
 
-    // Calculate month labels positions
-    const labels: Array<{ month: string; weekIndex: number }> = [];
-    let lastMonth = -1;
-    let weekIndex = 0;
-    let dayInWeek = result[0]?.dayOfWeek || 0;
+    // Build weeks array (with padding for first week)
+    const weeksArr: Array<Array<{ date: string; count: number; dayOfWeek: number; month: number }>> = [];
+    let currentWeek: typeof allDays = [];
 
-    for (const day of result) {
-      if (day.month !== lastMonth) {
-        labels.push({ month: MONTH_NAMES[day.month], weekIndex });
-        lastMonth = day.month;
-      }
-      dayInWeek++;
-      if (dayInWeek > 6) {
-        dayInWeek = 0;
-        weekIndex++;
+    // Pad first week
+    if (allDays.length > 0) {
+      const firstDayOfWeek = allDays[0].dayOfWeek;
+      for (let i = 0; i < firstDayOfWeek; i++) {
+        currentWeek.push({ date: "", count: -1, dayOfWeek: i, month: -1 });
       }
     }
 
-    return { grid: result, monthLabels: labels };
-  }, [data, period]);
+    for (const day of allDays) {
+      currentWeek.push(day);
+      if (day.dayOfWeek === 6) {
+        weeksArr.push(currentWeek);
+        currentWeek = [];
+      }
+    }
+    if (currentWeek.length > 0) {
+      weeksArr.push(currentWeek);
+    }
+
+    // Calculate cell size to fit container
+    const numWeeks = weeksArr.length;
+    const availableWidth = containerWidth - 12; // padding
+    const gap = 2;
+    const calculatedSize = Math.floor((availableWidth - (numWeeks - 1) * gap) / numWeeks);
+    const finalSize = Math.min(Math.max(calculatedSize, 6), 14); // min 6, max 14
+
+    // Calculate month labels (at week boundaries)
+    const labels: Array<{ month: string; weekIndex: number }> = [];
+    let lastMonth = -1;
+
+    weeksArr.forEach((week, weekIdx) => {
+      // Find first valid day in this week
+      const firstValidDay = week.find(d => d.month >= 0);
+      if (firstValidDay && firstValidDay.month !== lastMonth) {
+        // Only add label if it's not too close to previous (at least 3 weeks apart for short periods)
+        const minGap = period === "30" ? 2 : period === "90" ? 3 : 4;
+        const lastLabel = labels[labels.length - 1];
+        if (!lastLabel || weekIdx - lastLabel.weekIndex >= minGap) {
+          labels.push({
+            month: period === "30" ? MONTH_NAMES_FULL[firstValidDay.month] : MONTH_NAMES_SHORT[firstValidDay.month],
+            weekIndex: weekIdx
+          });
+        }
+        lastMonth = firstValidDay.month;
+      }
+    });
+
+    return { weeks: weeksArr, monthLabels: labels, cellSize: finalSize, cellGap: gap };
+  }, [data, period, containerWidth]);
 
   // Get intensity level (0-4)
   const getIntensity = (count: number): number => {
@@ -158,31 +195,11 @@ function ActivityHeatmapComponent() {
 
   if (!data) return null;
 
-  // Calculate weeks for grid layout
-  const weeks: Array<typeof grid> = [];
-  let currentWeek: typeof grid = [];
-
-  // Pad the first week if needed
-  if (grid.length > 0) {
-    const firstDayOfWeek = grid[0].dayOfWeek;
-    for (let i = 0; i < firstDayOfWeek; i++) {
-      currentWeek.push({ date: "", count: -1, dayOfWeek: i, month: -1 });
-    }
-  }
-
-  for (const day of grid) {
-    currentWeek.push(day);
-    if (day.dayOfWeek === 6) {
-      weeks.push(currentWeek);
-      currentWeek = [];
-    }
-  }
-  if (currentWeek.length > 0) {
-    weeks.push(currentWeek);
-  }
+  // Total grid width for positioning
+  const totalGridWidth = weeks.length * cellSize + (weeks.length - 1) * cellGap;
 
   return (
-    <div className="h-full flex flex-col p-3">
+    <div className="h-full flex flex-col p-3" ref={containerRef}>
       {/* Header with period selector */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2 text-sm font-medium">
@@ -203,29 +220,24 @@ function ActivityHeatmapComponent() {
         </Select>
       </div>
 
-      {/* Month labels */}
-      <div className="flex overflow-hidden mb-1" style={{ paddingLeft: 0 }}>
-        <div className="flex" style={{ gap: `${cellGap}px` }}>
+      {/* Heatmap container */}
+      <div className="flex-1 flex flex-col justify-center overflow-hidden">
+        {/* Month labels - positioned above grid */}
+        <div className="relative h-4 mb-1" style={{ width: `${totalGridWidth}px` }}>
           {monthLabels.map((label, idx) => (
-            <div
+            <span
               key={idx}
-              className="text-[10px] text-muted-foreground"
+              className="absolute text-[9px] text-muted-foreground whitespace-nowrap"
               style={{
-                position: "relative",
                 left: `${label.weekIndex * (cellSize + cellGap)}px`,
-                marginRight: idx < monthLabels.length - 1
-                  ? `${(monthLabels[idx + 1]?.weekIndex - label.weekIndex - 1) * (cellSize + cellGap) - 20}px`
-                  : 0,
               }}
             >
               {label.month}
-            </div>
+            </span>
           ))}
         </div>
-      </div>
 
-      {/* Heatmap grid */}
-      <div className="flex-1 flex items-center justify-center overflow-hidden">
+        {/* Heatmap grid */}
         <div className="flex" style={{ gap: `${cellGap}px` }}>
           {weeks.map((week, weekIdx) => (
             <div key={weekIdx} className="flex flex-col" style={{ gap: `${cellGap}px` }}>

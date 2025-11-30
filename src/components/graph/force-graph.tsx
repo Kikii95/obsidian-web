@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, memo, useMemo } from "react";
 import * as d3 from "d3";
 import { useRouter } from "next/navigation";
+import { encodePathSegments } from "@/lib/path-utils";
 
 interface GraphNode {
   id: string;
@@ -25,7 +26,7 @@ interface ForceGraphProps {
   links: GraphLink[];
 }
 
-export function ForceGraph({ nodes, links }: ForceGraphProps) {
+export const ForceGraph = memo(function ForceGraph({ nodes, links }: ForceGraphProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const router = useRouter();
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
@@ -135,11 +136,8 @@ export function ForceGraph({ nodes, links }: ForceGraphProps) {
       })
       .on("click", (event, d) => {
         event.stopPropagation();
-        const encodedPath = d.path
-          .replace(".md", "")
-          .split("/")
-          .map(s => encodeURIComponent(s))
-          .join("/");
+        const pathWithoutMd = d.path.replace(".md", "");
+        const encodedPath = encodePathSegments(pathWithoutMd);
         router.push(`/note/${encodedPath}`);
       });
 
@@ -199,4 +197,4 @@ export function ForceGraph({ nodes, links }: ForceGraphProps) {
       )}
     </div>
   );
-}
+});

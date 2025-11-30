@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, memo, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
@@ -50,9 +50,9 @@ interface MarkdownRendererProps {
   className?: string;
 }
 
-export function MarkdownRenderer({ content, className }: MarkdownRendererProps) {
+export const MarkdownRenderer = memo(function MarkdownRenderer({ content, className }: MarkdownRendererProps) {
   // Pre-process content to convert wikilinks to markdown links
-  const processedContent = processWikilinks(content);
+  const processedContent = useMemo(() => processWikilinks(content), [content]);
 
   return (
     <div className={cn("prose prose-invert max-w-none", className)}>
@@ -280,7 +280,7 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
       </ReactMarkdown>
     </div>
   );
-}
+});
 
 /**
  * Convert Obsidian wikilinks to standard markdown links

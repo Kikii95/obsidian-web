@@ -1,36 +1,175 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Obsidian Web
+
+A modern web-based viewer for Obsidian vaults, powered by GitHub as the backend storage.
+
+**Live Demo**: [obsidian-web-gray.vercel.app](https://obsidian-web-gray.vercel.app)
+
+## Features
+
+### Core
+- **GitHub Integration** — OAuth authentication, read/write access to your vault repository
+- **Markdown Viewer** — Full GFM support, syntax highlighting, wikilinks resolution
+- **CodeMirror Editor** — Syntax highlighting, keyboard shortcuts (Ctrl+S, Esc)
+- **File Tree Navigation** — Collapsible folders, real-time sync with GitHub
+
+### Media Support
+- **Images** — Zoom, rotation, fullscreen viewing
+- **PDF Viewer** — Navigation, zoom, download (via react-pdf)
+- **Canvas Viewer** — Visual editing with React Flow (zoom, pan, minimap)
+
+### Privacy & Security
+- **Lock System** — Apple Notes-style PIN protection
+- **Private Notes** — Support for `#private` tag, `private: true` frontmatter, `_private/` folders
+- **Offline Mode** — Cache API for note access without network
+
+### PWA
+- **Installable** — Add to home screen on mobile/desktop
+- **Service Worker** — Offline fallback page
+- **iOS Ready** — Apple touch icons, splash screens
+
+### Customization
+- **11 Color Themes** — Magenta, Ocean, Forest, Sunset, Turquoise, and more
+- **Theme Persistence** — localStorage-based preference saving
+- **Responsive Design** — Mobile-first with dropdown actions on small screens
+
+### Productivity
+- **Export** — Download as .md, print/PDF via jspdf
+- **Import** — Drag & drop .md files with folder selection
+- **Copy Code** — One-click copy for code blocks
+- **Markdown Cheatsheet** — Quick reference bar in editor
+
+## Tech Stack
+
+| Category | Technology |
+|----------|------------|
+| Framework | Next.js 16 (App Router) |
+| Language | TypeScript 5.9 |
+| Styling | Tailwind CSS 4 |
+| UI Components | Radix UI + shadcn/ui |
+| State Management | Zustand |
+| Auth | NextAuth.js (GitHub OAuth) |
+| Editor | CodeMirror 6 |
+| Markdown | react-markdown + remark/rehype |
+| Graph | D3.js (lazy-loaded) |
+| Canvas | React Flow (@xyflow/react) |
+| PDF | react-pdf |
+| Search | Fuse.js |
+| PWA | @ducanh2912/next-pwa |
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js 20+
+- pnpm (recommended) or npm
+- GitHub OAuth App credentials
+
+### Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+# Clone the repository
+git clone https://github.com/yourusername/obsidian-web.git
+cd obsidian-web
+
+# Install dependencies
+pnpm install
+
+# Copy environment variables
+cp .env.example .env.local
+
+# Start development server
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Environment Variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Create a `.env.local` file with the following:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```env
+# GitHub OAuth (create at https://github.com/settings/developers)
+GITHUB_CLIENT_ID=your_client_id
+GITHUB_CLIENT_SECRET=your_client_secret
 
-## Learn More
+# NextAuth
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your_secret_key  # Generate with: openssl rand -base64 32
+```
 
-To learn more about Next.js, take a look at the following resources:
+### GitHub OAuth Setup
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
+2. Create a new OAuth App
+3. Set **Homepage URL**: `http://localhost:3000`
+4. Set **Callback URL**: `http://localhost:3000/api/auth/callback/github`
+5. Copy Client ID and Client Secret to `.env.local`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Project Structure
 
-## Deploy on Vercel
+```
+src/
+├── app/                    # Next.js App Router
+│   ├── (dashboard)/       # Protected routes
+│   │   ├── note/          # Note viewer/editor
+│   │   ├── file/          # File viewer (images, PDFs)
+│   │   ├── canvas/        # Canvas viewer
+│   │   └── graph/         # Graph view (D3)
+│   ├── api/               # API routes
+│   │   ├── auth/          # NextAuth endpoints
+│   │   └── github/        # GitHub API proxy
+│   └── layout.tsx         # Root layout
+├── components/
+│   ├── editor/            # CodeMirror editor
+│   ├── graph/             # D3 force graph
+│   ├── lock/              # PIN lock dialogs
+│   ├── navigation/        # Sidebar, header
+│   ├── notes/             # CRUD dialogs
+│   ├── ui/                # shadcn/ui components
+│   └── viewer/            # Markdown, image, PDF, canvas viewers
+├── hooks/                 # Custom React hooks
+├── lib/                   # Utilities
+│   ├── github.ts          # GitHub API helpers
+│   ├── note-cache.ts      # Offline cache
+│   ├── store.ts           # Zustand store
+│   └── utils.ts           # General utilities
+└── types/                 # TypeScript types
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Scripts
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+pnpm dev       # Start development server
+pnpm build     # Build for production
+pnpm start     # Start production server
+pnpm lint      # Run ESLint
+```
+
+## Deployment
+
+### Vercel (Recommended)
+
+1. Push to GitHub
+2. Import project on [Vercel](https://vercel.com)
+3. Add environment variables in Vercel dashboard
+4. Update GitHub OAuth callback URL to production domain
+
+### Docker
+
+```bash
+docker build -t obsidian-web .
+docker run -p 3000:3000 --env-file .env.local obsidian-web
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feat/amazing-feature`)
+3. Commit changes (`git commit -m 'feat: add amazing feature'`)
+4. Push to branch (`git push origin feat/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+---
+
+Built with Next.js and deployed on Vercel.

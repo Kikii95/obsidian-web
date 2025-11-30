@@ -8,6 +8,7 @@ export type Theme =
   | "forest"
   | "sunset"
   | "mono"
+  | "mono-inverse"
   | "rose"
   | "crimson"
   | "cyber"
@@ -34,6 +35,7 @@ export const themes: ThemeOption[] = [
   { id: "turquoise", name: "Turquoise", emoji: "🩵", description: "Cyan tropical" },
   { id: "ocean", name: "Ocean", emoji: "🔵", description: "Bleu profond" },
   { id: "mono", name: "Mono", emoji: "⚪", description: "Noir & blanc" },
+  { id: "mono-inverse", name: "Mono Inverse", emoji: "⚫", description: "Blanc & noir" },
 ];
 
 const THEME_STORAGE_KEY = "obsidian-web-theme";

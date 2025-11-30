@@ -25,7 +25,10 @@ import {
   FileDown,
   Copy,
   Check,
+  Pin,
+  PinOff,
 } from "lucide-react";
+import { usePinnedStore } from "@/lib/pinned-store";
 import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
 import { MoveNoteDialog } from "@/components/notes/move-note-dialog";
 import { RenameNoteDialog } from "@/components/notes/rename-note-dialog";
@@ -75,7 +78,17 @@ export const NoteToolbar = memo(function NoteToolbar({
   isExportingPdf,
   copied,
 }: NoteToolbarProps) {
+  const { isPinned, pinNote, unpinNote } = usePinnedStore();
+  const noteIsPinned = isPinned(note.path);
   const canEdit = isOnline && !isFromCache;
+
+  const handleTogglePin = () => {
+    if (noteIsPinned) {
+      unpinNote(note.path);
+    } else {
+      pinNote(note.path, noteName);
+    }
+  };
 
   if (isEditing) {
     return (
@@ -120,6 +133,17 @@ export const NoteToolbar = memo(function NoteToolbar({
           <span className="hidden sm:inline">Cache</span>
         </div>
       )}
+
+      {/* Pin button - always visible */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleTogglePin}
+        title={noteIsPinned ? "Désépingler" : "Épingler"}
+        className={noteIsPinned ? "text-primary" : ""}
+      >
+        {noteIsPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
+      </Button>
 
       <Button
         variant="outline"
@@ -234,6 +258,15 @@ export const NoteToolbar = memo(function NoteToolbar({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={handleTogglePin}>
+                {noteIsPinned ? (
+                  <PinOff className="h-4 w-4 mr-2" />
+                ) : (
+                  <Pin className="h-4 w-4 mr-2" />
+                )}
+                {noteIsPinned ? "Désépingler" : "Épingler"}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <RenameNoteDialog
                 path={note.path}
                 sha={note.sha}

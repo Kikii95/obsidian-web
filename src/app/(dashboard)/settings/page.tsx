@@ -327,9 +327,9 @@ export default function SettingsPage() {
                 onValueChange={([value]) =>
                   updateSettings({ graphForceStrength: -value })
                 }
-                min={10}
+                min={1}
                 max={500}
-                step={10}
+                step={1}
                 className="flex-1"
               />
               <span className="w-12 text-center font-mono text-sm">

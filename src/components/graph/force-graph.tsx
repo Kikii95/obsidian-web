@@ -79,7 +79,11 @@ export const ForceGraph = memo(function ForceGraph({
 
     // Create force simulation with configurable forces
     // Collision radius scales with linkDistance (min 8px for readability)
-    const collisionRadius = Math.max(8, linkDistance * 0.3);
+    const collisionRadius = Math.max(6, linkDistance * 0.25);
+
+    // Gravity strength - pulls orphans toward the cluster
+    // Stronger when repulsion is low (compact mode)
+    const gravityStrength = Math.max(0.03, 0.1 - Math.abs(forceStrength) / 1000);
 
     const simulation = d3.forceSimulation<GraphNode>(nodes)
       .force("link", d3.forceLink<GraphNode, GraphLink>(links)
@@ -89,6 +93,8 @@ export const ForceGraph = memo(function ForceGraph({
       )
       .force("charge", d3.forceManyBody().strength(forceStrength))
       .force("center", d3.forceCenter(width / 2, height / 2))
+      .force("x", d3.forceX(width / 2).strength(gravityStrength)) // Pull toward center X
+      .force("y", d3.forceY(height / 2).strength(gravityStrength)) // Pull toward center Y
       .force("collision", d3.forceCollide().radius(collisionRadius));
 
     // Create links

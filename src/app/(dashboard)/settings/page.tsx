@@ -318,15 +318,18 @@ export default function SettingsPage() {
           {/* Force strength */}
           <div className="space-y-2">
             <Label>Force de répulsion</Label>
+            <p className="text-xs text-muted-foreground">
+              Plus bas = nodes plus proches (boule compacte)
+            </p>
             <div className="flex items-center gap-4">
               <Slider
                 value={[Math.abs(settings.graphForceStrength)]}
                 onValueChange={([value]) =>
                   updateSettings({ graphForceStrength: -value })
                 }
-                min={50}
+                min={10}
                 max={500}
-                step={50}
+                step={10}
                 className="flex-1"
               />
               <span className="w-12 text-center font-mono text-sm">
@@ -338,14 +341,17 @@ export default function SettingsPage() {
           {/* Link distance */}
           <div className="space-y-2">
             <Label>Distance des liens</Label>
+            <p className="text-xs text-muted-foreground">
+              Distance cible entre nodes liés
+            </p>
             <div className="flex items-center gap-4">
               <Slider
                 value={[settings.graphLinkDistance]}
                 onValueChange={([value]) =>
                   updateSettings({ graphLinkDistance: value })
                 }
-                min={30}
-                max={150}
+                min={10}
+                max={200}
                 step={10}
                 className="flex-1"
               />

@@ -248,11 +248,11 @@ export default function GraphPage() {
                   <div className="flex items-center justify-between">
                     <Label className="text-xs">Gravité</Label>
                     <span className="text-xs font-mono text-muted-foreground">
-                      {settings.graphGravityStrength.toFixed(2)}
+                      {(settings.graphGravityStrength ?? 0.05).toFixed(2)}
                     </span>
                   </div>
                   <Slider
-                    value={[settings.graphGravityStrength * 100]}
+                    value={[(settings.graphGravityStrength ?? 0.05) * 100]}
                     onValueChange={([value]) =>
                       updateSettings({ graphGravityStrength: value / 100 })
                     }
@@ -278,7 +278,7 @@ export default function GraphPage() {
           links={graphData.links}
           forceStrength={settings.graphForceStrength}
           linkDistance={settings.graphLinkDistance}
-          gravityStrength={settings.graphGravityStrength}
+          gravityStrength={settings.graphGravityStrength ?? 0.05}
         />
       </div>
 

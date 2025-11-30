@@ -369,7 +369,7 @@ export default function SettingsPage() {
             </p>
             <div className="flex items-center gap-4">
               <Slider
-                value={[settings.graphGravityStrength * 100]}
+                value={[(settings.graphGravityStrength ?? 0.05) * 100]}
                 onValueChange={([value]) =>
                   updateSettings({ graphGravityStrength: value / 100 })
                 }
@@ -379,7 +379,7 @@ export default function SettingsPage() {
                 className="flex-1"
               />
               <span className="w-12 text-center font-mono text-sm">
-                {settings.graphGravityStrength.toFixed(2)}
+                {(settings.graphGravityStrength ?? 0.05).toFixed(2)}
               </span>
             </div>
           </div>

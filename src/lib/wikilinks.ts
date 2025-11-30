@@ -26,12 +26,23 @@ export function parseWikilinks(content: string): WikiLink[] {
  * Convert wikilink target to URL path
  */
 export function wikilinkToPath(target: string): string {
-  // Remove .md extension if present
-  const cleanTarget = target.replace(/\.md$/, "");
+  // Clean the target: remove .md extension, trailing backslashes, and heading anchors
+  const cleanTarget = target
+    .replace(/\.md$/, "")
+    .replace(/\\+$/, "")        // Remove trailing backslashes
+    .replace(/\\+/g, "")        // Remove any remaining backslashes
+    .replace(/#.*$/, "");       // Remove heading anchors like #🎯 Vue d'Ensemble
+
+  // Skip empty paths
+  if (!cleanTarget.trim()) {
+    return "/";
+  }
+
   // Encode each segment separately to preserve slashes
   const encodedPath = cleanTarget
     .split("/")
-    .map((segment) => encodeURIComponent(segment))
+    .map((segment) => encodeURIComponent(segment.trim()))
+    .filter(Boolean)  // Remove empty segments
     .join("/");
   return `/note/${encodedPath}`;
 }

@@ -15,14 +15,18 @@ export function usePrefetchNote() {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const prefetch = useCallback(async (path: string) => {
-    // Remove leading /note/ or /canvas/ or /file/ from path
-    const cleanPath = path
-      .replace(/^\/note\//, "")
-      .replace(/^\/canvas\//, "")
-      .replace(/^\/file\//, "");
+    // Only prefetch notes, not canvas/file (binary)
+    if (!path.startsWith("/note/")) {
+      return;
+    }
 
-    // Decode URI components
-    const decodedPath = decodeURIComponent(cleanPath);
+    // Remove leading /note/ from path
+    const cleanPath = path.replace(/^\/note\//, "");
+
+    // Decode URI components and clean backslashes
+    const decodedPath = decodeURIComponent(cleanPath)
+      .replace(/\\+/g, "")
+      .replace(/#.*$/, "");
 
     // Skip if already prefetched or currently prefetching
     if (prefetchedPaths.has(decodedPath) || prefetchingPaths.has(decodedPath)) {

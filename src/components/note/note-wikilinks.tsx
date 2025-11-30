@@ -9,9 +9,13 @@ interface NoteWikilinksProps {
   wikilinks: string[];
 }
 
-// Format path for display (remove .md extension)
+// Format path for display (remove .md extension, backslashes, anchors)
 function formatPath(path: string): string {
-  return path.replace(/\.md$/, "");
+  return path
+    .replace(/\.md$/, "")
+    .replace(/\\+/g, "")        // Remove backslashes
+    .replace(/#.*$/, "")        // Remove heading anchors
+    .replace(/\/+$/, "");       // Remove trailing slashes
 }
 
 export const NoteWikilinks = memo(function NoteWikilinks({

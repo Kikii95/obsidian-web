@@ -34,8 +34,8 @@ export const themes: ThemeOption[] = [
   { id: "forest", name: "Forest", emoji: "🟢", description: "Vert émeraude" },
   { id: "turquoise", name: "Turquoise", emoji: "🩵", description: "Cyan tropical" },
   { id: "ocean", name: "Ocean", emoji: "🔵", description: "Bleu profond" },
-  { id: "mono", name: "Mono", emoji: "⚫", description: "Blanc & noir" },
-  { id: "mono-inverse", name: "Mono Inverse", emoji: "⚪", description: "Noir & blanc" },
+  { id: "mono", name: "Mono Inverse", emoji: "⚫", description: "Noir & blanc" },
+  { id: "mono-inverse", name: "Mono", emoji: "⚪", description: "Blanc & noir" },
 ];
 
 const THEME_STORAGE_KEY = "obsidian-web-theme";

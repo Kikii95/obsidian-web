@@ -33,11 +33,23 @@ const PERIOD_OPTIONS: { value: PeriodOption; label: string }[] = [
   { value: "365", label: "1 an" },
 ];
 
+// Cell size based on period (smaller period = bigger cells)
+const CELL_SIZES: Record<PeriodOption, { size: number; gap: number }> = {
+  "30": { size: 18, gap: 3 },
+  "90": { size: 14, gap: 2 },
+  "180": { size: 12, gap: 2 },
+  "365": { size: 10, gap: 2 },
+};
+
+const MONTH_NAMES = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"];
+
 function ActivityHeatmapComponent() {
   const [data, setData] = useState<ActivityData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [period, setPeriod] = useState<PeriodOption>("90");
+
+  const { size: cellSize, gap: cellGap } = CELL_SIZES[period];
 
   useEffect(() => {
     const fetchActivity = async () => {
@@ -55,16 +67,16 @@ function ActivityHeatmapComponent() {
     fetchActivity();
   }, [period]);
 
-  // Generate grid of days
-  const grid = useMemo(() => {
-    if (!data) return [];
+  // Generate grid of days with month info
+  const { grid, monthLabels } = useMemo(() => {
+    if (!data) return { grid: [], monthLabels: [] };
 
     const days = parseInt(period);
     const activityMap = new Map(
       data.activity.map((a) => [a.date, a.count])
     );
 
-    const result: Array<{ date: string; count: number; dayOfWeek: number }> = [];
+    const result: Array<{ date: string; count: number; dayOfWeek: number; month: number }> = [];
     const today = new Date();
 
     for (let i = days - 1; i >= 0; i--) {
@@ -75,10 +87,29 @@ function ActivityHeatmapComponent() {
         date: dateStr,
         count: activityMap.get(dateStr) || 0,
         dayOfWeek: date.getDay(),
+        month: date.getMonth(),
       });
     }
 
-    return result;
+    // Calculate month labels positions
+    const labels: Array<{ month: string; weekIndex: number }> = [];
+    let lastMonth = -1;
+    let weekIndex = 0;
+    let dayInWeek = result[0]?.dayOfWeek || 0;
+
+    for (const day of result) {
+      if (day.month !== lastMonth) {
+        labels.push({ month: MONTH_NAMES[day.month], weekIndex });
+        lastMonth = day.month;
+      }
+      dayInWeek++;
+      if (dayInWeek > 6) {
+        dayInWeek = 0;
+        weekIndex++;
+      }
+    }
+
+    return { grid: result, monthLabels: labels };
   }, [data, period]);
 
   // Get intensity level (0-4)
@@ -135,7 +166,7 @@ function ActivityHeatmapComponent() {
   if (grid.length > 0) {
     const firstDayOfWeek = grid[0].dayOfWeek;
     for (let i = 0; i < firstDayOfWeek; i++) {
-      currentWeek.push({ date: "", count: -1, dayOfWeek: i });
+      currentWeek.push({ date: "", count: -1, dayOfWeek: i, month: -1 });
     }
   }
 
@@ -153,7 +184,7 @@ function ActivityHeatmapComponent() {
   return (
     <div className="h-full flex flex-col p-3">
       {/* Header with period selector */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2 text-sm font-medium">
           <Flame className="h-4 w-4 text-primary" />
           <span>Activité</span>
@@ -172,17 +203,39 @@ function ActivityHeatmapComponent() {
         </Select>
       </div>
 
+      {/* Month labels */}
+      <div className="flex overflow-hidden mb-1" style={{ paddingLeft: 0 }}>
+        <div className="flex" style={{ gap: `${cellGap}px` }}>
+          {monthLabels.map((label, idx) => (
+            <div
+              key={idx}
+              className="text-[10px] text-muted-foreground"
+              style={{
+                position: "relative",
+                left: `${label.weekIndex * (cellSize + cellGap)}px`,
+                marginRight: idx < monthLabels.length - 1
+                  ? `${(monthLabels[idx + 1]?.weekIndex - label.weekIndex - 1) * (cellSize + cellGap) - 20}px`
+                  : 0,
+              }}
+            >
+              {label.month}
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Heatmap grid */}
       <div className="flex-1 flex items-center justify-center overflow-hidden">
-        <div className="flex gap-[2px]">
+        <div className="flex" style={{ gap: `${cellGap}px` }}>
           {weeks.map((week, weekIdx) => (
-            <div key={weekIdx} className="flex flex-col gap-[2px]">
+            <div key={weekIdx} className="flex flex-col" style={{ gap: `${cellGap}px` }}>
               {week.map((day, dayIdx) => (
                 <div
                   key={`${weekIdx}-${dayIdx}`}
-                  className={`w-[10px] h-[10px] rounded-[2px] ${
+                  className={`rounded-[2px] ${
                     day.count === -1 ? "bg-transparent" : getColor(getIntensity(day.count))
                   }`}
+                  style={{ width: `${cellSize}px`, height: `${cellSize}px` }}
                   title={
                     day.count >= 0
                       ? `${day.date}: ${day.count} commit${day.count !== 1 ? "s" : ""}`
@@ -198,11 +251,12 @@ function ActivityHeatmapComponent() {
       {/* Legend */}
       <div className="flex items-center justify-between text-[10px] text-muted-foreground mt-2">
         <span>Moins</span>
-        <div className="flex gap-[2px]">
+        <div className="flex" style={{ gap: `${cellGap}px` }}>
           {[0, 1, 2, 3, 4].map((level) => (
             <div
               key={level}
-              className={`w-[10px] h-[10px] rounded-[2px] ${getColor(level)}`}
+              className={`rounded-[2px] ${getColor(level)}`}
+              style={{ width: `${cellSize}px`, height: `${cellSize}px` }}
             />
           ))}
         </div>

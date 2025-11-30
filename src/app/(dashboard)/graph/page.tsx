@@ -12,7 +12,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { AlertCircle, RefreshCw, Network, ArrowLeft, Loader2, SlidersHorizontal, RotateCcw } from "lucide-react";
+import { AlertCircle, RefreshCw, Network, ArrowLeft, Loader2, SlidersHorizontal, RotateCcw, ZoomIn } from "lucide-react";
 import Link from "next/link";
 import { githubClient } from "@/services/github-client";
 import { useSettingsStore } from "@/lib/settings-store";
@@ -54,6 +54,7 @@ export default function GraphPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [loadingProgress, setLoadingProgress] = useState(0);
+  const [currentZoom, setCurrentZoom] = useState(settings.graphDefaultZoom ?? 0.8);
 
   const fetchGraph = useCallback(async () => {
     setIsLoading(true);
@@ -261,6 +262,27 @@ export default function GraphPage() {
                     step={1}
                   />
                 </div>
+
+                {/* Save zoom */}
+                <div className="pt-2 border-t border-border">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-xs">Zoom par défaut</Label>
+                      <p className="text-[10px] text-muted-foreground">
+                        Actuel: {Math.round(currentZoom * 100)}%
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => updateSettings({ graphDefaultZoom: currentZoom })}
+                    >
+                      <ZoomIn className="h-3 w-3 mr-1" />
+                      Set
+                    </Button>
+                  </div>
+                </div>
               </div>
             </PopoverContent>
           </Popover>
@@ -279,6 +301,8 @@ export default function GraphPage() {
           forceStrength={settings.graphForceStrength}
           linkDistance={settings.graphLinkDistance}
           gravityStrength={settings.graphGravityStrength ?? 0.05}
+          initialZoom={settings.graphDefaultZoom ?? 0.8}
+          onZoomChange={setCurrentZoom}
         />
       </div>
 

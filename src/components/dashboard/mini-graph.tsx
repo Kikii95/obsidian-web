@@ -22,9 +22,18 @@ interface Link {
 interface MiniGraphProps {
   nodes: Node[];
   links: Link[];
+  forceStrength?: number;
+  linkDistance?: number;
+  gravityStrength?: number;
 }
 
-function MiniGraphComponent({ nodes, links }: MiniGraphProps) {
+function MiniGraphComponent({
+  nodes,
+  links,
+  forceStrength = -80,
+  linkDistance = 40,
+  gravityStrength = 0.1,
+}: MiniGraphProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const router = useRouter();
 
@@ -45,7 +54,9 @@ function MiniGraphComponent({ nodes, links }: MiniGraphProps) {
     const nodesCopy: Node[] = nodes.map((n) => ({ ...n }));
     const linksCopy: Link[] = links.map((l) => ({ ...l }));
 
-    // Create simulation
+    // Create simulation with settings
+    const collisionRadius = Math.max(4, linkDistance * 0.2);
+
     const simulation = d3
       .forceSimulation(nodesCopy)
       .force(
@@ -53,11 +64,14 @@ function MiniGraphComponent({ nodes, links }: MiniGraphProps) {
         d3
           .forceLink<Node, Link>(linksCopy)
           .id((d) => d.id)
-          .distance(40)
+          .distance(linkDistance)
+          .strength(1)
       )
-      .force("charge", d3.forceManyBody().strength(-80))
+      .force("charge", d3.forceManyBody().strength(forceStrength))
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("collision", d3.forceCollide().radius(15));
+      .force("x", d3.forceX(width / 2).strength(gravityStrength))
+      .force("y", d3.forceY(height / 2).strength(gravityStrength))
+      .force("collision", d3.forceCollide().radius(collisionRadius));
 
     // Draw links
     const link = g
@@ -134,7 +148,7 @@ function MiniGraphComponent({ nodes, links }: MiniGraphProps) {
     return () => {
       simulation.stop();
     };
-  }, [nodes, links, router]);
+  }, [nodes, links, router, forceStrength, linkDistance, gravityStrength]);
 
   if (nodes.length === 0) {
     return (

@@ -459,7 +459,13 @@ export default function HomePage() {
           <CardContent>
             <div className="h-[250px] rounded-lg overflow-hidden border border-border/50 bg-muted/20">
               {graphData ? (
-                <MiniGraph nodes={graphData.nodes} links={graphData.links} />
+                <MiniGraph
+                  nodes={graphData.nodes}
+                  links={graphData.links}
+                  forceStrength={settings.graphForceStrength}
+                  linkDistance={settings.graphLinkDistance}
+                  gravityStrength={settings.graphGravityStrength ?? 0.1}
+                />
               ) : (
                 <div className="h-full flex items-center justify-center">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />

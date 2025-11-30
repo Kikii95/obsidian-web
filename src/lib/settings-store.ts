@@ -20,6 +20,7 @@ export interface UserSettings {
   graphForceStrength: number; // -1 to -500
   graphLinkDistance: number; // 10 to 200
   graphGravityStrength: number; // 0 to 0.2 (pull toward center)
+  graphDefaultZoom: number; // 0.1 to 2 (saved zoom level)
 }
 
 interface SettingsState {
@@ -47,6 +48,7 @@ const defaultSettings: UserSettings = {
   graphForceStrength: -300,
   graphLinkDistance: 80,
   graphGravityStrength: 0.05,
+  graphDefaultZoom: 0.8,
 };
 
 export const useSettingsStore = create<SettingsState>()(

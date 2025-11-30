@@ -28,6 +28,8 @@ interface ForceGraphProps {
   forceStrength?: number;
   linkDistance?: number;
   gravityStrength?: number;
+  initialZoom?: number;
+  onZoomChange?: (zoom: number) => void;
 }
 
 export const ForceGraph = memo(function ForceGraph({
@@ -36,11 +38,14 @@ export const ForceGraph = memo(function ForceGraph({
   forceStrength = -200,
   linkDistance = 80,
   gravityStrength = 0.05,
+  initialZoom = 0.8,
+  onZoomChange,
 }: ForceGraphProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const router = useRouter();
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   const [hoveredNode, setHoveredNode] = useState<GraphNode | null>(null);
+  const [currentZoom, setCurrentZoom] = useState(initialZoom);
 
   useEffect(() => {
     const updateDimensions = () => {
@@ -75,6 +80,7 @@ export const ForceGraph = memo(function ForceGraph({
       .scaleExtent([0.1, 4])
       .on("zoom", (event) => {
         container.attr("transform", event.transform);
+        setCurrentZoom(event.transform.k);
       });
 
     svg.call(zoom);
@@ -181,19 +187,23 @@ export const ForceGraph = memo(function ForceGraph({
       node.attr("transform", d => `translate(${d.x},${d.y})`);
     });
 
-    // Initial zoom to fit
-    const initialScale = 0.8;
+    // Initial zoom to fit - use saved zoom level
     svg.call(
       zoom.transform,
       d3.zoomIdentity
-        .translate(width * (1 - initialScale) / 2, height * (1 - initialScale) / 2)
-        .scale(initialScale)
+        .translate(width * (1 - initialZoom) / 2, height * (1 - initialZoom) / 2)
+        .scale(initialZoom)
     );
 
     return () => {
       simulation.stop();
     };
-  }, [nodes, links, dimensions, router, forceStrength, linkDistance, gravityStrength]);
+  }, [nodes, links, dimensions, router, forceStrength, linkDistance, gravityStrength, initialZoom]);
+
+  // Notify parent of zoom changes
+  useEffect(() => {
+    onZoomChange?.(currentZoom);
+  }, [currentZoom, onZoomChange]);
 
   return (
     <div className="relative w-full h-full">
@@ -214,6 +224,10 @@ export const ForceGraph = memo(function ForceGraph({
           </p>
         </div>
       )}
+      {/* Zoom indicator */}
+      <div className="absolute bottom-4 left-4 bg-card/80 backdrop-blur border border-border rounded px-2 py-1 text-xs font-mono text-muted-foreground">
+        {Math.round(currentZoom * 100)}%
+      </div>
     </div>
   );
 });

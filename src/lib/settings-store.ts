@@ -17,8 +17,9 @@ export interface UserSettings {
 
   // Graph
   showOrphanNotes: boolean;
-  graphForceStrength: number; // -100 to -500
-  graphLinkDistance: number; // 30 to 150
+  graphForceStrength: number; // -1 to -500
+  graphLinkDistance: number; // 10 to 200
+  graphGravityStrength: number; // 0 to 0.2 (pull toward center)
 }
 
 interface SettingsState {
@@ -45,6 +46,7 @@ const defaultSettings: UserSettings = {
   showOrphanNotes: false,
   graphForceStrength: -300,
   graphLinkDistance: 80,
+  graphGravityStrength: 0.05,
 };
 
 export const useSettingsStore = create<SettingsState>()(

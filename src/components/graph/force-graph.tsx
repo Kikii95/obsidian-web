@@ -27,6 +27,7 @@ interface ForceGraphProps {
   links: GraphLink[];
   forceStrength?: number;
   linkDistance?: number;
+  gravityStrength?: number;
 }
 
 export const ForceGraph = memo(function ForceGraph({
@@ -34,6 +35,7 @@ export const ForceGraph = memo(function ForceGraph({
   links,
   forceStrength = -200,
   linkDistance = 80,
+  gravityStrength = 0.05,
 }: ForceGraphProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const router = useRouter();
@@ -78,12 +80,8 @@ export const ForceGraph = memo(function ForceGraph({
     svg.call(zoom);
 
     // Create force simulation with configurable forces
-    // Collision radius scales with linkDistance (min 8px for readability)
+    // Collision radius scales with linkDistance (min 6px for readability)
     const collisionRadius = Math.max(6, linkDistance * 0.25);
-
-    // Gravity strength - pulls orphans toward the cluster
-    // Stronger when repulsion is low (compact mode)
-    const gravityStrength = Math.max(0.03, 0.1 - Math.abs(forceStrength) / 1000);
 
     const simulation = d3.forceSimulation<GraphNode>(nodes)
       .force("link", d3.forceLink<GraphNode, GraphLink>(links)
@@ -195,7 +193,7 @@ export const ForceGraph = memo(function ForceGraph({
     return () => {
       simulation.stop();
     };
-  }, [nodes, links, dimensions, router, forceStrength, linkDistance]);
+  }, [nodes, links, dimensions, router, forceStrength, linkDistance, gravityStrength]);
 
   return (
     <div className="relative w-full h-full">

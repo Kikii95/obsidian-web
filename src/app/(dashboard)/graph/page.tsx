@@ -4,7 +4,15 @@ import { useEffect, useState, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle, RefreshCw, Network, ArrowLeft, Loader2, Settings } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { AlertCircle, RefreshCw, Network, ArrowLeft, Loader2, SlidersHorizontal, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { githubClient } from "@/services/github-client";
 import { useSettingsStore } from "@/lib/settings-store";
@@ -41,7 +49,7 @@ interface GraphData {
 }
 
 export default function GraphPage() {
-  const { settings } = useSettingsStore();
+  const { settings, updateSettings } = useSettingsStore();
   const [graphData, setGraphData] = useState<GraphData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -155,15 +163,108 @@ export default function GraphPage() {
             <span className="font-medium">Graph View</span>
           </div>
         </div>
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-          <span className="hidden sm:inline">{graphData.connectedNotes} notes connectées</span>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <span className="hidden sm:inline">{graphData.connectedNotes} notes</span>
           <span className="hidden sm:inline">•</span>
-          <span>{graphData.links.length} liens</span>
-          <Button variant="ghost" size="sm" asChild title="Paramètres du graph">
-            <Link href="/settings">
-              <Settings className="h-4 w-4" />
-            </Link>
-          </Button>
+          <span className="hidden sm:inline">{graphData.links.length} liens</span>
+
+          {/* Settings Popover */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="sm" title="Réglages du graph">
+                <SlidersHorizontal className="h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-72" align="end">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium text-sm">Réglages Graph</h4>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-xs"
+                    onClick={() => updateSettings({
+                      graphForceStrength: -300,
+                      graphLinkDistance: 80,
+                      graphGravityStrength: 0.05,
+                    })}
+                    title="Réinitialiser"
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                  </Button>
+                </div>
+
+                {/* Orphan notes toggle */}
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs">Notes orphelines</Label>
+                  <Switch
+                    checked={settings.showOrphanNotes}
+                    onCheckedChange={(checked) =>
+                      updateSettings({ showOrphanNotes: checked })
+                    }
+                  />
+                </div>
+
+                {/* Force strength */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Répulsion</Label>
+                    <span className="text-xs font-mono text-muted-foreground">
+                      {Math.abs(settings.graphForceStrength)}
+                    </span>
+                  </div>
+                  <Slider
+                    value={[Math.abs(settings.graphForceStrength)]}
+                    onValueChange={([value]) =>
+                      updateSettings({ graphForceStrength: -value })
+                    }
+                    min={1}
+                    max={500}
+                    step={1}
+                  />
+                </div>
+
+                {/* Link distance */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Distance liens</Label>
+                    <span className="text-xs font-mono text-muted-foreground">
+                      {settings.graphLinkDistance}px
+                    </span>
+                  </div>
+                  <Slider
+                    value={[settings.graphLinkDistance]}
+                    onValueChange={([value]) =>
+                      updateSettings({ graphLinkDistance: value })
+                    }
+                    min={5}
+                    max={200}
+                    step={5}
+                  />
+                </div>
+
+                {/* Gravity */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Gravité</Label>
+                    <span className="text-xs font-mono text-muted-foreground">
+                      {settings.graphGravityStrength.toFixed(2)}
+                    </span>
+                  </div>
+                  <Slider
+                    value={[settings.graphGravityStrength * 100]}
+                    onValueChange={([value]) =>
+                      updateSettings({ graphGravityStrength: value / 100 })
+                    }
+                    min={0}
+                    max={30}
+                    step={1}
+                  />
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+
           <Button variant="ghost" size="sm" onClick={fetchGraph} title="Rafraîchir">
             <RefreshCw className="h-4 w-4" />
           </Button>
@@ -177,6 +278,7 @@ export default function GraphPage() {
           links={graphData.links}
           forceStrength={settings.graphForceStrength}
           linkDistance={settings.graphLinkDistance}
+          gravityStrength={settings.graphGravityStrength}
         />
       </div>
 

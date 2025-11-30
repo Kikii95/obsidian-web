@@ -350,13 +350,36 @@ export default function SettingsPage() {
                 onValueChange={([value]) =>
                   updateSettings({ graphLinkDistance: value })
                 }
-                min={10}
+                min={5}
                 max={200}
-                step={10}
+                step={5}
                 className="flex-1"
               />
               <span className="w-12 text-center font-mono text-sm">
                 {settings.graphLinkDistance}px
+              </span>
+            </div>
+          </div>
+
+          {/* Gravity strength */}
+          <div className="space-y-2">
+            <Label>Gravité (cohésion)</Label>
+            <p className="text-xs text-muted-foreground">
+              Force qui attire les nodes vers le centre
+            </p>
+            <div className="flex items-center gap-4">
+              <Slider
+                value={[settings.graphGravityStrength * 100]}
+                onValueChange={([value]) =>
+                  updateSettings({ graphGravityStrength: value / 100 })
+                }
+                min={0}
+                max={30}
+                step={1}
+                className="flex-1"
+              />
+              <span className="w-12 text-center font-mono text-sm">
+                {settings.graphGravityStrength.toFixed(2)}
               </span>
             </div>
           </div>

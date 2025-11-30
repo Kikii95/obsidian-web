@@ -39,7 +39,7 @@ import {
 import Link from "next/link";
 import { useTheme, themes } from "@/hooks/use-theme";
 import { getCacheStats, clearNotesCache } from "@/lib/note-cache";
-import { useSettingsStore, type UserSettings } from "@/lib/settings-store";
+import { useSettingsStore, type UserSettings, type ActivityPeriod } from "@/lib/settings-store";
 import { useVaultStore } from "@/lib/store";
 import type { VaultFile } from "@/types";
 
@@ -159,6 +159,30 @@ export default function SettingsPage() {
                 updateSettings({ showMiniGraph: checked })
               }
             />
+          </div>
+
+          {/* Activity heatmap default period */}
+          <div className="space-y-2">
+            <Label>Période activité par défaut</Label>
+            <Select
+              value={settings.activityDefaultPeriod ?? "90"}
+              onValueChange={(value) =>
+                updateSettings({ activityDefaultPeriod: value as ActivityPeriod })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="30">30 jours</SelectItem>
+                <SelectItem value="90">3 mois</SelectItem>
+                <SelectItem value="180">6 mois</SelectItem>
+                <SelectItem value="365">1 an</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-sm text-muted-foreground">
+              Période affichée au chargement du heatmap
+            </p>
           </div>
         </CardContent>
       </Card>

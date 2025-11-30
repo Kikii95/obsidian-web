@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useSettingsStore, type ActivityPeriod } from "@/lib/settings-store";
 
 interface ActivityData {
   activity: Array<{ date: string; count: number }>;
@@ -24,9 +25,7 @@ interface ActivityData {
   };
 }
 
-type PeriodOption = "30" | "90" | "180" | "365";
-
-const PERIOD_OPTIONS: { value: PeriodOption; label: string }[] = [
+const PERIOD_OPTIONS: { value: ActivityPeriod; label: string }[] = [
   { value: "30", label: "30 jours" },
   { value: "90", label: "3 mois" },
   { value: "180", label: "6 mois" },
@@ -37,10 +36,11 @@ const MONTH_NAMES_SHORT = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N"
 const MONTH_NAMES_FULL = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"];
 
 function ActivityHeatmapComponent() {
+  const { settings } = useSettingsStore();
   const [data, setData] = useState<ActivityData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [period, setPeriod] = useState<PeriodOption>("90");
+  const [period, setPeriod] = useState<ActivityPeriod>(settings.activityDefaultPeriod ?? "90");
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
 
@@ -203,7 +203,7 @@ function ActivityHeatmapComponent() {
           <Flame className="h-4 w-4 text-primary" />
           <span>Activité</span>
         </div>
-        <Select value={period} onValueChange={(v) => setPeriod(v as PeriodOption)}>
+        <Select value={period} onValueChange={(v) => setPeriod(v as ActivityPeriod)}>
           <SelectTrigger className="h-7 w-24 text-xs">
             <SelectValue />
           </SelectTrigger>

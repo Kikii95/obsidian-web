@@ -177,29 +177,26 @@ function ActivityHeatmapComponent() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
-        {error}
-      </div>
-    );
-  }
-
-  if (!data) return null;
-
   // Total grid width for positioning
   const totalGridWidth = weeks.length * cellSize + (weeks.length - 1) * cellGap;
 
+  // Always render container for measurement
   return (
     <div className="h-full flex flex-col p-3" ref={containerRef}>
+      {isLoading ? (
+        <div className="flex-1 flex items-center justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : error ? (
+        <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
+          {error}
+        </div>
+      ) : !data || weeks.length === 0 ? (
+        <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
+          Chargement...
+        </div>
+      ) : (
+        <>
       {/* Header with period selector */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2 text-sm font-medium">
@@ -299,6 +296,8 @@ function ActivityHeatmapComponent() {
           <p className="text-sm font-semibold">{data.stats.totalCommits}</p>
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 }

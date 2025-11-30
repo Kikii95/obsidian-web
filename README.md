@@ -41,11 +41,21 @@ A modern web-based viewer for Obsidian vaults, powered by GitHub as the backend 
 - **Service Worker** — Offline fallback page
 - **iOS Ready** — Apple touch icons, splash screens
 
-### Customization
+### Customization (Phase 9)
 - **12 Color Themes** — Magenta, Ocean, Forest, Sunset, Turquoise, Mono, and more
-- **Settings Page** — Dashboard, sidebar, graph, lock configuration
-- **Theme Persistence** — localStorage-based preference saving
-- **Responsive Design** — Mobile-first with dropdown actions on small screens
+- **Editor Settings** — Font size, line height, max width, frontmatter toggle
+- **Sidebar Settings** — Sort by name/type, hide patterns, custom folder order
+- **Header Settings** — Date/time display with format options (FR/EN/ISO)
+- **General Settings** — Auto-save delay configuration
+- **Dashboard Layout** — Compact, spacious, or minimal views
+
+### Obsidian-like Features (Phase 10)
+- **Quick Switcher** — Ctrl+P to instantly search and navigate to any note
+- **Tags Explorer** — `/tags` page with tag cloud and note filtering
+- **Daily Notes** — Calendar button creates/opens today's note (YYYY-MM-DD)
+- **Templates** — Select template when creating new notes
+- **Backlinks Panel** — See all notes linking to the current note
+- **Version History** — View git commit history for any file
 
 ### Productivity
 - **Export** — Download as .md, print/PDF via jspdf
@@ -129,11 +139,21 @@ src/
 │   │   ├── canvas/        # Canvas viewer
 │   │   ├── graph/         # Graph view (D3)
 │   │   ├── folder/        # Folder explorer
+│   │   ├── tags/          # Tags explorer (P10)
 │   │   ├── settings/      # Settings page
 │   │   └── profile/       # User profile
 │   ├── api/               # API routes
 │   │   ├── auth/          # NextAuth endpoints
-│   │   └── github/        # GitHub API proxy (tree, graph, activity, etc.)
+│   │   └── github/        # GitHub API proxy
+│   │       ├── tree/      # Vault structure
+│   │       ├── read/      # File content
+│   │       ├── save/      # Save file
+│   │       ├── graph/     # Graph data
+│   │       ├── activity/  # Commit history
+│   │       ├── backlinks/ # Backlinks (P10)
+│   │       ├── tags/      # Tags list (P10)
+│   │       ├── templates/ # Templates list (P10)
+│   │       └── history/   # Version history (P10)
 │   └── layout.tsx         # Root layout
 ├── components/
 │   ├── dashboard/         # Dashboard widgets (mini-graph, activity-heatmap)

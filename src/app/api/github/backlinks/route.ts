@@ -2,13 +2,12 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { createOctokit, getFullVaultTree, getFileContent } from "@/lib/github";
-import { parseWikilinks } from "@/lib/wikilinks";
 import { filterPrivatePaths, isPrivateContent } from "@/lib/privacy";
 
 interface Backlink {
   path: string;
   name: string;
-  context?: string; // Line containing the link (optional)
+  context?: string;
 }
 
 export async function GET(request: Request) {
@@ -31,26 +30,38 @@ export async function GET(request: Request) {
 
     const octokit = createOctokit(session.accessToken);
 
+    // Normalize target path - ensure .md extension
+    const normalizedPath = targetPath.endsWith(".md")
+      ? targetPath
+      : `${targetPath}.md`;
+
     // Get the target note name (without extension and path)
-    const targetName = targetPath
+    const targetName = normalizedPath
       .replace(/\.md$/, "")
       .split("/")
       .pop() || "";
 
     // Also keep full path without extension for exact matching
-    const targetId = targetPath.replace(/\.md$/, "");
+    const targetId = normalizedPath.replace(/\.md$/, "");
+
+    // Create lowercase versions for case-insensitive matching
+    const targetNameLower = targetName.toLowerCase();
+    const targetIdLower = targetId.toLowerCase();
 
     // Get all markdown files
     const allFiles = await getFullVaultTree(octokit);
     const publicFiles = filterPrivatePaths(allFiles);
     const mdFiles = publicFiles.filter(
-      (f) => f.type === "file" && f.path.endsWith(".md") && f.path !== targetPath
+      (f) => f.type === "file" && f.path.endsWith(".md") && f.path !== normalizedPath
     );
 
     const backlinks: Backlink[] = [];
 
-    // Limit files to scan for performance
-    const filesToScan = mdFiles.slice(0, 150);
+    // Scan ALL files (or up to 500 for very large vaults)
+    const filesToScan = mdFiles.slice(0, 500);
+
+    // Regex to find all wikilinks in content
+    const wikilinkRegex = /\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g;
 
     for (const file of filesToScan) {
       try {
@@ -60,47 +71,63 @@ export async function GET(request: Request) {
         const privacyCheck = isPrivateContent(content);
         if (privacyCheck.isPrivate) continue;
 
-        const wikilinks = parseWikilinks(content);
+        // Find all wikilinks in content
+        const matches = content.matchAll(wikilinkRegex);
+        let hasBacklink = false;
+        let matchedLine: string | undefined;
 
-        // Check if any wikilink points to our target
-        const hasBacklink = wikilinks.some((link) => {
-          if (link.isEmbed) return false;
+        for (const match of matches) {
+          const linkTarget = match[1].trim();
+          const linkTargetLower = linkTarget.toLowerCase();
 
-          const linkTarget = link.target;
+          // Clean the link target (remove anchors, extensions)
+          const cleanTarget = linkTargetLower
+            .replace(/\.md$/i, "")
+            .replace(/#.*$/, "")
+            .replace(/\\+/g, "");
 
-          // Match by full path
-          if (linkTarget === targetId) return true;
+          // Multiple matching strategies:
+          // 1. Exact match by full path
+          if (cleanTarget === targetIdLower) {
+            hasBacklink = true;
+          }
+          // 2. Match by name only (Obsidian style - just [[NoteName]])
+          else if (cleanTarget === targetNameLower) {
+            hasBacklink = true;
+          }
+          // 3. Match if link ends with /targetName
+          else if (cleanTarget.endsWith("/" + targetNameLower)) {
+            hasBacklink = true;
+          }
+          // 4. Match if target ends with /linkTarget (partial path match)
+          else if (targetIdLower.endsWith("/" + cleanTarget)) {
+            hasBacklink = true;
+          }
+          // 5. Match just the filename part
+          else if (cleanTarget.split("/").pop() === targetNameLower) {
+            hasBacklink = true;
+          }
 
-          // Match by name only (Obsidian style - just [[NoteName]])
-          if (linkTarget === targetName) return true;
-
-          // Match if link ends with target name
-          if (linkTarget.endsWith("/" + targetName)) return true;
-
-          return false;
-        });
+          if (hasBacklink) {
+            // Get the line containing this match for context
+            const lineStart = content.lastIndexOf("\n", match.index) + 1;
+            const lineEnd = content.indexOf("\n", match.index);
+            matchedLine = content.substring(
+              lineStart,
+              lineEnd === -1 ? undefined : lineEnd
+            ).trim();
+            break;
+          }
+        }
 
         if (hasBacklink) {
-          // Find the line containing the link for context
-          const lines = content.split("\n");
-          const linkLine = lines.find((line) => {
-            const lowerLine = line.toLowerCase();
-            return (
-              lowerLine.includes(`[[${targetName.toLowerCase()}]]`) ||
-              lowerLine.includes(`[[${targetName.toLowerCase()}|`) ||
-              lowerLine.includes(`[[${targetId.toLowerCase()}]]`) ||
-              lowerLine.includes(`[[${targetId.toLowerCase()}|`)
-            );
-          });
-
           backlinks.push({
             path: file.path,
             name: file.name.replace(/\.md$/, ""),
-            context: linkLine?.trim().slice(0, 200), // Limit context length
+            context: matchedLine?.slice(0, 200),
           });
         }
       } catch {
-        // Skip files that can't be read
         continue;
       }
     }

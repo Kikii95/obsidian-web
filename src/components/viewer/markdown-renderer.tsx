@@ -6,7 +6,7 @@ import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
 import rehypeRaw from "rehype-raw";
 import rehypeHighlight from "rehype-highlight";
-import Link from "next/link";
+import { PrefetchLink } from "@/components/ui/prefetch-link";
 import { wikilinkToPath } from "@/lib/wikilinks";
 import { cn } from "@/lib/utils";
 import { Copy, Check } from "lucide-react";
@@ -60,18 +60,18 @@ export const MarkdownRenderer = memo(function MarkdownRenderer({ content, classN
         remarkPlugins={[remarkGfm, remarkBreaks]}
         rehypePlugins={[rehypeRaw, rehypeHighlight]}
         components={{
-          // Custom link component to handle internal links
+          // Custom link component to handle internal links with prefetching
           a: ({ href, children, ...props }) => {
-            // Check if it's an internal wikilink
-            if (href?.startsWith("/note/")) {
+            // Check if it's an internal wikilink - prefetch on hover
+            if (href?.startsWith("/note/") || href?.startsWith("/canvas/") || href?.startsWith("/file/")) {
               return (
-                <Link
+                <PrefetchLink
                   href={href}
                   className="wikilink text-primary hover:text-primary/80 no-underline hover:underline"
                   {...props}
                 >
                   {children}
-                </Link>
+                </PrefetchLink>
               );
             }
 

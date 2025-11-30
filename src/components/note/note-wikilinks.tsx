@@ -1,11 +1,17 @@
 "use client";
 
 import { memo } from "react";
-import Link from "next/link";
+import { FileText } from "lucide-react";
+import { PrefetchLink } from "@/components/ui/prefetch-link";
 import { encodePathSegments } from "@/lib/path-utils";
 
 interface NoteWikilinksProps {
   wikilinks: string[];
+}
+
+// Format path for display (remove .md extension)
+function formatPath(path: string): string {
+  return path.replace(/\.md$/, "");
 }
 
 export const NoteWikilinks = memo(function NoteWikilinks({
@@ -21,14 +27,16 @@ export const NoteWikilinks = memo(function NoteWikilinks({
       <div className="flex flex-wrap gap-2">
         {wikilinks.map((link) => {
           const encodedLink = encodePathSegments(link);
+          const displayPath = formatPath(link);
           return (
-            <Link
+            <PrefetchLink
               key={link}
               href={`/note/${encodedLink}`}
-              className="text-sm text-primary hover:text-primary/80 hover:underline"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
             >
-              [[{link}]]
-            </Link>
+              <FileText className="h-3.5 w-3.5 shrink-0" />
+              {displayPath}
+            </PrefetchLink>
           );
         })}
       </div>

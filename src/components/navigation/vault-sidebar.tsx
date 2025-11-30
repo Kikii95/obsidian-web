@@ -2,9 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { FileTree } from "./file-tree";
+import { VirtualFileTree } from "./virtual-file-tree";
 import { useVaultStore } from "@/lib/store";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, FolderTree, RefreshCw, FilePlus, FolderPlus, ChevronsDownUp, ChevronsUpDown, MoreHorizontal, FolderPen, FolderX, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -132,9 +131,9 @@ export function VaultSidebar() {
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col overflow-hidden">
       {/* Sticky header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-border/50 shrink-0">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-border/50 shrink-0 flex-none">
         <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
           Vault
         </span>
@@ -240,12 +239,10 @@ export function VaultSidebar() {
             </Button>
           </div>
       </div>
-      {/* Scrollable tree */}
-      <ScrollArea className="flex-1 min-h-0">
-        <div className="p-2">
-          <FileTree files={tree} />
-        </div>
-      </ScrollArea>
+      {/* Virtualized scrollable tree */}
+      <div className="flex-1 min-h-0 overflow-hidden p-2">
+        <VirtualFileTree files={tree} />
+      </div>
 
       {/* Manage folder dialog */}
       {manageFolderMode && (

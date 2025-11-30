@@ -73,7 +73,7 @@ function MiniGraphComponent({
       .force("y", d3.forceY(height / 2).strength(gravityStrength))
       .force("collision", d3.forceCollide().radius(collisionRadius));
 
-    // Draw links
+    // Draw links - more visible
     const link = g
       .append("g")
       .attr("class", "links")
@@ -81,10 +81,10 @@ function MiniGraphComponent({
       .data(linksCopy)
       .enter()
       .append("line")
-      .attr("stroke", "hsl(var(--primary) / 0.3)")
-      .attr("stroke-width", 1);
+      .attr("stroke", "hsl(var(--primary) / 0.5)")
+      .attr("stroke-width", 1.5);
 
-    // Draw nodes
+    // Draw nodes - larger and more visible
     const node = g
       .append("g")
       .attr("class", "nodes")
@@ -92,10 +92,10 @@ function MiniGraphComponent({
       .data(nodesCopy)
       .enter()
       .append("circle")
-      .attr("r", 4)
+      .attr("r", 6)
       .attr("fill", "hsl(var(--primary))")
-      .attr("stroke", "hsl(var(--background))")
-      .attr("stroke-width", 1)
+      .attr("stroke", "hsl(var(--primary-foreground))")
+      .attr("stroke-width", 2)
       .style("cursor", "pointer")
       .on("click", (_, d) => {
         const path = d.path.replace(/\.md$/, "");

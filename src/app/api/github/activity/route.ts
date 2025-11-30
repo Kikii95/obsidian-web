@@ -26,8 +26,8 @@ export async function GET(request: Request) {
     since.setDate(since.getDate() - days);
 
     // Get commits from the vault repo
-    const owner = process.env.GITHUB_VAULT_OWNER!;
-    const repo = process.env.GITHUB_VAULT_REPO!;
+    const owner = process.env.GITHUB_REPO_OWNER!;
+    const repo = process.env.GITHUB_REPO_NAME!;
 
     // Fetch commits with pagination (max 100 per page)
     const commits: Array<{ date: string }> = [];

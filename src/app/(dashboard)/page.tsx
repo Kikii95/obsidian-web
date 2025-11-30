@@ -45,12 +45,25 @@ import type { VaultFile } from "@/types";
 // Lazy load mini graph
 const MiniGraph = dynamic(() => import("@/components/dashboard/mini-graph"), {
   loading: () => (
-    <div className="h-[200px] flex items-center justify-center">
+    <div className="h-full flex items-center justify-center">
       <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
     </div>
   ),
   ssr: false,
 });
+
+// Lazy load activity heatmap
+const ActivityHeatmap = dynamic(
+  () => import("@/components/dashboard/activity-heatmap"),
+  {
+    loading: () => (
+      <div className="h-full flex items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    ),
+    ssr: false,
+  }
+);
 
 interface VaultStats {
   notes: number;
@@ -440,40 +453,52 @@ export default function HomePage() {
         </Card>
       </div>
 
-      {/* Mini Graph */}
+      {/* Graph & Activity - Two square cards side by side */}
       {settings.showMiniGraph && (
-        <Card className="mb-6">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Network className="h-4 w-4 text-primary" />
-                Aperçu du Graph
-              </CardTitle>
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/graph" className="text-xs">
-                  Voir complet →
-                </Link>
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[250px] rounded-lg overflow-hidden border border-border/50 bg-muted/20">
-              {graphData ? (
-                <MiniGraph
-                  nodes={graphData.nodes}
-                  links={graphData.links}
-                  forceStrength={settings.graphForceStrength}
-                  linkDistance={settings.graphLinkDistance}
-                  gravityStrength={settings.graphGravityStrength ?? 0.1}
-                />
-              ) : (
-                <div className="h-full flex items-center justify-center">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          {/* Mini Graph Card */}
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <Network className="h-4 w-4 text-primary" />
+                  Graph
+                </CardTitle>
+                <Button variant="ghost" size="sm" asChild className="h-6 px-2">
+                  <Link href="/graph" className="text-xs">
+                    Voir →
+                  </Link>
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="aspect-square rounded-lg overflow-hidden border border-border/50 bg-muted/20">
+                {graphData ? (
+                  <MiniGraph
+                    nodes={graphData.nodes}
+                    links={graphData.links}
+                    forceStrength={settings.graphForceStrength}
+                    linkDistance={settings.graphLinkDistance}
+                    gravityStrength={settings.graphGravityStrength ?? 0.1}
+                  />
+                ) : (
+                  <div className="h-full flex items-center justify-center">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Activity Heatmap Card */}
+          <Card>
+            <CardContent className="p-0">
+              <div className="aspect-square rounded-lg overflow-hidden">
+                <ActivityHeatmap />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );

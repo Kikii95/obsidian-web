@@ -21,6 +21,19 @@ interface GraphData {
   connectedNotes: number;
 }
 
+interface ActivityData {
+  activity: Array<{ date: string; count: number }>;
+  stats: {
+    totalCommits: number;
+    activeDays: number;
+    maxCommitsPerDay: number;
+    avgCommitsPerDay: number;
+    currentStreak: number;
+    longestStreak: number;
+    period: number;
+  };
+}
+
 interface BinaryFileData {
   path: string;
   content: string; // base64
@@ -79,6 +92,13 @@ export const githubClient = {
       ? "/api/github/graph?includeOrphans=true"
       : "/api/github/graph";
     return apiFetch<GraphData>(url);
+  },
+
+  /**
+   * Get activity data (commits heatmap)
+   */
+  async getActivity(days = 365): Promise<ActivityData> {
+    return apiFetch<ActivityData>(`/api/github/activity?days=${days}`);
   },
 
   /**

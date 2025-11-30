@@ -13,6 +13,7 @@ import {
   Image,
   FileText,
   LayoutDashboard,
+  ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useVaultStore } from "@/lib/store";
@@ -158,29 +159,46 @@ const VirtualTreeItem = memo(function VirtualTreeItem({
   );
 
   if (isDirectory) {
+    // Build folder explorer URL
+    const folderHref = `/folder/${file.path.split("/").map(s => encodeURIComponent(s)).join("/")}`;
+
     return (
-      <button
-        onClick={() => toggleFolder(file.path)}
-        className={cn(
-          "flex items-center gap-1 w-full h-full px-2 text-sm rounded-md transition-colors overflow-hidden",
-          "hover:bg-muted/50 text-left",
-          isExpanded && "text-foreground",
-          !isExpanded && "text-muted-foreground"
-        )}
-      >
-        {indentGuides}
-        <ChevronRight
+      <div className="flex items-center w-full h-full group">
+        <button
+          onClick={() => toggleFolder(file.path)}
           className={cn(
-            "h-3 w-3 shrink-0 transition-transform",
-            isExpanded && "rotate-90"
+            "flex items-center gap-1 flex-1 h-full px-2 text-sm rounded-md transition-colors overflow-hidden",
+            "hover:bg-muted/50 text-left",
+            isExpanded && "text-foreground",
+            !isExpanded && "text-muted-foreground"
           )}
-        />
-        <span className="shrink-0">{icon}</span>
-        <span className="truncate font-medium">{displayName}</span>
-        {file.isLocked && (
-          <Lock className="h-3.5 w-3.5 ml-1 shrink-0 text-amber-500" />
-        )}
-      </button>
+        >
+          {indentGuides}
+          <ChevronRight
+            className={cn(
+              "h-3 w-3 shrink-0 transition-transform",
+              isExpanded && "rotate-90"
+            )}
+          />
+          <span className="shrink-0">{icon}</span>
+          <span className="truncate font-medium">{displayName}</span>
+          {file.isLocked && (
+            <Lock className="h-3.5 w-3.5 ml-1 shrink-0 text-amber-500" />
+          )}
+        </button>
+        {/* Folder explorer button */}
+        <Link
+          href={folderHref}
+          onClick={(e) => e.stopPropagation()}
+          className={cn(
+            "p-1 mr-1 rounded opacity-0 group-hover:opacity-100 transition-opacity",
+            "hover:bg-primary/20 text-muted-foreground hover:text-primary"
+          )}
+          title="Ouvrir l'explorateur"
+        >
+          <ExternalLink className="h-3 w-3" />
+        </Link>
+      </div>
     );
   }
 

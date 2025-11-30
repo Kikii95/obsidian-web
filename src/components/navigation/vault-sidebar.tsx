@@ -19,6 +19,7 @@ import { CreateFolderDialog } from "@/components/notes/create-folder-dialog";
 import { ManageFolderDialog } from "@/components/notes/manage-folder-dialog";
 import { ImportNoteDialog } from "@/components/notes/import-note-dialog";
 import { githubClient } from "@/services/github-client";
+import { useSettingsStore } from "@/lib/settings-store";
 import type { VaultFile } from "@/types";
 
 // Extract all folder paths from tree recursively
@@ -73,6 +74,7 @@ function filterTree(files: VaultFile[], query: string): VaultFile[] {
 
 export function VaultSidebar() {
   const { data: session } = useSession();
+  const { settings } = useSettingsStore();
   const {
     tree,
     isLoadingTree,
@@ -83,6 +85,7 @@ export function VaultSidebar() {
     setTreeError,
     collapseAllFolders,
     expandAllFolders,
+    expandFolder,
   } = useVaultStore();
 
   const [manageFolderMode, setManageFolderMode] = useState<"rename" | "delete" | null>(null);
@@ -93,7 +96,7 @@ export function VaultSidebar() {
     return filterTree(tree, searchQuery);
   }, [tree, searchQuery]);
 
-  const fetchTree = useCallback(async () => {
+  const fetchTree = useCallback(async (applyDefaults = false) => {
     if (!session) return;
 
     setTreeLoading(true);
@@ -102,6 +105,13 @@ export function VaultSidebar() {
     try {
       const tree = await githubClient.getTree();
       setTree(tree);
+
+      // Apply default expanded folders on initial load
+      if (applyDefaults && settings.defaultExpandedFolders.length > 0) {
+        settings.defaultExpandedFolders.forEach((folder) => {
+          expandFolder(folder);
+        });
+      }
     } catch (error) {
       setTreeError(
         error instanceof Error ? error.message : "Erreur inconnue"
@@ -109,11 +119,11 @@ export function VaultSidebar() {
     } finally {
       setTreeLoading(false);
     }
-  }, [session, setTree, setTreeLoading, setTreeError]);
+  }, [session, setTree, setTreeLoading, setTreeError, settings.defaultExpandedFolders, expandFolder]);
 
   useEffect(() => {
     if (session && tree.length === 0) {
-      fetchTree();
+      fetchTree(true); // Apply default folders on initial load
     }
   }, [session, tree.length, fetchTree]);
 
@@ -148,7 +158,7 @@ export function VaultSidebar() {
         <div className="flex flex-col items-center justify-center gap-3 text-center py-8">
           <AlertCircle className="h-8 w-8 text-destructive" />
           <p className="text-sm text-muted-foreground">{treeError}</p>
-          <Button variant="outline" size="sm" onClick={fetchTree}>
+          <Button variant="outline" size="sm" onClick={() => fetchTree()}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Réessayer
           </Button>
@@ -163,7 +173,7 @@ export function VaultSidebar() {
         <div className="flex flex-col items-center justify-center gap-3 text-center py-8">
           <FolderTree className="h-8 w-8 text-muted-foreground" />
           <p className="text-sm text-muted-foreground">Vault vide</p>
-          <Button variant="outline" size="sm" onClick={fetchTree}>
+          <Button variant="outline" size="sm" onClick={() => fetchTree()}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Rafraîchir
           </Button>

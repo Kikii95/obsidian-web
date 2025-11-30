@@ -14,7 +14,14 @@ export type Theme =
   | "cyber"
   | "lavender"
   | "mint"
-  | "turquoise";
+  | "turquoise"
+  // Soft Light themes
+  | "cream"
+  | "cloud"
+  | "sage"
+  | "peach"
+  | "mist"
+  | "sand";
 
 export interface ThemeOption {
   id: Theme;
@@ -24,6 +31,7 @@ export interface ThemeOption {
 }
 
 export const themes: ThemeOption[] = [
+  // Vibrant themes (dark background)
   { id: "magenta", name: "Magenta", emoji: "💜", description: "Violet vibrant" },
   { id: "lavender", name: "Lavender", emoji: "🟣", description: "Violet doux" },
   { id: "rose", name: "Rose", emoji: "🌸", description: "Rose pastel" },
@@ -36,6 +44,13 @@ export const themes: ThemeOption[] = [
   { id: "ocean", name: "Ocean", emoji: "🔵", description: "Bleu profond" },
   { id: "mono", name: "Mono Inverse", emoji: "⚫", description: "Noir & blanc" },
   { id: "mono-inverse", name: "Mono", emoji: "⚪", description: "Blanc & noir" },
+  // Soft Light themes (light background, easy on the eyes)
+  { id: "cream", name: "Cream", emoji: "🍦", description: "Beige doux" },
+  { id: "cloud", name: "Cloud", emoji: "☁️", description: "Bleu ciel" },
+  { id: "sage", name: "Sage", emoji: "🌿", description: "Vert sauge" },
+  { id: "peach", name: "Peach", emoji: "🍑", description: "Pêche doux" },
+  { id: "mist", name: "Mist", emoji: "🌫️", description: "Gris bleuté" },
+  { id: "sand", name: "Sand", emoji: "🏖️", description: "Sable chaud" },
 ];
 
 const THEME_STORAGE_KEY = "obsidian-web-theme";

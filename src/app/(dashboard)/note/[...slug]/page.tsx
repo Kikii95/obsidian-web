@@ -3,9 +3,23 @@
 import { useEffect, useMemo } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { MarkdownRenderer } from "@/components/viewer/markdown-renderer";
-import { MarkdownEditor } from "@/components/editor/markdown-editor";
 import { Skeleton } from "@/components/ui/skeleton";
+
+// Lazy load CodeMirror editor (~500kb) - only loaded when editing
+const MarkdownEditor = dynamic(
+  () => import("@/components/editor/markdown-editor").then((mod) => mod.MarkdownEditor),
+  {
+    loading: () => (
+      <div className="border border-border rounded-lg p-4 space-y-2">
+        <Skeleton className="h-6 w-32" />
+        <Skeleton className="h-[400px] w-full" />
+      </div>
+    ),
+    ssr: false,
+  }
+);
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, ChevronRight, FileText, RefreshCw } from "lucide-react";

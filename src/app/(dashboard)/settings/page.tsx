@@ -35,11 +35,19 @@ import {
   Network,
   FolderTree,
   RotateCcw,
+  Type,
+  X,
+  ChevronUp,
+  ChevronDown,
+  Plus,
+  GripVertical,
+  Clock,
+  Settings2,
 } from "lucide-react";
 import Link from "next/link";
 import { useTheme, themes } from "@/hooks/use-theme";
 import { getCacheStats, clearNotesCache } from "@/lib/note-cache";
-import { useSettingsStore, type UserSettings, type ActivityPeriod, type DashboardLayout } from "@/lib/settings-store";
+import { useSettingsStore, type UserSettings, type ActivityPeriod, type DashboardLayout, type SidebarSortBy, type DateFormat } from "@/lib/settings-store";
 import { useVaultStore } from "@/lib/store";
 import type { VaultFile } from "@/types";
 
@@ -226,6 +234,126 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/* Editor Settings */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Type className="h-5 w-5 text-primary" />
+            Éditeur & Viewer
+          </CardTitle>
+          <CardDescription>Personnalise l'affichage des notes</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Font size */}
+          <div className="space-y-2">
+            <Label>Taille de police</Label>
+            <div className="flex items-center gap-4">
+              <Slider
+                value={[settings.editorFontSize ?? 16]}
+                onValueChange={([value]) =>
+                  updateSettings({ editorFontSize: value })
+                }
+                min={12}
+                max={24}
+                step={1}
+                className="flex-1"
+              />
+              <span className="w-12 text-center font-mono text-sm">
+                {settings.editorFontSize ?? 16}px
+              </span>
+            </div>
+          </div>
+
+          {/* Line height */}
+          <div className="space-y-2">
+            <Label>Interligne</Label>
+            <div className="flex items-center gap-4">
+              <Slider
+                value={[(settings.editorLineHeight ?? 1.6) * 10]}
+                onValueChange={([value]) =>
+                  updateSettings({ editorLineHeight: value / 10 })
+                }
+                min={12}
+                max={24}
+                step={1}
+                className="flex-1"
+              />
+              <span className="w-12 text-center font-mono text-sm">
+                {(settings.editorLineHeight ?? 1.6).toFixed(1)}
+              </span>
+            </div>
+          </div>
+
+          {/* Max content width */}
+          <div className="space-y-2">
+            <Label>Largeur max du contenu</Label>
+            <div className="flex items-center gap-4">
+              <Slider
+                value={[settings.editorMaxWidth ?? 800]}
+                onValueChange={([value]) =>
+                  updateSettings({ editorMaxWidth: value })
+                }
+                min={500}
+                max={1400}
+                step={50}
+                className="flex-1"
+              />
+              <span className="w-16 text-center font-mono text-sm">
+                {settings.editorMaxWidth ?? 800}px
+              </span>
+            </div>
+          </div>
+
+          {/* Show frontmatter */}
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>Afficher le frontmatter</Label>
+              <p className="text-sm text-muted-foreground">
+                Badges status et tags sous le titre
+              </p>
+            </div>
+            <Switch
+              checked={settings.showFrontmatter ?? true}
+              onCheckedChange={(checked) =>
+                updateSettings({ showFrontmatter: checked })
+              }
+            />
+          </div>
+
+          {/* Default edit mode */}
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>Mode édition par défaut</Label>
+              <p className="text-sm text-muted-foreground">
+                Ouvrir les notes en mode édition
+              </p>
+            </div>
+            <Switch
+              checked={settings.defaultEditMode ?? false}
+              onCheckedChange={(checked) =>
+                updateSettings({ defaultEditMode: checked })
+              }
+            />
+          </div>
+
+          {/* Keyboard shortcuts */}
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>Raccourcis clavier</Label>
+              <p className="text-sm text-muted-foreground">
+                Ctrl+S pour sauvegarder, Esc pour annuler
+              </p>
+            </div>
+            <Switch
+              checked={settings.enableKeyboardShortcuts ?? true}
+              onCheckedChange={(checked) =>
+                updateSettings({ enableKeyboardShortcuts: checked })
+              }
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Sidebar Settings */}
       <Card className="mb-6">
         <CardHeader>
@@ -278,6 +406,174 @@ export default function SettingsPage() {
                 {settings.defaultExpandedFolders.length} dossier(s) sélectionné(s)
               </p>
             )}
+          </div>
+
+          {/* Sort by */}
+          <div className="space-y-2">
+            <Label>Tri des fichiers</Label>
+            <Select
+              value={settings.sidebarSortBy ?? "name"}
+              onValueChange={(value) =>
+                updateSettings({ sidebarSortBy: value as SidebarSortBy })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="name">Alphabétique (A-Z)</SelectItem>
+                <SelectItem value="type">Par type (md, canvas, images...)</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-sm text-muted-foreground">
+              Les dossiers sont toujours affichés en premier
+            </p>
+          </div>
+
+          {/* Show file icons */}
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>Icônes colorées par type</Label>
+              <p className="text-sm text-muted-foreground">
+                Icônes différenciées pour md, canvas, images, pdf
+              </p>
+            </div>
+            <Switch
+              checked={settings.showFileIcons ?? true}
+              onCheckedChange={(checked) =>
+                updateSettings({ showFileIcons: checked })
+              }
+            />
+          </div>
+
+          {/* Hide patterns */}
+          <div className="space-y-2">
+            <Label>Fichiers masqués</Label>
+            <p className="text-sm text-muted-foreground mb-2">
+              Patterns de fichiers à masquer (supporte *.ext)
+            </p>
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {(settings.hidePatterns ?? []).map((pattern) => (
+                <Badge
+                  key={pattern}
+                  variant="secondary"
+                  className="gap-1 cursor-pointer hover:bg-destructive/20"
+                  onClick={() =>
+                    updateSettings({
+                      hidePatterns: settings.hidePatterns.filter((p) => p !== pattern),
+                    })
+                  }
+                >
+                  {pattern}
+                  <X className="h-3 w-3" />
+                </Badge>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Ex: .gitkeep, *.log, _temp"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    const value = e.currentTarget.value.trim();
+                    if (value && !settings.hidePatterns?.includes(value)) {
+                      updateSettings({
+                        hidePatterns: [...(settings.hidePatterns ?? []), value],
+                      });
+                      e.currentTarget.value = "";
+                    }
+                  }
+                }}
+                className="flex-1"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Appuie sur Entrée pour ajouter, clique sur un badge pour supprimer
+            </p>
+          </div>
+
+          {/* Custom folder order */}
+          <div className="space-y-2">
+            <Label>Ordre des dossiers racine</Label>
+            <p className="text-sm text-muted-foreground mb-2">
+              Définir un ordre personnalisé pour les dossiers principaux
+            </p>
+            {(settings.customFolderOrder ?? []).length > 0 && (
+              <div className="space-y-1 mb-2">
+                {settings.customFolderOrder.map((folder, index) => (
+                  <div
+                    key={folder}
+                    className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 border border-border"
+                  >
+                    <GripVertical className="h-4 w-4 text-muted-foreground" />
+                    <span className="flex-1 text-sm font-medium">{folder}</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      disabled={index === 0}
+                      onClick={() => {
+                        const order = [...settings.customFolderOrder];
+                        [order[index - 1], order[index]] = [order[index], order[index - 1]];
+                        updateSettings({ customFolderOrder: order });
+                      }}
+                    >
+                      <ChevronUp className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      disabled={index === settings.customFolderOrder.length - 1}
+                      onClick={() => {
+                        const order = [...settings.customFolderOrder];
+                        [order[index], order[index + 1]] = [order[index + 1], order[index]];
+                        updateSettings({ customFolderOrder: order });
+                      }}
+                    >
+                      <ChevronDown className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 text-destructive hover:text-destructive"
+                      onClick={() => {
+                        updateSettings({
+                          customFolderOrder: settings.customFolderOrder.filter((f) => f !== folder),
+                        });
+                      }}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {/* Add folders not in custom order */}
+            {topLevelFolders.filter((f) => !(settings.customFolderOrder ?? []).includes(f)).length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {topLevelFolders
+                  .filter((f) => !(settings.customFolderOrder ?? []).includes(f))
+                  .map((folder) => (
+                    <Button
+                      key={folder}
+                      variant="outline"
+                      size="sm"
+                      className="gap-1"
+                      onClick={() => {
+                        updateSettings({
+                          customFolderOrder: [...(settings.customFolderOrder ?? []), folder],
+                        });
+                      }}
+                    >
+                      <Plus className="h-3 w-3" />
+                      {folder}
+                    </Button>
+                  ))}
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Clique sur un dossier pour l'ajouter à l'ordre. Dossiers non listés apparaissent après (alphabétiquement).
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -445,6 +741,79 @@ export default function SettingsPage() {
                 {(settings.graphGravityStrength ?? 0.05).toFixed(2)}
               </span>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* General Settings */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Settings2 className="h-5 w-5 text-primary" />
+            Général
+          </CardTitle>
+          <CardDescription>Paramètres généraux de l'application</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Show date/time in header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>Afficher date et heure</Label>
+              <p className="text-sm text-muted-foreground">
+                Date et heure dans le header
+              </p>
+            </div>
+            <Switch
+              checked={settings.showDateTime ?? false}
+              onCheckedChange={(checked) =>
+                updateSettings({ showDateTime: checked })
+              }
+            />
+          </div>
+
+          {/* Date format */}
+          <div className="space-y-2">
+            <Label>Format de date</Label>
+            <Select
+              value={settings.dateFormat ?? "fr"}
+              onValueChange={(value) =>
+                updateSettings({ dateFormat: value as DateFormat })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="fr">Français (sam. 30 nov.)</SelectItem>
+                <SelectItem value="en">English (Sat, Nov 30)</SelectItem>
+                <SelectItem value="iso">ISO (2025-11-30)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Auto-save delay */}
+          <div className="space-y-2">
+            <Label>Sauvegarde automatique</Label>
+            <Select
+              value={String(settings.autoSaveDelay ?? 0)}
+              onValueChange={(value) =>
+                updateSettings({ autoSaveDelay: Number(value) })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="0">Désactivée</SelectItem>
+                <SelectItem value="5">5 secondes</SelectItem>
+                <SelectItem value="10">10 secondes</SelectItem>
+                <SelectItem value="30">30 secondes</SelectItem>
+                <SelectItem value="60">1 minute</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-sm text-muted-foreground">
+              Délai après la dernière frappe avant sauvegarde auto
+            </p>
           </div>
         </CardContent>
       </Card>

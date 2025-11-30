@@ -22,6 +22,7 @@ import { Logo } from "@/components/ui/logo";
 import { NetworkStatus } from "@/components/ui/network-status";
 import { ResizableSidebar } from "@/components/ui/resizable-sidebar";
 import { GlobalLockStatus } from "@/components/lock/global-lock-status";
+import { HeaderDateTime } from "@/components/ui/header-date-time";
 
 export default function DashboardLayout({
   children,
@@ -102,6 +103,9 @@ export default function DashboardLayout({
               <span className="font-semibold text-lg hidden sm:inline">Obsidian Web</span>
             </Link>
           </div>
+
+          {/* Center - Date/Time */}
+          <HeaderDateTime />
 
           {/* Right side */}
           <div className="flex items-center gap-2">

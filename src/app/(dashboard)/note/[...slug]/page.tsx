@@ -34,11 +34,20 @@ import { useNoteExport } from "@/hooks/use-note-export";
 import { useNoteLock } from "@/hooks/use-note-lock";
 import { useBreadcrumb, useSlugName } from "@/hooks/use-breadcrumb";
 import { decodeSlugSegments, buildFilePath } from "@/lib/path-utils";
+import { useSettingsStore } from "@/lib/settings-store";
 
 export default function NotePage() {
   const params = useParams();
   const { isOnline } = useOnlineStatus();
   const { isUnlocked, initializeLockState } = useLockStore();
+  const { settings } = useSettingsStore();
+
+  // Editor style settings
+  const editorMaxWidth = settings.editorMaxWidth ?? 800;
+  const editorFontSize = settings.editorFontSize ?? 16;
+  const editorLineHeight = settings.editorLineHeight ?? 1.6;
+  const defaultEditMode = settings.defaultEditMode ?? false;
+  const enableKeyboardShortcuts = settings.enableKeyboardShortcuts ?? true;
 
   // Parse slug
   const slug = params.slug as string[];
@@ -71,6 +80,7 @@ export default function NotePage() {
   const editor = useNoteEditor({
     note,
     onNoteUpdate: updateNote,
+    defaultEditMode,
   });
 
   // Export hook
@@ -88,6 +98,8 @@ export default function NotePage() {
 
   // Keyboard shortcuts
   useEffect(() => {
+    if (!enableKeyboardShortcuts) return;
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "s" && editor.isEditing) {
         e.preventDefault();
@@ -101,7 +113,7 @@ export default function NotePage() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [editor]);
+  }, [editor, enableKeyboardShortcuts]);
 
   // Show locked view for private notes
   if (isNoteLocked && !canViewNote) {
@@ -169,8 +181,14 @@ export default function NotePage() {
   // Title from frontmatter or file name
   const title = (note.frontmatter?.title as string) || noteName || "Sans titre";
 
+  // Container max-width: use wider for editing, user setting for viewing
+  const containerMaxWidth = editor.isEditing ? 1152 : editorMaxWidth;
+
   return (
-    <div className={`p-4 sm:p-6 mx-auto ${editor.isEditing ? "max-w-6xl" : "max-w-4xl"}`}>
+    <div
+      className="p-4 sm:p-6 mx-auto"
+      style={{ maxWidth: containerMaxWidth }}
+    >
       {/* Header with breadcrumb and actions */}
       <div className="flex items-start justify-between gap-2 sm:gap-4 mb-6">
         <NoteBreadcrumb items={breadcrumbs} />
@@ -205,7 +223,7 @@ export default function NotePage() {
       )}
 
       {/* Frontmatter badges */}
-      {note.frontmatter && Object.keys(note.frontmatter).length > 0 && !editor.isEditing && (
+      {(settings.showFrontmatter ?? true) && note.frontmatter && Object.keys(note.frontmatter).length > 0 && !editor.isEditing && (
         <div className="flex flex-wrap gap-2 mb-4">
           {note.frontmatter.status ? (
             <Badge variant="outline">{String(note.frontmatter.status)}</Badge>
@@ -221,7 +239,12 @@ export default function NotePage() {
       )}
 
       {/* Content - Editor or Viewer */}
-      <article>
+      <article
+        style={{
+          fontSize: editorFontSize,
+          lineHeight: editorLineHeight,
+        }}
+      >
         {editor.isEditing ? (
           <MarkdownEditor content={editor.editContent} onChange={editor.setEditContent} />
         ) : (

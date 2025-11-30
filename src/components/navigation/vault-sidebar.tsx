@@ -19,7 +19,8 @@ import { CreateFolderDialog } from "@/components/notes/create-folder-dialog";
 import { ManageFolderDialog } from "@/components/notes/manage-folder-dialog";
 import { ImportNoteDialog } from "@/components/notes/import-note-dialog";
 import { githubClient } from "@/services/github-client";
-import { useSettingsStore } from "@/lib/settings-store";
+import { useSettingsStore, type SidebarSortBy } from "@/lib/settings-store";
+import { getFileType } from "@/lib/file-types";
 import type { VaultFile } from "@/types";
 
 // Extract all folder paths from tree recursively
@@ -35,6 +36,92 @@ function getAllFolderPaths(files: VaultFile[], parentPath = ""): string[] {
     }
   }
   return paths;
+}
+
+// Get type priority for sorting (lower = first)
+function getTypePriority(file: VaultFile): number {
+  if (file.type === "dir") return 0;
+  const type = getFileType(file.name);
+  switch (type) {
+    case "markdown": return 1;
+    case "canvas": return 2;
+    case "image": return 3;
+    case "pdf": return 4;
+    default: return 5;
+  }
+}
+
+// Filter files by hide patterns (recursive)
+function filterByPatterns(files: VaultFile[], patterns: string[]): VaultFile[] {
+  if (patterns.length === 0) return files;
+
+  const result: VaultFile[] = [];
+  for (const file of files) {
+    // Check if file name matches any pattern
+    const shouldHide = patterns.some((pattern) => {
+      if (pattern.startsWith("*")) {
+        // Glob-like pattern (e.g., "*.log")
+        return file.name.endsWith(pattern.slice(1));
+      }
+      return file.name === pattern || file.name.includes(pattern);
+    });
+
+    if (shouldHide) continue;
+
+    if (file.type === "dir" && file.children) {
+      result.push({
+        ...file,
+        children: filterByPatterns(file.children, patterns),
+      });
+    } else {
+      result.push(file);
+    }
+  }
+  return result;
+}
+
+// Sort files recursively
+function sortTree(
+  files: VaultFile[],
+  sortBy: SidebarSortBy,
+  customFolderOrder: string[] = [],
+  isTopLevel = true
+): VaultFile[] {
+  const sorted = [...files].sort((a, b) => {
+    // Always folders first
+    if (a.type === "dir" && b.type !== "dir") return -1;
+    if (a.type !== "dir" && b.type === "dir") return 1;
+
+    // Apply custom folder order only at top level
+    if (isTopLevel && a.type === "dir" && b.type === "dir" && customFolderOrder.length > 0) {
+      const aIndex = customFolderOrder.indexOf(a.name);
+      const bIndex = customFolderOrder.indexOf(b.name);
+      // Both in custom order: sort by index
+      if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+      // Only a in custom order: a first
+      if (aIndex !== -1) return -1;
+      // Only b in custom order: b first
+      if (bIndex !== -1) return 1;
+      // Neither in custom order: fall through to normal sort
+    }
+
+    if (sortBy === "type") {
+      // Sort by type priority, then alphabetically
+      const priorityDiff = getTypePriority(a) - getTypePriority(b);
+      if (priorityDiff !== 0) return priorityDiff;
+    }
+
+    // Alphabetical sort (case-insensitive)
+    return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+  });
+
+  // Recursively sort children (not top level)
+  return sorted.map((file) => {
+    if (file.children) {
+      return { ...file, children: sortTree(file.children, sortBy, customFolderOrder, false) };
+    }
+    return file;
+  });
 }
 
 // Filter tree by search query (recursive)
@@ -91,10 +178,17 @@ export function VaultSidebar() {
   const [manageFolderMode, setManageFolderMode] = useState<"rename" | "delete" | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Filter tree based on search query
+  // Get settings
+  const sortBy = settings.sidebarSortBy ?? "name";
+  const hidePatterns = settings.hidePatterns ?? [];
+  const customFolderOrder = settings.customFolderOrder ?? [];
+
+  // Filter by patterns, search query, and sort tree
   const filteredTree = useMemo(() => {
-    return filterTree(tree, searchQuery);
-  }, [tree, searchQuery]);
+    const withoutHidden = filterByPatterns(tree, hidePatterns);
+    const filtered = filterTree(withoutHidden, searchQuery);
+    return sortTree(filtered, sortBy, customFolderOrder);
+  }, [tree, searchQuery, sortBy, hidePatterns, customFolderOrder]);
 
   const fetchTree = useCallback(async (applyDefaults = false) => {
     if (!session) return;

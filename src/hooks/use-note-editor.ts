@@ -6,6 +6,7 @@ import { githubClient, type NoteData } from "@/services/github-client";
 interface UseNoteEditorOptions {
   note: NoteData | null;
   onNoteUpdate?: (updates: Partial<NoteData>) => void;
+  defaultEditMode?: boolean;
 }
 
 interface UseNoteEditorReturn {
@@ -26,8 +27,9 @@ interface UseNoteEditorReturn {
 export function useNoteEditor({
   note,
   onNoteUpdate,
+  defaultEditMode = false,
 }: UseNoteEditorOptions): UseNoteEditorReturn {
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(defaultEditMode);
   const [editContent, setEditContent] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);

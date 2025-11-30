@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useVaultStore } from "@/lib/store";
+import { useSettingsStore } from "@/lib/settings-store";
 import { getFileType } from "@/lib/file-types";
 import { useFlattenedTree, type FlatTreeItem } from "@/hooks/use-flattened-tree";
 import type { VaultFile } from "@/types";
@@ -88,9 +89,11 @@ const VirtualTreeItem = memo(function VirtualTreeItem({
   const { file, depth, isExpanded } = item;
   const pathname = usePathname();
   const { toggleFolder } = useVaultStore();
+  const { settings } = useSettingsStore();
 
   const isDirectory = file.type === "dir";
   const fileType = getFileType(file.name);
+  const showFileIcons = settings.showFileIcons ?? true;
 
   // Build the URL path for this file
   const getFilePath = useCallback(
@@ -127,6 +130,10 @@ const VirtualTreeItem = memo(function VirtualTreeItem({
       ) : (
         <Folder className="h-4 w-4 text-muted-foreground" />
       );
+    }
+    // If icons disabled, show generic file icon
+    if (!showFileIcons) {
+      return <File className="h-4 w-4 text-muted-foreground" />;
     }
     switch (fileType) {
       case "image":

@@ -78,14 +78,18 @@ export const ForceGraph = memo(function ForceGraph({
     svg.call(zoom);
 
     // Create force simulation with configurable forces
+    // Collision radius scales with linkDistance (min 8px for readability)
+    const collisionRadius = Math.max(8, linkDistance * 0.3);
+
     const simulation = d3.forceSimulation<GraphNode>(nodes)
       .force("link", d3.forceLink<GraphNode, GraphLink>(links)
         .id(d => d.id)
         .distance(linkDistance)
+        .strength(1) // Strong link force to respect distance
       )
       .force("charge", d3.forceManyBody().strength(forceStrength))
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("collision", d3.forceCollide().radius(30));
+      .force("collision", d3.forceCollide().radius(collisionRadius));
 
     // Create links
     const link = container.append("g")

@@ -10,7 +10,21 @@ A modern web-based viewer for Obsidian vaults, powered by GitHub as the backend 
 - **GitHub Integration** — OAuth authentication, read/write access to your vault repository
 - **Markdown Viewer** — Full GFM support, syntax highlighting, wikilinks resolution
 - **CodeMirror Editor** — Syntax highlighting, keyboard shortcuts (Ctrl+S, Esc)
-- **File Tree Navigation** — Collapsible folders, real-time sync with GitHub
+- **File Tree Navigation** — Collapsible folders, search, real-time sync with GitHub
+
+### Dashboard
+- **Activity Heatmap** — GitHub-style contribution calendar showing commit history
+- **Mini Graph** — Interactive graph preview with configurable physics
+- **Vault Statistics** — Notes, folders, links, orphans, images, PDFs, canvas count
+- **Pinned Notes** — Quick access to your favorite notes
+- **Recent Notes** — Configurable list of recently accessed notes
+
+### Graph View
+- **Force-Directed Graph** — D3.js-powered node visualization
+- **Live Settings** — Real-time adjustment of repulsion, distance, gravity
+- **Orphan Toggle** — Show/hide notes without links
+- **Zoom Persistence** — Save and restore zoom level
+- **Click Navigation** — Click nodes to open notes
 
 ### Media Support
 - **Images** — Zoom, rotation, fullscreen viewing
@@ -29,6 +43,7 @@ A modern web-based viewer for Obsidian vaults, powered by GitHub as the backend 
 
 ### Customization
 - **12 Color Themes** — Magenta, Ocean, Forest, Sunset, Turquoise, Mono, and more
+- **Settings Page** — Dashboard, sidebar, graph, lock configuration
 - **Theme Persistence** — localStorage-based preference saving
 - **Responsive Design** — Mobile-first with dropdown actions on small screens
 
@@ -37,6 +52,7 @@ A modern web-based viewer for Obsidian vaults, powered by GitHub as the backend 
 - **Import** — Drag & drop .md files with folder selection
 - **Copy Code** — One-click copy for code blocks
 - **Markdown Cheatsheet** — Quick reference bar in editor
+- **Folder Explorer** — Dedicated `/folder` route for vault exploration
 
 ## Tech Stack
 
@@ -111,23 +127,29 @@ src/
 │   │   ├── note/          # Note viewer/editor
 │   │   ├── file/          # File viewer (images, PDFs)
 │   │   ├── canvas/        # Canvas viewer
-│   │   └── graph/         # Graph view (D3)
+│   │   ├── graph/         # Graph view (D3)
+│   │   ├── folder/        # Folder explorer
+│   │   ├── settings/      # Settings page
+│   │   └── profile/       # User profile
 │   ├── api/               # API routes
 │   │   ├── auth/          # NextAuth endpoints
-│   │   └── github/        # GitHub API proxy
+│   │   └── github/        # GitHub API proxy (tree, graph, activity, etc.)
 │   └── layout.tsx         # Root layout
 ├── components/
+│   ├── dashboard/         # Dashboard widgets (mini-graph, activity-heatmap)
+│   ├── dialogs/           # Generic dialog components (form, confirm)
 │   ├── editor/            # CodeMirror editor
-│   ├── graph/             # D3 force graph
+│   ├── graph/             # D3 force graph + settings popover
 │   ├── lock/              # PIN lock dialogs
 │   ├── navigation/        # Sidebar, header
 │   ├── notes/             # CRUD dialogs
 │   ├── ui/                # shadcn/ui components
 │   └── viewer/            # Markdown, image, PDF, canvas viewers
-├── hooks/                 # Custom React hooks (7 hooks)
+├── hooks/                 # Custom React hooks (8 hooks)
 │   ├── use-note-data.ts   # Note fetching + offline cache
 │   ├── use-note-editor.ts # Editor state management
 │   ├── use-note-export.ts # MD/PDF export
+│   ├── use-dialog-action.ts # Dialog async actions
 │   └── ...                # See docs/ARCHITECTURE.md
 ├── services/              # API clients
 │   └── github-client.ts   # Centralized GitHub API
@@ -135,7 +157,9 @@ src/
 │   ├── github.ts          # Server-side GitHub (Octokit)
 │   ├── note-cache.ts      # Offline cache
 │   ├── tree-cache.ts      # Tree cache for offline nav
-│   ├── store.ts           # Zustand store
+│   ├── store.ts           # Zustand vault store
+│   ├── settings-store.ts  # Zustand settings store
+│   ├── pinned-store.ts    # Zustand pinned notes store
 │   └── utils.ts           # General utilities
 ├── types/                 # TypeScript types
 └── docs/                  # Documentation

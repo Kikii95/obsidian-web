@@ -480,14 +480,72 @@ Added loading states for remaining dynamic routes:
 
 ---
 
-## Future Optimizations (TODO)
+## Phase 5 Optimizations (Completed)
 
-### Phase 5 Targets
+### Accessibility & Lazy Loading
 
-1. **Accessibility** — Focus traps, ARIA live regions, keyboard navigation
-2. **Lazy loading** — Dynamic imports for heavy components (canvas-viewer, force-graph)
-3. **Virtual scrolling** — For large file trees in sidebar (1000+ files)
-4. **Prefetching** — Prefetch linked notes on hover
+1. ✅ **Skip Link** — Skip to main content for keyboard users
+2. ✅ **ARIA Landmarks** — Proper roles for navigation, main, sidebar
+3. ✅ **aria-live Regions** — Announce dynamic content changes
+4. ✅ **Lazy Loading PDFViewer** — Dynamic import for ~500kb reduction
+5. ✅ **Virtual Scrolling** — TanStack Virtual for file tree (1000+ files)
+6. ✅ **Prefetch on Hover** — Notes prefetched when hovering links
+
+---
+
+## Phase 6 Optimizations (Completed)
+
+### Dashboard & Settings System
+
+**New Components:**
+
+| Component | Description |
+|-----------|-------------|
+| `mini-graph.tsx` | Interactive D3 graph preview on dashboard |
+| `activity-heatmap.tsx` | GitHub-style contribution calendar |
+
+**Settings Store (`lib/settings-store.ts`):**
+
+Zustand store with localStorage persistence for user preferences.
+
+```typescript
+interface UserSettings {
+  // Dashboard
+  recentNotesCount: number;      // 3-15
+  showMiniGraph: boolean;
+  activityDefaultPeriod: "30" | "90" | "180" | "365";
+
+  // Sidebar
+  defaultExpandedFolders: string[];
+  sidebarWidth: number;
+
+  // Lock system
+  lockTimeout: number;           // Minutes (0 = never)
+  requirePinOnDelete: boolean;
+  requirePinOnPrivateFolder: boolean;
+
+  // Graph
+  showOrphanNotes: boolean;
+  graphForceStrength: number;    // -1 to -500
+  graphLinkDistance: number;     // 5 to 200
+  graphGravityStrength: number;  // 0 to 0.3
+  graphDefaultZoom: number;      // 0.1 to 2
+}
+```
+
+**Graph Live Settings:**
+
+- Real-time adjustment via popover on `/graph` page
+- No reload required — Zustand triggers re-render
+- "Set Zoom" button to persist current zoom level
+
+**Activity Heatmap:**
+
+- Fetches commit history via `/api/github/activity`
+- Period selector: 30 days, 3 months, 6 months, 1 year
+- Responsive cell sizing based on container width
+- Month labels for orientation
+- Stats: streak, active days, total commits
 
 ---
 
@@ -506,7 +564,21 @@ Added loading states for remaining dynamic routes:
 ### Services
 - `src/services/github-client.ts` — Centralized API client
 
+### State Management (Zustand)
+- `src/lib/store.ts` — Vault tree store
+- `src/lib/settings-store.ts` — User settings with persistence (Phase 6)
+- `src/lib/pinned-store.ts` — Pinned notes store
+- `src/lib/lock-store.ts` — Lock state store
+
 ### Components
+
+**Dashboard Components (Phase 6)**
+- `src/components/dashboard/mini-graph.tsx` — Interactive graph preview
+- `src/components/dashboard/activity-heatmap.tsx` — GitHub-style heatmap
+
+**Graph Components**
+- `src/components/graph/force-graph.tsx` — D3 force-directed graph
+- `src/app/(dashboard)/graph/page.tsx` — Graph page with settings popover
 
 **Note Components**
 - `src/components/note/note-toolbar.tsx`
@@ -517,6 +589,16 @@ Added loading states for remaining dynamic routes:
 - `src/components/dialogs/confirm-dialog.tsx` — Generic confirmation
 - `src/components/dialogs/form-dialog.tsx` — Generic form dialog
 - `src/components/dialogs/index.ts` — Exports
+
+### API Routes
+- `src/app/api/github/tree/route.ts` — File tree
+- `src/app/api/github/graph/route.ts` — Graph data
+- `src/app/api/github/activity/route.ts` — Commit history (Phase 6)
+- `src/app/api/github/read/route.ts` — Read note
+- `src/app/api/github/save/route.ts` — Save note
+- `src/app/api/github/create/route.ts` — Create note
+- `src/app/api/github/delete/route.ts` — Delete note
+- `src/app/api/github/move/route.ts` — Move/rename note
 
 ### Cache
 - `src/lib/note-cache.ts` — Individual note cache

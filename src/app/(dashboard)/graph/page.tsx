@@ -52,14 +52,14 @@ export default function GraphPage() {
     setError(null);
 
     try {
-      const data = await githubClient.getGraph();
+      const data = await githubClient.getGraph(settings.showOrphanNotes);
       setGraphData(data as GraphData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [settings.showOrphanNotes]);
 
   useEffect(() => {
     fetchGraph();

@@ -162,7 +162,7 @@ export default function HomePage() {
 
       const [treeData, graph] = await Promise.all([
         githubClient.getTree(),
-        githubClient.getGraph(),
+        githubClient.getGraph(true), // Include orphans to get accurate stats
       ]);
 
       setTree(treeData);
@@ -170,18 +170,13 @@ export default function HomePage() {
 
       const counts = countItems(treeData);
 
-      // Calculate orphan notes (nodes without links)
-      const linkedNodes = new Set<string>();
-      graph.links?.forEach((link: { source: string; target: string }) => {
-        linkedNodes.add(link.source);
-        linkedNodes.add(link.target);
-      });
-      const orphanNotes = (graph.nodes?.length || 0) - linkedNodes.size;
+      // Use orphanNotes from API response
+      const orphanCount = (graph as { orphanNotes?: number }).orphanNotes || 0;
 
       setStats({
         ...counts,
         links: graph.links?.length || 0,
-        orphanNotes: Math.max(0, orphanNotes),
+        orphanNotes: orphanCount,
         loading: false,
       });
     } catch {

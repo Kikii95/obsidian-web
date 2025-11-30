@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { VirtualFileTree } from "./virtual-file-tree";
 import { useVaultStore } from "@/lib/store";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle, FolderTree, RefreshCw, FilePlus, FolderPlus, ChevronsDownUp, ChevronsUpDown, MoreHorizontal, FolderPen, FolderX, Upload } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { AlertCircle, FolderTree, RefreshCw, FilePlus, FolderPlus, ChevronsDownUp, ChevronsUpDown, MoreHorizontal, FolderPen, FolderX, Upload, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -35,6 +36,41 @@ function getAllFolderPaths(files: VaultFile[], parentPath = ""): string[] {
   return paths;
 }
 
+// Filter tree by search query (recursive)
+function filterTree(files: VaultFile[], query: string): VaultFile[] {
+  if (!query.trim()) return files;
+
+  const lowerQuery = query.toLowerCase();
+  const result: VaultFile[] = [];
+
+  for (const file of files) {
+    if (file.type === "dir") {
+      // Recursively filter children
+      const filteredChildren = file.children
+        ? filterTree(file.children, query)
+        : [];
+
+      // Include folder if name matches OR has matching children
+      if (
+        file.name.toLowerCase().includes(lowerQuery) ||
+        filteredChildren.length > 0
+      ) {
+        result.push({
+          ...file,
+          children: filteredChildren.length > 0 ? filteredChildren : file.children,
+        });
+      }
+    } else {
+      // File: include if name matches
+      if (file.name.toLowerCase().includes(lowerQuery)) {
+        result.push(file);
+      }
+    }
+  }
+
+  return result;
+}
+
 export function VaultSidebar() {
   const { data: session } = useSession();
   const {
@@ -50,6 +86,12 @@ export function VaultSidebar() {
   } = useVaultStore();
 
   const [manageFolderMode, setManageFolderMode] = useState<"rename" | "delete" | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Filter tree based on search query
+  const filteredTree = useMemo(() => {
+    return filterTree(tree, searchQuery);
+  }, [tree, searchQuery]);
 
   const fetchTree = useCallback(async () => {
     if (!session) return;
@@ -132,10 +174,34 @@ export function VaultSidebar() {
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
+      {/* Search bar */}
+      <div className="px-2 pt-2 shrink-0">
+        <div className="relative">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Rechercher..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="h-8 pl-7 pr-7 text-sm bg-muted/50"
+          />
+          {searchQuery && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-5 w-5"
+              onClick={() => setSearchQuery("")}
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          )}
+        </div>
+      </div>
+
       {/* Sticky header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-border/50 shrink-0 flex-none">
         <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          Vault
+          {searchQuery ? `${filteredTree.length} résultat(s)` : "Vault"}
         </span>
         <div className="flex items-center gap-0.5">
             {/* Folder management dropdown */}
@@ -241,7 +307,7 @@ export function VaultSidebar() {
       </div>
       {/* Virtualized scrollable tree */}
       <div className="flex-1 min-h-0 overflow-hidden p-2">
-        <VirtualFileTree files={tree} />
+        <VirtualFileTree files={filteredTree} />
       </div>
 
       {/* Manage folder dialog */}

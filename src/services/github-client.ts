@@ -74,8 +74,11 @@ export const githubClient = {
   /**
    * Get graph data (nodes + links)
    */
-  async getGraph(): Promise<GraphData> {
-    return apiFetch<GraphData>("/api/github/graph");
+  async getGraph(includeOrphans = false): Promise<GraphData> {
+    const url = includeOrphans
+      ? "/api/github/graph?includeOrphans=true"
+      : "/api/github/graph";
+    return apiFetch<GraphData>(url);
   },
 
   /**

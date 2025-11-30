@@ -17,8 +17,11 @@ interface GraphLink {
   target: string;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const includeOrphans = searchParams.get("includeOrphans") === "true";
+
     const session = await getServerSession(authOptions);
 
     if (!session?.accessToken) {
@@ -118,22 +121,30 @@ export async function GET() {
       link => !privateFileIds.has(link.source) && !privateFileIds.has(link.target)
     );
 
-    // Filter out orphan nodes (no links) for cleaner graph
+    // Track connected nodes
     const connectedNodeIds = new Set<string>();
     for (const link of publicLinks) {
       connectedNodeIds.add(link.source);
       connectedNodeIds.add(link.target);
     }
 
-    const filteredNodes = Array.from(nodes.values()).filter(
-      node => connectedNodeIds.has(node.id)
-    );
+    // Filter nodes based on includeOrphans parameter
+    const filteredNodes = includeOrphans
+      ? Array.from(nodes.values()) // Include all nodes
+      : Array.from(nodes.values()).filter(node => connectedNodeIds.has(node.id));
+
+    // Mark orphan nodes
+    const nodesWithOrphanFlag = filteredNodes.map(node => ({
+      ...node,
+      isOrphan: !connectedNodeIds.has(node.id),
+    }));
 
     return NextResponse.json({
-      nodes: filteredNodes,
+      nodes: nodesWithOrphanFlag,
       links: publicLinks,
       totalNotes: mdFiles.length - privateFileIds.size,
-      connectedNotes: filteredNodes.length,
+      connectedNotes: connectedNodeIds.size,
+      orphanNotes: nodes.size - connectedNodeIds.size,
     });
   } catch (error) {
     console.error("Error building graph:", error);

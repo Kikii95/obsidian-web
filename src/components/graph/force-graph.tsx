@@ -10,6 +10,7 @@ interface GraphNode {
   name: string;
   path: string;
   linkCount: number;
+  isOrphan?: boolean;
   x?: number;
   y?: number;
   fx?: number | null;
@@ -123,22 +124,25 @@ export const ForceGraph = memo(function ForceGraph({
 
     node.call(dragBehavior);
 
-    // Node circles
+    // Node circles - orphans styled differently
     node.append("circle")
-      .attr("r", d => Math.min(8 + d.linkCount * 2, 20))
-      .attr("fill", "var(--primary)")
+      .attr("r", d => d.isOrphan ? 5 : Math.min(8 + d.linkCount * 2, 20))
+      .attr("fill", d => d.isOrphan ? "var(--muted-foreground)" : "var(--primary)")
       .attr("stroke", "var(--background)")
       .attr("stroke-width", 2)
+      .attr("opacity", d => d.isOrphan ? 0.5 : 1)
       .on("mouseover", function(event, d) {
         d3.select(this)
           .attr("fill", "var(--accent)")
-          .attr("r", Math.min(10 + d.linkCount * 2, 24));
+          .attr("r", d.isOrphan ? 7 : Math.min(10 + d.linkCount * 2, 24))
+          .attr("opacity", 1);
         setHoveredNode(d);
       })
       .on("mouseout", function(event, d) {
         d3.select(this)
-          .attr("fill", "var(--primary)")
-          .attr("r", Math.min(8 + d.linkCount * 2, 20));
+          .attr("fill", d.isOrphan ? "var(--muted-foreground)" : "var(--primary)")
+          .attr("r", d.isOrphan ? 5 : Math.min(8 + d.linkCount * 2, 20))
+          .attr("opacity", d.isOrphan ? 0.5 : 1);
         setHoveredNode(null);
       })
       .on("click", (event, d) => {

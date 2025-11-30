@@ -23,20 +23,19 @@ function formatPath(path: string): string {
 type LinkType = "note" | "folder" | "canvas" | "image" | "pdf";
 
 function detectLinkType(path: string): LinkType {
-  const cleanPath = path.replace(/\\+/g, "").replace(/#.*$/, "");
+  const cleanPath = path.replace(/\\+/g, "").replace(/#.*$/, "").trim();
 
-  // Check for folder (ends with / or no extension)
-  if (cleanPath.endsWith("/") || !cleanPath.includes(".")) {
-    // If no dot in the last segment, likely a folder
-    const lastSegment = cleanPath.split("/").pop() || "";
-    if (!lastSegment.includes(".")) {
-      return "folder";
-    }
+  // Explicit folder: ends with /
+  if (cleanPath.endsWith("/")) {
+    return "folder";
   }
 
+  // Check for known extensions
   if (/\.canvas$/i.test(cleanPath)) return "canvas";
   if (/\.pdf$/i.test(cleanPath)) return "pdf";
   if (/\.(png|jpg|jpeg|gif|svg|webp|bmp|ico)$/i.test(cleanPath)) return "image";
+
+  // Default: it's a note (even without .md extension - Obsidian style)
   return "note";
 }
 

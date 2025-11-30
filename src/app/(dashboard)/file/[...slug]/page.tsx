@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,14 +9,9 @@ import { AlertCircle, ChevronRight, RefreshCw, Image, FileText } from "lucide-re
 import { ImageViewer } from "@/components/viewer/image-viewer";
 import { PDFViewer } from "@/components/viewer/pdf-viewer";
 import { getFileType } from "@/lib/file-types";
+import { githubClient, type BinaryFileData } from "@/services/github-client";
 
-interface BinaryFileData {
-  path: string;
-  content: string; // base64
-  sha: string;
-  size: number;
-  mimeType: string;
-}
+const SUPPORTED_EXTENSIONS = [".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".bmp", ".ico", ".pdf"];
 
 export default function FilePage() {
   const params = useParams();
@@ -24,34 +19,23 @@ export default function FilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Build the file path from slug
   const slug = params.slug as string[];
   const decodedSlug = slug?.map((s) => decodeURIComponent(s)) || [];
 
-  // Try different extensions to find the file
-  const possibleExtensions = [".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".bmp", ".ico", ".pdf"];
-
-  const fetchFile = async () => {
+  const fetchFile = useCallback(async () => {
     if (decodedSlug.length === 0) return;
 
     setIsLoading(true);
     setError(null);
 
-    // Try each extension until we find the file
-    for (const ext of possibleExtensions) {
+    for (const ext of SUPPORTED_EXTENSIONS) {
       const filePath = `${decodedSlug.join("/")}${ext}`;
 
       try {
-        const response = await fetch(
-          `/api/github/binary?path=${encodeURIComponent(filePath)}`
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          setFile(data);
-          setIsLoading(false);
-          return;
-        }
+        const data = await githubClient.readBinaryFile(filePath);
+        setFile(data);
+        setIsLoading(false);
+        return;
       } catch {
         // Try next extension
       }
@@ -59,11 +43,11 @@ export default function FilePage() {
 
     setError("Fichier non trouvé");
     setIsLoading(false);
-  };
+  }, [decodedSlug]);
 
   useEffect(() => {
     fetchFile();
-  }, [params.slug]);
+  }, [fetchFile]);
 
   // Build breadcrumb
   const breadcrumbs = decodedSlug?.map((part, index) => ({

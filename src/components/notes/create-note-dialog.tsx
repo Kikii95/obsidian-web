@@ -1,21 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FilePlus, Loader2 } from "lucide-react";
-import { useVaultStore } from "@/lib/store";
+import { FilePlus } from "lucide-react";
+import { FormDialog } from "@/components/dialogs";
 import { githubClient } from "@/services/github-client";
+import { useVaultStore } from "@/lib/store";
+import { useDialogAction } from "@/hooks/use-dialog-action";
 import { FolderTreePicker } from "./folder-tree-picker";
 
 interface CreateNoteDialogProps {
@@ -33,148 +26,93 @@ export function CreateNoteDialog({
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
 }: CreateNoteDialogProps) {
-  const router = useRouter();
-  const { tree, triggerTreeRefresh } = useVaultStore();
-  const [internalOpen, setInternalOpen] = useState(false);
+  const { tree } = useVaultStore();
+  const { setError } = useDialogAction();
+
   const [title, setTitle] = useState("");
   const [selectedFolder, setSelectedFolder] = useState(currentFolder || ROOT_VALUE);
-  const [isCreating, setIsCreating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  // Use controlled or uncontrolled mode
-  const isControlled = controlledOpen !== undefined;
-  const open = isControlled ? controlledOpen : internalOpen;
-  const setOpen = isControlled ? controlledOnOpenChange! : setInternalOpen;
-
-  // Get actual folder path (convert ROOT_VALUE to empty string)
   const actualFolder = selectedFolder === ROOT_VALUE ? "" : selectedFolder;
 
-  const handleCreate = async () => {
-    if (!title.trim()) {
-      setError("Le titre est requis");
-      return;
+  const validate = useCallback((): string | null => {
+    if (!title.trim()) return "Le titre est requis";
+    return null;
+  }, [title]);
+
+  const handleSubmit = async () => {
+    const error = validate();
+    if (error) {
+      setError(error);
+      throw new Error(error);
     }
 
-    setIsCreating(true);
-    setError(null);
+    const path = actualFolder
+      ? `${actualFolder}/${title.trim()}.md`
+      : `${title.trim()}.md`;
 
-    try {
-      // Build path: folder/title.md or just title.md
-      const path = actualFolder
-        ? `${actualFolder}/${title.trim()}.md`
-        : `${title.trim()}.md`;
-
-      // Create note with default content
-      const content = `# ${title.trim()}\n\n`;
-      const data = await githubClient.createNote(path, content);
-
-      // Navigate to the new note
-      const notePath = data.path.replace(".md", "");
-      const encodedPath = notePath
-        .split("/")
-        .map((s: string) => encodeURIComponent(s))
-        .join("/");
-
-      setOpen(false);
-      setTitle("");
-      setSelectedFolder(currentFolder || ROOT_VALUE);
-      triggerTreeRefresh();
-      router.push(`/note/${encodedPath}`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur inconnue");
-    } finally {
-      setIsCreating(false);
-    }
+    const content = `# ${title.trim()}\n\n`;
+    await githubClient.createNote(path, content);
   };
 
-  const handleOpenChange = (newOpen: boolean) => {
-    setOpen(newOpen);
-    if (newOpen) {
-      setSelectedFolder(currentFolder || ROOT_VALUE);
-      setTitle("");
-      setError(null);
-    }
+  const getNavigateTo = () => {
+    const path = actualFolder
+      ? `${actualFolder}/${title.trim()}.md`
+      : `${title.trim()}.md`;
+    const notePath = path.replace(".md", "");
+    return `/note/${notePath.split("/").map(encodeURIComponent).join("/")}`;
+  };
+
+  const handleOpen = () => {
+    setSelectedFolder(currentFolder || ROOT_VALUE);
+    setTitle("");
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        {trigger || (
+    <FormDialog
+      trigger={
+        trigger || (
           <Button variant="outline" size="sm">
             <FilePlus className="h-4 w-4 mr-2" />
             Nouvelle note
           </Button>
-        )}
-      </DialogTrigger>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Créer une nouvelle note</DialogTitle>
-          <DialogDescription>
-            Choisissez un emplacement et un titre pour votre note
-          </DialogDescription>
-        </DialogHeader>
+        )
+      }
+      title="Créer une nouvelle note"
+      description="Choisissez un emplacement et un titre pour votre note"
+      submitLabel="Créer"
+      submitLoadingLabel="Création..."
+      submitIcon={<FilePlus className="h-4 w-4" />}
+      onSubmit={handleSubmit}
+      navigateTo={validate() ? undefined : getNavigateTo()}
+      open={controlledOpen}
+      onOpenChange={controlledOnOpenChange}
+      onOpen={handleOpen}
+    >
+      <div className="space-y-2">
+        <Label htmlFor="title">Titre de la note</Label>
+        <Input
+          id="title"
+          placeholder="Ma nouvelle note"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          autoFocus
+        />
+      </div>
 
-        <div className="space-y-4 pt-4">
-          {/* Title input - moved to top for better UX */}
-          <div className="space-y-2">
-            <Label htmlFor="title">Titre de la note</Label>
-            <Input
-              id="title"
-              placeholder="Ma nouvelle note"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !isCreating) {
-                  handleCreate();
-                }
-              }}
-              disabled={isCreating}
-              autoFocus
-            />
-          </div>
+      <div className="space-y-2">
+        <Label>Dossier de destination</Label>
+        <FolderTreePicker
+          tree={tree}
+          selectedPath={selectedFolder}
+          onSelect={setSelectedFolder}
+        />
+      </div>
 
-          {/* Folder tree picker */}
-          <div className="space-y-2">
-            <Label>Dossier de destination</Label>
-            <FolderTreePicker
-              tree={tree}
-              selectedPath={selectedFolder}
-              onSelect={setSelectedFolder}
-            />
-          </div>
-
-          {/* Preview path */}
-          {title && (
-            <div className="text-xs text-muted-foreground bg-muted/50 px-3 py-2 rounded-md">
-              Chemin: <code>{actualFolder ? `${actualFolder}/` : ""}{title.trim()}.md</code>
-            </div>
-          )}
-
-          {error && (
-            <p className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
-              {error}
-            </p>
-          )}
-
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="ghost"
-              onClick={() => setOpen(false)}
-              disabled={isCreating}
-            >
-              Annuler
-            </Button>
-            <Button onClick={handleCreate} disabled={isCreating || !title.trim()}>
-              {isCreating ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <FilePlus className="h-4 w-4 mr-2" />
-              )}
-              {isCreating ? "Création..." : "Créer"}
-            </Button>
-          </div>
+      {title && (
+        <div className="text-xs text-muted-foreground bg-muted/50 px-3 py-2 rounded-md">
+          Chemin: <code>{actualFolder ? `${actualFolder}/` : ""}{title.trim()}.md</code>
         </div>
-      </DialogContent>
-    </Dialog>
+      )}
+    </FormDialog>
   );
 }

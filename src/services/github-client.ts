@@ -21,6 +21,14 @@ interface GraphData {
   connectedNotes: number;
 }
 
+interface BinaryFileData {
+  path: string;
+  content: string; // base64
+  sha: string;
+  size: number;
+  mimeType: string;
+}
+
 interface ApiError extends Error {
   status?: number;
 }
@@ -189,9 +197,18 @@ export const githubClient = {
       body: JSON.stringify({ path, data, sha }),
     });
   },
+
+  /**
+   * Read a binary file (image, PDF, etc.)
+   */
+  async readBinaryFile(path: string): Promise<BinaryFileData> {
+    return apiFetch<BinaryFileData>(
+      `/api/github/binary?path=${encodeURIComponent(path)}`
+    );
+  },
 };
 
 /**
  * Export types for consumers
  */
-export type { NoteData, GraphData, ApiError };
+export type { NoteData, GraphData, BinaryFileData, ApiError };

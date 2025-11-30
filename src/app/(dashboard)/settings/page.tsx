@@ -39,7 +39,7 @@ import {
 import Link from "next/link";
 import { useTheme, themes } from "@/hooks/use-theme";
 import { getCacheStats, clearNotesCache } from "@/lib/note-cache";
-import { useSettingsStore, type UserSettings, type ActivityPeriod } from "@/lib/settings-store";
+import { useSettingsStore, type UserSettings, type ActivityPeriod, type DashboardLayout } from "@/lib/settings-store";
 import { useVaultStore } from "@/lib/store";
 import type { VaultFile } from "@/types";
 
@@ -161,6 +161,22 @@ export default function SettingsPage() {
             />
           </div>
 
+          {/* Show activity heatmap */}
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>Afficher le heatmap d'activité</Label>
+              <p className="text-sm text-muted-foreground">
+                Calendrier des commits style GitHub
+              </p>
+            </div>
+            <Switch
+              checked={settings.showActivityHeatmap ?? true}
+              onCheckedChange={(checked) =>
+                updateSettings({ showActivityHeatmap: checked })
+              }
+            />
+          </div>
+
           {/* Activity heatmap default period */}
           <div className="space-y-2">
             <Label>Période activité par défaut</Label>
@@ -182,6 +198,29 @@ export default function SettingsPage() {
             </Select>
             <p className="text-sm text-muted-foreground">
               Période affichée au chargement du heatmap
+            </p>
+          </div>
+
+          {/* Dashboard layout */}
+          <div className="space-y-2">
+            <Label>Layout du dashboard</Label>
+            <Select
+              value={settings.dashboardLayout ?? "spacious"}
+              onValueChange={(value) =>
+                updateSettings({ dashboardLayout: value as DashboardLayout })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="compact">Compact — Moins d'espace</SelectItem>
+                <SelectItem value="spacious">Spacieux — Layout par défaut</SelectItem>
+                <SelectItem value="minimal">Minimal — Stats uniquement</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-sm text-muted-foreground">
+              Compact réduit les marges, Minimal masque le graph et heatmap
             </p>
           </div>
         </CardContent>

@@ -215,20 +215,30 @@ export default function HomePage() {
     return `/note/${cleanPath.split("/").map(encodeURIComponent).join("/")}`;
   };
 
+  // Layout-specific classes
+  const layout = settings.dashboardLayout ?? "spacious";
+  const isCompact = layout === "compact";
+  const isMinimal = layout === "minimal";
+  const containerClass = isCompact ? "p-2 md:p-4" : "p-4 md:p-6";
+  const gapClass = isCompact ? "gap-3" : "gap-4";
+  const mbClass = isCompact ? "mb-4" : "mb-6";
+
   return (
-    <div className="container mx-auto p-4 md:p-6 max-w-6xl">
+    <div className={`container mx-auto ${containerClass} max-w-6xl`}>
       {/* Welcome */}
-      <div className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold mb-1">
+      <div className={mbClass}>
+        <h1 className={`${isCompact ? "text-xl md:text-2xl" : "text-2xl md:text-3xl"} font-bold mb-1`}>
           Bienvenue, {session?.user?.name?.split(" ")[0]} 👋
         </h1>
-        <p className="text-muted-foreground text-sm">
-          Ton vault Obsidian est prêt à être exploré.
-        </p>
+        {!isMinimal && (
+          <p className="text-muted-foreground text-sm">
+            Ton vault Obsidian est prêt à être exploré.
+          </p>
+        )}
       </div>
 
       {/* Main Grid */}
-      <div className="grid lg:grid-cols-3 gap-4 mb-6">
+      <div className={`grid lg:grid-cols-3 ${gapClass} ${mbClass}`}>
         {/* Stats Card - Takes 2 columns */}
         <Card className="lg:col-span-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
           <CardHeader className="pb-2">
@@ -341,7 +351,7 @@ export default function HomePage() {
       </div>
 
       {/* Second Row */}
-      <div className="grid lg:grid-cols-2 gap-4 mb-6">
+      <div className={`grid lg:grid-cols-2 ${gapClass} ${mbClass}`}>
         {/* Pinned Notes */}
         <Card>
           <CardHeader className="pb-2">
@@ -453,51 +463,55 @@ export default function HomePage() {
         </Card>
       </div>
 
-      {/* Graph & Activity - Two square cards side by side */}
-      {settings.showMiniGraph && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      {/* Graph & Activity - Dynamic grid based on visibility (hidden in minimal mode) */}
+      {!isMinimal && (settings.showMiniGraph || (settings.showActivityHeatmap ?? true)) && (
+        <div className={`grid grid-cols-1 ${settings.showMiniGraph && (settings.showActivityHeatmap ?? true) ? "md:grid-cols-2" : ""} ${gapClass} ${mbClass}`}>
           {/* Mini Graph Card */}
-          <Card>
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2 text-sm">
-                  <Network className="h-4 w-4 text-primary" />
-                  Graph
-                </CardTitle>
-                <Button variant="ghost" size="sm" asChild className="h-6 px-2">
-                  <Link href="/graph" className="text-xs">
-                    Voir →
-                  </Link>
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="aspect-square rounded-lg overflow-hidden border border-border/50 bg-muted/20">
-                {graphData ? (
-                  <MiniGraph
-                    nodes={graphData.nodes}
-                    links={graphData.links}
-                    forceStrength={settings.graphForceStrength}
-                    linkDistance={settings.graphLinkDistance}
-                    gravityStrength={settings.graphGravityStrength ?? 0.1}
-                  />
-                ) : (
-                  <div className="h-full flex items-center justify-center">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          {settings.showMiniGraph && (
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2 text-sm">
+                    <Network className="h-4 w-4 text-primary" />
+                    Graph
+                  </CardTitle>
+                  <Button variant="ghost" size="sm" asChild className="h-6 px-2">
+                    <Link href="/graph" className="text-xs">
+                      Voir →
+                    </Link>
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="aspect-square rounded-lg overflow-hidden border border-border/50 bg-muted/20">
+                  {graphData ? (
+                    <MiniGraph
+                      nodes={graphData.nodes}
+                      links={graphData.links}
+                      forceStrength={settings.graphForceStrength}
+                      linkDistance={settings.graphLinkDistance}
+                      gravityStrength={settings.graphGravityStrength ?? 0.1}
+                    />
+                  ) : (
+                    <div className="h-full flex items-center justify-center">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Activity Heatmap Card */}
-          <Card>
-            <CardContent className="p-0">
-              <div className="aspect-square rounded-lg overflow-hidden">
-                <ActivityHeatmap />
-              </div>
-            </CardContent>
-          </Card>
+          {(settings.showActivityHeatmap ?? true) && (
+            <Card>
+              <CardContent className="p-0">
+                <div className="aspect-square rounded-lg overflow-hidden">
+                  <ActivityHeatmap />
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
     </div>

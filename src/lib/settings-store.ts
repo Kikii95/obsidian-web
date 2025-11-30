@@ -2,12 +2,15 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 export type ActivityPeriod = "30" | "90" | "180" | "365";
+export type DashboardLayout = "compact" | "spacious" | "minimal";
 
 export interface UserSettings {
   // Dashboard
   recentNotesCount: number;
   showMiniGraph: boolean;
+  showActivityHeatmap: boolean;
   activityDefaultPeriod: ActivityPeriod;
+  dashboardLayout: DashboardLayout;
 
   // Sidebar
   defaultExpandedFolders: string[]; // Folders to expand by default
@@ -36,7 +39,9 @@ const defaultSettings: UserSettings = {
   // Dashboard
   recentNotesCount: 5,
   showMiniGraph: true,
+  showActivityHeatmap: true,
   activityDefaultPeriod: "90",
+  dashboardLayout: "spacious",
 
   // Sidebar
   defaultExpandedFolders: [],

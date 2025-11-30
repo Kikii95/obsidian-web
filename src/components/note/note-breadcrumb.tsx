@@ -30,7 +30,7 @@ export const NoteBreadcrumb = memo(function NoteBreadcrumb({
   return (
     <nav className="flex items-center gap-1 text-sm text-muted-foreground flex-wrap min-w-0 overflow-hidden">
       <Link
-        href="/"
+        href="/folder"
         className="hover:text-foreground transition-colors shrink-0 flex items-center gap-1"
       >
         <Home className="h-3.5 w-3.5" />

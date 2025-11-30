@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
   Folder,
@@ -13,62 +12,17 @@ import {
   LayoutDashboard,
   File
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useVaultStore } from "@/lib/store";
-import { decodeSlugSegments } from "@/lib/path-utils";
 import { getFileType, isViewableFile } from "@/lib/file-types";
 import { cn } from "@/lib/utils";
 import type { VaultFile } from "@/types";
 
-export default function FolderPage() {
-  const params = useParams();
+export default function FolderRootPage() {
   const { tree } = useVaultStore();
-
-  // Parse slug
-  const slug = params.slug as string[];
-  const decodedSlug = useMemo(() => decodeSlugSegments(slug || []), [slug]);
-  const folderPath = decodedSlug.join("/");
-  const folderName = decodedSlug[decodedSlug.length - 1] || "Root";
-
-  // Find the folder in the tree
-  const folderContent = useMemo(() => {
-    if (!folderPath) return tree;
-
-    const findFolder = (files: VaultFile[], path: string[]): VaultFile[] | null => {
-      if (path.length === 0) return files;
-
-      const [current, ...rest] = path;
-      const folder = files.find(f => f.type === "dir" && f.name === current);
-
-      if (!folder) return null;
-      if (rest.length === 0) return folder.children || [];
-      return findFolder(folder.children || [], rest);
-    };
-
-    return findFolder(tree, decodedSlug);
-  }, [tree, folderPath, decodedSlug]);
-
-  // Build breadcrumb
-  const breadcrumbs = useMemo(() => {
-    const crumbs = [{ name: "Vault", path: "/folder" }];
-    let currentPath = "";
-
-    for (const segment of decodedSlug) {
-      currentPath += (currentPath ? "/" : "") + segment;
-      crumbs.push({
-        name: segment,
-        path: `/folder/${currentPath.split("/").map(s => encodeURIComponent(s)).join("/")}`,
-      });
-    }
-
-    return crumbs;
-  }, [decodedSlug]);
 
   // Sort content: folders first, then files alphabetically
   const sortedContent = useMemo(() => {
-    if (!folderContent) return [];
-
-    return [...folderContent]
+    return [...tree]
       .filter(f => f.type === "dir" || isViewableFile(f.name))
       .sort((a, b) => {
         if (a.type !== b.type) {
@@ -76,7 +30,7 @@ export default function FolderPage() {
         }
         return a.name.localeCompare(b.name);
       });
-  }, [folderContent]);
+  }, [tree]);
 
   // Stats
   const stats = useMemo(() => {
@@ -85,47 +39,15 @@ export default function FolderPage() {
     return { folders, files, total: folders + files };
   }, [sortedContent]);
 
-  if (!folderContent) {
-    return (
-      <div className="p-8">
-        <div className="max-w-4xl mx-auto text-center py-12">
-          <Folder className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-          <h1 className="text-2xl font-bold mb-2">Dossier introuvable</h1>
-          <p className="text-muted-foreground mb-6">
-            Le dossier <code className="bg-muted px-2 py-1 rounded">{folderPath}</code> n'existe pas.
-          </p>
-          <Button asChild>
-            <Link href="/">
-              <Home className="h-4 w-4 mr-2" />
-              Retour au vault
-            </Link>
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-1 text-sm text-muted-foreground mb-6 flex-wrap">
-          {breadcrumbs.map((crumb, i) => (
-            <span key={crumb.path} className="flex items-center gap-1">
-              {i > 0 && <ChevronRight className="h-3 w-3" />}
-              {i === breadcrumbs.length - 1 ? (
-                <span className="text-foreground font-medium">{crumb.name}</span>
-              ) : (
-                <Link
-                  href={crumb.path}
-                  className="hover:text-foreground transition-colors flex items-center gap-1"
-                >
-                  {i === 0 && <Home className="h-3.5 w-3.5" />}
-                  <span className={i === 0 ? "hidden sm:inline" : ""}>{crumb.name}</span>
-                </Link>
-              )}
-            </span>
-          ))}
+        <nav className="flex items-center gap-1 text-sm text-muted-foreground mb-6">
+          <span className="flex items-center gap-1 text-foreground font-medium">
+            <Home className="h-3.5 w-3.5" />
+            Vault
+          </span>
         </nav>
 
         {/* Header */}
@@ -134,7 +56,7 @@ export default function FolderPage() {
             <FolderOpen className="h-8 w-8 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">{folderName}</h1>
+            <h1 className="text-2xl font-bold">Vault</h1>
             <p className="text-sm text-muted-foreground">
               {stats.folders} dossier{stats.folders > 1 ? "s" : ""} · {stats.files} fichier{stats.files > 1 ? "s" : ""}
             </p>
@@ -145,16 +67,12 @@ export default function FolderPage() {
         {sortedContent.length === 0 ? (
           <div className="text-center py-12 border border-dashed border-border rounded-lg">
             <Folder className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-            <p className="text-muted-foreground">Ce dossier est vide</p>
+            <p className="text-muted-foreground">Le vault est vide</p>
           </div>
         ) : (
           <div className="grid gap-2">
             {sortedContent.map((item) => (
-              <FolderItem
-                key={item.path}
-                item={item}
-                basePath={folderPath}
-              />
+              <FolderItem key={item.path} item={item} />
             ))}
           </div>
         )}
@@ -164,18 +82,16 @@ export default function FolderPage() {
 }
 
 // Individual item component
-function FolderItem({ item, basePath }: { item: VaultFile; basePath: string }) {
+function FolderItem({ item }: { item: VaultFile }) {
   const isDirectory = item.type === "dir";
   const fileType = getFileType(item.name);
 
   // Build href
   const getHref = () => {
     if (isDirectory) {
-      const path = basePath ? `${basePath}/${item.name}` : item.name;
-      return `/folder/${path.split("/").map(s => encodeURIComponent(s)).join("/")}`;
+      return `/folder/${encodeURIComponent(item.name)}`;
     }
 
-    // File path without extension
     const pathWithoutExt = item.path
       .replace(/\.md$/, "")
       .replace(/\.canvas$/, "")

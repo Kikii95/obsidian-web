@@ -118,9 +118,10 @@ export default function FolderPage() {
               ) : (
                 <Link
                   href={crumb.path}
-                  className="hover:text-foreground transition-colors"
+                  className="hover:text-foreground transition-colors flex items-center gap-1"
                 >
-                  {i === 0 ? <Home className="h-3.5 w-3.5" /> : crumb.name}
+                  {i === 0 && <Home className="h-3.5 w-3.5" />}
+                  <span className={i === 0 ? "hidden sm:inline" : ""}>{crumb.name}</span>
                 </Link>
               )}
             </span>

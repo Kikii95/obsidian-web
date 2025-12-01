@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -11,18 +11,23 @@ import {
   Home,
   Image,
   LayoutDashboard,
-  File
+  File,
+  ArrowUpDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useVaultStore } from "@/lib/store";
+import { useSettingsStore } from "@/lib/settings-store";
 import { decodeSlugSegments } from "@/lib/path-utils";
 import { getFileType, isViewableFile } from "@/lib/file-types";
 import { cn } from "@/lib/utils";
+import { ReorderFoldersDialog } from "@/components/notes/reorder-folders-dialog";
 import type { VaultFile } from "@/types";
 
 export default function FolderPage() {
   const params = useParams();
   const { tree } = useVaultStore();
+  const { getFolderOrder } = useSettingsStore();
+  const [reorderDialogOpen, setReorderDialogOpen] = useState(false);
 
   // Parse slug
   const slug = params.slug as string[];
@@ -64,19 +69,32 @@ export default function FolderPage() {
     return crumbs;
   }, [decodedSlug]);
 
-  // Sort content: folders first, then files alphabetically
+  // Sort content: folders first (with custom order), then files alphabetically
   const sortedContent = useMemo(() => {
     if (!folderContent) return [];
+
+    const customOrder = getFolderOrder(folderPath);
 
     return [...folderContent]
       .filter(f => f.type === "dir" || isViewableFile(f.name))
       .sort((a, b) => {
+        // Folders first
         if (a.type !== b.type) {
           return a.type === "dir" ? -1 : 1;
         }
+
+        // Apply custom order for folders
+        if (a.type === "dir" && b.type === "dir" && customOrder.length > 0) {
+          const aIndex = customOrder.indexOf(a.name);
+          const bIndex = customOrder.indexOf(b.name);
+          if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+          if (aIndex !== -1) return -1;
+          if (bIndex !== -1) return 1;
+        }
+
         return a.name.localeCompare(b.name);
       });
-  }, [folderContent]);
+  }, [folderContent, folderPath, getFolderOrder]);
 
   // Stats
   const stats = useMemo(() => {
@@ -133,12 +151,23 @@ export default function FolderPage() {
           <div className="p-3 rounded-xl bg-primary/10">
             <FolderOpen className="h-8 w-8 text-primary" />
           </div>
-          <div>
+          <div className="flex-1">
             <h1 className="text-2xl font-bold">{folderName}</h1>
             <p className="text-sm text-muted-foreground">
               {stats.folders} dossier{stats.folders > 1 ? "s" : ""} · {stats.files} fichier{stats.files > 1 ? "s" : ""}
             </p>
           </div>
+          {stats.folders > 1 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setReorderDialogOpen(true)}
+              title="Réorganiser les dossiers"
+            >
+              <ArrowUpDown className="h-4 w-4 mr-2" />
+              Ordre
+            </Button>
+          )}
         </div>
 
         {/* Content Grid */}
@@ -158,6 +187,14 @@ export default function FolderPage() {
             ))}
           </div>
         )}
+
+        {/* Reorder folders dialog */}
+        <ReorderFoldersDialog
+          open={reorderDialogOpen}
+          onOpenChange={setReorderDialogOpen}
+          parentPath={folderPath}
+          folders={folderContent || []}
+        />
       </div>
     </div>
   );

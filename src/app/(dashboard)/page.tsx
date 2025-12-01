@@ -228,7 +228,7 @@ export default function HomePage() {
       {/* Welcome */}
       <div className={mbClass}>
         <h1 className={`${isCompact ? "text-xl md:text-2xl" : "text-2xl md:text-3xl"} font-bold mb-1`}>
-          Bienvenue, {session?.user?.name?.split(" ")[0]} 👋
+          Bienvenue, {session?.user?.name?.split(" ")[0]}
         </h1>
         {!isMinimal && (
           <p className="text-muted-foreground text-sm">

@@ -38,10 +38,6 @@ import {
   RotateCcw,
   Type,
   X,
-  ChevronUp,
-  ChevronDown,
-  Plus,
-  GripVertical,
   Clock,
   Settings2,
 } from "lucide-react";
@@ -535,90 +531,6 @@ export default function SettingsPage() {
             </p>
           </div>
 
-          {/* Custom folder order */}
-          <div className="space-y-2">
-            <Label>Ordre des dossiers racine</Label>
-            <p className="text-sm text-muted-foreground mb-2">
-              Définir un ordre personnalisé pour les dossiers principaux
-            </p>
-            {(settings.customFolderOrder ?? []).length > 0 && (
-              <div className="space-y-1 mb-2">
-                {settings.customFolderOrder.map((folder, index) => (
-                  <div
-                    key={folder}
-                    className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 border border-border"
-                  >
-                    <GripVertical className="h-4 w-4 text-muted-foreground" />
-                    <span className="flex-1 text-sm font-medium">{folder}</span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      disabled={index === 0}
-                      onClick={() => {
-                        const order = [...settings.customFolderOrder];
-                        [order[index - 1], order[index]] = [order[index], order[index - 1]];
-                        updateSettings({ customFolderOrder: order });
-                      }}
-                    >
-                      <ChevronUp className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      disabled={index === settings.customFolderOrder.length - 1}
-                      onClick={() => {
-                        const order = [...settings.customFolderOrder];
-                        [order[index], order[index + 1]] = [order[index + 1], order[index]];
-                        updateSettings({ customFolderOrder: order });
-                      }}
-                    >
-                      <ChevronDown className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 text-destructive hover:text-destructive"
-                      onClick={() => {
-                        updateSettings({
-                          customFolderOrder: settings.customFolderOrder.filter((f) => f !== folder),
-                        });
-                      }}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-            {/* Add folders not in custom order */}
-            {topLevelFolders.filter((f) => !(settings.customFolderOrder ?? []).includes(f)).length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {topLevelFolders
-                  .filter((f) => !(settings.customFolderOrder ?? []).includes(f))
-                  .map((folder) => (
-                    <Button
-                      key={folder}
-                      variant="outline"
-                      size="sm"
-                      className="gap-1"
-                      onClick={() => {
-                        updateSettings({
-                          customFolderOrder: [...(settings.customFolderOrder ?? []), folder],
-                        });
-                      }}
-                    >
-                      <Plus className="h-3 w-3" />
-                      {folder}
-                    </Button>
-                  ))}
-              </div>
-            )}
-            <p className="text-xs text-muted-foreground">
-              Clique sur un dossier pour l'ajouter à l'ordre. Dossiers non listés apparaissent après (alphabétiquement).
-            </p>
-          </div>
         </CardContent>
       </Card>
 

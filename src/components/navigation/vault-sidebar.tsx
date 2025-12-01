@@ -6,7 +6,7 @@ import { VirtualFileTree } from "./virtual-file-tree";
 import { useVaultStore } from "@/lib/store";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
-import { AlertCircle, FolderTree, RefreshCw, FilePlus, FolderPlus, ChevronsDownUp, ChevronsUpDown, MoreHorizontal, FolderPen, FolderX, Upload, Search, X } from "lucide-react";
+import { AlertCircle, FolderTree, RefreshCw, FilePlus, FolderPlus, ChevronsDownUp, ChevronsUpDown, MoreHorizontal, FolderPen, FolderX, Upload, Search, X, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -18,6 +18,7 @@ import { CreateNoteDialog } from "@/components/notes/create-note-dialog";
 import { CreateFolderDialog } from "@/components/notes/create-folder-dialog";
 import { ManageFolderDialog } from "@/components/notes/manage-folder-dialog";
 import { ImportNoteDialog } from "@/components/notes/import-note-dialog";
+import { ReorderFoldersDialog } from "@/components/notes/reorder-folders-dialog";
 import { githubClient } from "@/services/github-client";
 import { useSettingsStore, type SidebarSortBy } from "@/lib/settings-store";
 import { getFileType } from "@/lib/file-types";
@@ -81,22 +82,25 @@ function filterByPatterns(files: VaultFile[], patterns: string[]): VaultFile[] {
   return result;
 }
 
-// Sort files recursively
+// Sort files recursively with per-folder custom order
 function sortTree(
   files: VaultFile[],
   sortBy: SidebarSortBy,
-  customFolderOrder: string[] = [],
-  isTopLevel = true
+  customFolderOrders: Record<string, string[]> = {},
+  parentPath = "" // "" = root
 ): VaultFile[] {
+  // Get custom order for this specific folder
+  const customOrder = customFolderOrders[parentPath] || [];
+
   const sorted = [...files].sort((a, b) => {
     // Always folders first
     if (a.type === "dir" && b.type !== "dir") return -1;
     if (a.type !== "dir" && b.type === "dir") return 1;
 
-    // Apply custom folder order only at top level
-    if (isTopLevel && a.type === "dir" && b.type === "dir" && customFolderOrder.length > 0) {
-      const aIndex = customFolderOrder.indexOf(a.name);
-      const bIndex = customFolderOrder.indexOf(b.name);
+    // Apply custom folder order for this level
+    if (a.type === "dir" && b.type === "dir" && customOrder.length > 0) {
+      const aIndex = customOrder.indexOf(a.name);
+      const bIndex = customOrder.indexOf(b.name);
       // Both in custom order: sort by index
       if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
       // Only a in custom order: a first
@@ -116,10 +120,11 @@ function sortTree(
     return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
   });
 
-  // Recursively sort children (not top level)
+  // Recursively sort children with their own path
   return sorted.map((file) => {
     if (file.children) {
-      return { ...file, children: sortTree(file.children, sortBy, customFolderOrder, false) };
+      const childPath = parentPath ? `${parentPath}/${file.name}` : file.name;
+      return { ...file, children: sortTree(file.children, sortBy, customFolderOrders, childPath) };
     }
     return file;
   });
@@ -178,18 +183,19 @@ export function VaultSidebar() {
 
   const [manageFolderMode, setManageFolderMode] = useState<"rename" | "delete" | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [reorderDialogOpen, setReorderDialogOpen] = useState(false);
 
   // Get settings
   const sortBy = settings.sidebarSortBy ?? "name";
   const hidePatterns = settings.hidePatterns ?? [];
-  const customFolderOrder = settings.customFolderOrder ?? [];
+  const customFolderOrders = settings.customFolderOrders ?? {};
 
   // Filter by patterns, search query, and sort tree
   const filteredTree = useMemo(() => {
     const withoutHidden = filterByPatterns(tree, hidePatterns);
     const filtered = filterTree(withoutHidden, searchQuery);
-    return sortTree(filtered, sortBy, customFolderOrder);
-  }, [tree, searchQuery, sortBy, hidePatterns, customFolderOrder]);
+    return sortTree(filtered, sortBy, customFolderOrders);
+  }, [tree, searchQuery, sortBy, hidePatterns, customFolderOrders]);
 
   const fetchTree = useCallback(async (applyDefaults = false, forceRefresh = false) => {
     if (!session) return;
@@ -360,6 +366,10 @@ export function VaultSidebar() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48">
+                <DropdownMenuItem onClick={() => setReorderDialogOpen(true)}>
+                  <ArrowUpDown className="h-4 w-4 mr-2" />
+                  Réorganiser dossiers
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setManageFolderMode("rename")}>
                   <FolderPen className="h-4 w-4 mr-2" />
                   Renommer un dossier
@@ -461,6 +471,14 @@ export function VaultSidebar() {
           onOpenChange={(open) => !open && setManageFolderMode(null)}
         />
       )}
+
+      {/* Reorder folders dialog (root level) */}
+      <ReorderFoldersDialog
+        open={reorderDialogOpen}
+        onOpenChange={setReorderDialogOpen}
+        parentPath=""
+        folders={tree}
+      />
     </div>
   );
 }

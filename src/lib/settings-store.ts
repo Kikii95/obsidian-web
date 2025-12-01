@@ -28,7 +28,7 @@ export interface UserSettings {
   sidebarSortBy: SidebarSortBy; // Sort files by name or type
   showFileIcons: boolean; // Show colored icons by file type
   hidePatterns: string[]; // Patterns to hide (e.g. [".gitkeep", "_private"])
-  customFolderOrder: string[]; // Custom order for top-level folders
+  customFolderOrders: Record<string, string[]>; // Custom order per folder path ("" = root)
 
   // Lock system
   lockTimeout: number; // Minutes before auto-lock (0 = never)
@@ -57,6 +57,11 @@ interface SettingsState {
   settings: UserSettings;
   updateSettings: (partial: Partial<UserSettings>) => void;
   resetSettings: () => void;
+  // Folder order helpers
+  getFolderOrder: (parentPath: string) => string[];
+  setFolderOrder: (parentPath: string, order: string[]) => void;
+  moveFolderInOrder: (parentPath: string, folderName: string, direction: "up" | "down") => void;
+  clearFolderOrder: (parentPath: string) => void;
 }
 
 const defaultSettings: UserSettings = {
@@ -81,7 +86,7 @@ const defaultSettings: UserSettings = {
   sidebarSortBy: "name",
   showFileIcons: true,
   hidePatterns: [".gitkeep"],
-  customFolderOrder: [],
+  customFolderOrders: {},
 
   // Lock system
   lockTimeout: 5, // 5 minutes
@@ -108,7 +113,7 @@ const defaultSettings: UserSettings = {
 
 export const useSettingsStore = create<SettingsState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       settings: defaultSettings,
 
       updateSettings: (partial) =>
@@ -118,6 +123,59 @@ export const useSettingsStore = create<SettingsState>()(
 
       resetSettings: () =>
         set({ settings: defaultSettings }),
+
+      // Get folder order for a specific parent path ("" = root)
+      getFolderOrder: (parentPath: string) => {
+        return get().settings.customFolderOrders[parentPath] || [];
+      },
+
+      // Set folder order for a specific parent path
+      setFolderOrder: (parentPath: string, order: string[]) => {
+        set((state) => ({
+          settings: {
+            ...state.settings,
+            customFolderOrders: {
+              ...state.settings.customFolderOrders,
+              [parentPath]: order,
+            },
+          },
+        }));
+      },
+
+      // Move a folder up or down in the order
+      moveFolderInOrder: (parentPath: string, folderName: string, direction: "up" | "down") => {
+        const currentOrder = get().getFolderOrder(parentPath);
+        const index = currentOrder.indexOf(folderName);
+
+        if (index === -1) {
+          // Folder not in order yet, can't move
+          return;
+        }
+
+        const newIndex = direction === "up" ? index - 1 : index + 1;
+        if (newIndex < 0 || newIndex >= currentOrder.length) {
+          return; // Can't move beyond bounds
+        }
+
+        const newOrder = [...currentOrder];
+        [newOrder[index], newOrder[newIndex]] = [newOrder[newIndex], newOrder[index]];
+
+        get().setFolderOrder(parentPath, newOrder);
+      },
+
+      // Clear folder order for a specific parent path
+      clearFolderOrder: (parentPath: string) => {
+        set((state) => {
+          const newOrders = { ...state.settings.customFolderOrders };
+          delete newOrders[parentPath];
+          return {
+            settings: {
+              ...state.settings,
+              customFolderOrders: newOrders,
+            },
+          };
+        });
+      },
     }),
     {
       name: "obsidian-web-settings",

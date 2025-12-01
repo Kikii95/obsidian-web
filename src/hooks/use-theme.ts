@@ -9,44 +9,40 @@ import { useEffect, useState } from "react";
 export type ThemeMode = "dark" | "light";
 
 export type Theme =
-  // Dark themes (vibrant)
-  | "magenta"
-  | "ocean"
-  | "forest"
-  | "sunset"
-  | "mono"
-  | "rose"
-  | "crimson"
-  | "cyber"
-  | "lavender"
-  | "mint"
-  | "turquoise"
-  // Dark themes (soft)
-  | "cream-dark"
-  | "cloud-dark"
-  | "sage-dark"
-  | "peach-dark"
-  | "mist-dark"
-  | "sand-dark"
-  // Light themes (vibrant)
-  | "magenta-light"
-  | "ocean-light"
-  | "forest-light"
-  | "sunset-light"
-  | "mono-inverse"
-  | "rose-light"
+  // Dark themes (ordered by hue 0→360)
+  | "crimson"      // 15
+  | "peach-dark"   // 25
+  | "sunset"       // 35
+  | "sand-dark"    // 50
+  | "cyber"        // 85
+  | "sage-dark"    // 140
+  | "forest"       // 150
+  | "mint"         // 170
+  | "turquoise"    // 190
+  | "cloud-dark"   // 210
+  | "ocean"        // 220
+  | "mist-dark"    // 230
+  | "lavender"     // 280
+  | "magenta"      // 320
+  | "rose"         // 350
+  | "mono"         // achromatic
+  // Light themes (same order)
   | "crimson-light"
+  | "peach"
+  | "sunset-light"
+  | "sand"
   | "cyber-light"
-  | "lavender-light"
+  | "sage"
+  | "forest-light"
   | "mint-light"
   | "turquoise-light"
-  // Light themes (soft)
-  | "cream"
   | "cloud"
-  | "sage"
-  | "peach"
+  | "ocean-light"
   | "mist"
-  | "sand";
+  | "lavender-light"
+  | "magenta-light"
+  | "rose-light"
+  | "mono-inverse";
 
 export interface ThemeOption {
   id: Theme;
@@ -58,53 +54,61 @@ export interface ThemeOption {
 }
 
 // ═══════════════════════════════════════════════
-// THEME DEFINITIONS
+// THEME DEFINITIONS (ordered by color spectrum)
 // ═══════════════════════════════════════════════
 
 export const themes: ThemeOption[] = [
   // ─────────────────────────────────────────────
-  // DARK THEMES
+  // DARK THEMES (hue 0→360)
   // ─────────────────────────────────────────────
-  { id: "magenta", name: "Magenta", emoji: "💜", description: "Violet vibrant", mode: "dark", pair: "magenta-light" },
-  { id: "lavender", name: "Lavender", emoji: "🟣", description: "Violet doux", mode: "dark", pair: "lavender-light" },
-  { id: "rose", name: "Rose", emoji: "🌸", description: "Rose pastel", mode: "dark", pair: "rose-light" },
+  // 🔴 Reds / Oranges
   { id: "crimson", name: "Crimson", emoji: "🔴", description: "Rouge intense", mode: "dark", pair: "crimson-light" },
-  { id: "sunset", name: "Sunset", emoji: "🟠", description: "Orange chaud", mode: "dark", pair: "sunset-light" },
-  { id: "cyber", name: "Cyber", emoji: "💛", description: "Jaune néon", mode: "dark", pair: "cyber-light" },
-  { id: "mint", name: "Mint", emoji: "🌿", description: "Menthe fraîche", mode: "dark", pair: "mint-light" },
-  { id: "forest", name: "Forest", emoji: "🟢", description: "Vert émeraude", mode: "dark", pair: "forest-light" },
-  { id: "turquoise", name: "Turquoise", emoji: "🩵", description: "Cyan tropical", mode: "dark", pair: "turquoise-light" },
-  { id: "ocean", name: "Ocean", emoji: "🔵", description: "Bleu profond", mode: "dark", pair: "ocean-light" },
-  { id: "mono", name: "Mono", emoji: "⚫", description: "Noir & blanc", mode: "dark", pair: "mono-inverse" },
-  // Soft dark
-  { id: "cream-dark", name: "Cream", emoji: "🍦", description: "Beige chaud", mode: "dark", pair: "cream" },
-  { id: "cloud-dark", name: "Cloud", emoji: "☁️", description: "Bleu ciel", mode: "dark", pair: "cloud" },
-  { id: "sage-dark", name: "Sage", emoji: "🧘", description: "Vert sauge", mode: "dark", pair: "sage" },
   { id: "peach-dark", name: "Peach", emoji: "🍑", description: "Pêche doux", mode: "dark", pair: "peach" },
-  { id: "mist-dark", name: "Mist", emoji: "🌫️", description: "Gris bleuté", mode: "dark", pair: "mist" },
+  { id: "sunset", name: "Sunset", emoji: "🟠", description: "Orange chaud", mode: "dark", pair: "sunset-light" },
   { id: "sand-dark", name: "Sand", emoji: "🏖️", description: "Sable chaud", mode: "dark", pair: "sand" },
+  // 💛 Yellow
+  { id: "cyber", name: "Cyber", emoji: "💛", description: "Jaune néon", mode: "dark", pair: "cyber-light" },
+  // 🟢 Greens
+  { id: "sage-dark", name: "Sage", emoji: "🧘", description: "Vert sauge", mode: "dark", pair: "sage" },
+  { id: "forest", name: "Forest", emoji: "🟢", description: "Vert émeraude", mode: "dark", pair: "forest-light" },
+  { id: "mint", name: "Mint", emoji: "🌿", description: "Menthe fraîche", mode: "dark", pair: "mint-light" },
+  { id: "turquoise", name: "Turquoise", emoji: "🩵", description: "Cyan tropical", mode: "dark", pair: "turquoise-light" },
+  // 🔵 Blues
+  { id: "cloud-dark", name: "Cloud", emoji: "☁️", description: "Bleu ciel", mode: "dark", pair: "cloud" },
+  { id: "ocean", name: "Ocean", emoji: "🔵", description: "Bleu profond", mode: "dark", pair: "ocean-light" },
+  { id: "mist-dark", name: "Mist", emoji: "🌫️", description: "Gris bleuté", mode: "dark", pair: "mist" },
+  // 🟣 Purples / Pinks
+  { id: "lavender", name: "Lavender", emoji: "🟣", description: "Violet doux", mode: "dark", pair: "lavender-light" },
+  { id: "magenta", name: "Magenta", emoji: "💜", description: "Violet vibrant", mode: "dark", pair: "magenta-light" },
+  { id: "rose", name: "Rose", emoji: "🌸", description: "Rose pastel", mode: "dark", pair: "rose-light" },
+  // ⚫ Achromatic
+  { id: "mono", name: "Mono", emoji: "⚫", description: "Noir & blanc", mode: "dark", pair: "mono-inverse" },
 
   // ─────────────────────────────────────────────
-  // LIGHT THEMES
+  // LIGHT THEMES (same order)
   // ─────────────────────────────────────────────
-  { id: "magenta-light", name: "Magenta", emoji: "💜", description: "Violet clair", mode: "light", pair: "magenta" },
-  { id: "lavender-light", name: "Lavender", emoji: "🟣", description: "Lavande clair", mode: "light", pair: "lavender" },
-  { id: "rose-light", name: "Rose", emoji: "🌸", description: "Rose clair", mode: "light", pair: "rose" },
+  // 🔴 Reds / Oranges
   { id: "crimson-light", name: "Crimson", emoji: "🔴", description: "Rouge clair", mode: "light", pair: "crimson" },
-  { id: "sunset-light", name: "Sunset", emoji: "🟠", description: "Orange clair", mode: "light", pair: "sunset" },
-  { id: "cyber-light", name: "Cyber", emoji: "💛", description: "Jaune clair", mode: "light", pair: "cyber" },
-  { id: "mint-light", name: "Mint", emoji: "🌿", description: "Menthe clair", mode: "light", pair: "mint" },
-  { id: "forest-light", name: "Forest", emoji: "🟢", description: "Forêt clair", mode: "light", pair: "forest" },
-  { id: "turquoise-light", name: "Turquoise", emoji: "🩵", description: "Turquoise clair", mode: "light", pair: "turquoise" },
-  { id: "ocean-light", name: "Ocean", emoji: "🔵", description: "Océan clair", mode: "light", pair: "ocean" },
-  { id: "mono-inverse", name: "Mono", emoji: "⚪", description: "Blanc & noir", mode: "light", pair: "mono" },
-  // Soft light
-  { id: "cream", name: "Cream", emoji: "🍦", description: "Beige doux", mode: "light", pair: "cream-dark" },
-  { id: "cloud", name: "Cloud", emoji: "☁️", description: "Bleu ciel", mode: "light", pair: "cloud-dark" },
-  { id: "sage", name: "Sage", emoji: "🧘", description: "Vert sauge", mode: "light", pair: "sage-dark" },
   { id: "peach", name: "Peach", emoji: "🍑", description: "Pêche doux", mode: "light", pair: "peach-dark" },
-  { id: "mist", name: "Mist", emoji: "🌫️", description: "Gris bleuté", mode: "light", pair: "mist-dark" },
+  { id: "sunset-light", name: "Sunset", emoji: "🟠", description: "Orange clair", mode: "light", pair: "sunset" },
   { id: "sand", name: "Sand", emoji: "🏖️", description: "Sable chaud", mode: "light", pair: "sand-dark" },
+  // 💛 Yellow
+  { id: "cyber-light", name: "Cyber", emoji: "💛", description: "Jaune clair", mode: "light", pair: "cyber" },
+  // 🟢 Greens
+  { id: "sage", name: "Sage", emoji: "🧘", description: "Vert sauge", mode: "light", pair: "sage-dark" },
+  { id: "forest-light", name: "Forest", emoji: "🟢", description: "Forêt clair", mode: "light", pair: "forest" },
+  { id: "mint-light", name: "Mint", emoji: "🌿", description: "Menthe clair", mode: "light", pair: "mint" },
+  { id: "turquoise-light", name: "Turquoise", emoji: "🩵", description: "Turquoise clair", mode: "light", pair: "turquoise" },
+  // 🔵 Blues
+  { id: "cloud", name: "Cloud", emoji: "☁️", description: "Bleu ciel", mode: "light", pair: "cloud-dark" },
+  { id: "ocean-light", name: "Ocean", emoji: "🔵", description: "Océan clair", mode: "light", pair: "ocean" },
+  { id: "mist", name: "Mist", emoji: "🌫️", description: "Gris bleuté", mode: "light", pair: "mist-dark" },
+  // 🟣 Purples / Pinks
+  { id: "lavender-light", name: "Lavender", emoji: "🟣", description: "Lavande clair", mode: "light", pair: "lavender" },
+  { id: "magenta-light", name: "Magenta", emoji: "💜", description: "Violet clair", mode: "light", pair: "magenta" },
+  { id: "rose-light", name: "Rose", emoji: "🌸", description: "Rose clair", mode: "light", pair: "rose" },
+  // ⚫ Achromatic
+  { id: "mono-inverse", name: "Mono", emoji: "⚪", description: "Blanc & noir", mode: "light", pair: "mono" },
 ];
 
 // ═══════════════════════════════════════════════

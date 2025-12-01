@@ -1,6 +1,6 @@
 "use client";
 
-import { Sun, Moon, Check } from "lucide-react";
+import { Sun, Moon, Check, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,45 +13,65 @@ import {
 import { useTheme, type Theme, type ThemeOption } from "@/hooks/use-theme";
 import { cn } from "@/lib/utils";
 
-// Mini logo icon colored by theme (exported for Settings page)
-export function ThemeLogo({ themeOption, size = "md" }: { themeOption?: ThemeOption; size?: "sm" | "md" | "lg" }) {
-  const isMono = themeOption?.id === "mono" || themeOption?.id === "mono-light";
-  const isMonoLight = themeOption?.id === "mono-light";
+// Hardcoded theme colors (OKLCH primary colors converted to hex approximations)
+const themeColors: Record<Theme, { bg: string; fg: string }> = {
+  // Dark themes
+  "carmine": { bg: "#dc2626", fg: "#fff" },
+  "crimson": { bg: "#e11d48", fg: "#fff" },
+  "peach-dark": { bg: "#f97316", fg: "#fff" },
+  "brown": { bg: "#a16207", fg: "#fff" },
+  "sunset": { bg: "#ea580c", fg: "#fff" },
+  "sand-dark": { bg: "#ca8a04", fg: "#000" },
+  "cyber": { bg: "#eab308", fg: "#000" },
+  "sage-dark": { bg: "#65a30d", fg: "#fff" },
+  "forest": { bg: "#16a34a", fg: "#fff" },
+  "mint": { bg: "#14b8a6", fg: "#fff" },
+  "turquoise": { bg: "#06b6d4", fg: "#fff" },
+  "cloud-dark": { bg: "#0ea5e9", fg: "#fff" },
+  "ocean": { bg: "#3b82f6", fg: "#fff" },
+  "mist-dark": { bg: "#6366f1", fg: "#fff" },
+  "lavender": { bg: "#8b5cf6", fg: "#fff" },
+  "magenta": { bg: "#d946ef", fg: "#fff" },
+  "rose": { bg: "#ec4899", fg: "#fff" },
+  "mono": { bg: "#f5f5f5", fg: "#000" },
+  // Light themes
+  "carmine-light": { bg: "#dc2626", fg: "#fff" },
+  "crimson-light": { bg: "#e11d48", fg: "#fff" },
+  "peach": { bg: "#f97316", fg: "#fff" },
+  "brown-light": { bg: "#a16207", fg: "#fff" },
+  "sunset-light": { bg: "#ea580c", fg: "#fff" },
+  "sand": { bg: "#ca8a04", fg: "#000" },
+  "cyber-light": { bg: "#eab308", fg: "#000" },
+  "sage": { bg: "#65a30d", fg: "#fff" },
+  "forest-light": { bg: "#16a34a", fg: "#fff" },
+  "mint-light": { bg: "#14b8a6", fg: "#fff" },
+  "turquoise-light": { bg: "#06b6d4", fg: "#fff" },
+  "cloud": { bg: "#0ea5e9", fg: "#fff" },
+  "ocean-light": { bg: "#3b82f6", fg: "#fff" },
+  "mist": { bg: "#6366f1", fg: "#fff" },
+  "lavender-light": { bg: "#8b5cf6", fg: "#fff" },
+  "magenta-light": { bg: "#d946ef", fg: "#fff" },
+  "rose-light": { bg: "#ec4899", fg: "#fff" },
+  "mono-light": { bg: "#1a1a1a", fg: "#fff" },
+};
 
+// Mini palette icon colored by theme (exported for Settings page)
+export function ThemeLogo({ themeOption, size = "md" }: { themeOption?: ThemeOption; size?: "sm" | "md" | "lg" }) {
   const sizeClasses = {
     sm: { container: "w-5 h-5", icon: "w-3 h-3" },
     md: { container: "w-6 h-6", icon: "w-3.5 h-3.5" },
-    lg: { container: "w-8 h-8", icon: "w-4 h-4" },
+    lg: { container: "w-8 h-8", icon: "w-4.5 h-4.5" },
   };
   const { container: sizeClass, icon: iconSize } = sizeClasses[size];
 
-  // For mono themes: invert colors (white bg + black icon for mono, black bg + white icon for mono-light)
-  const bgStyle = isMono
-    ? { background: isMonoLight ? "#1a1a1a" : "#f5f5f5" }
-    : { background: "linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)" };
-
-  const iconColor = isMono
-    ? (isMonoLight ? "text-white" : "text-black")
-    : "text-primary-foreground";
+  const colors = themeOption?.id ? themeColors[themeOption.id] : { bg: "#d946ef", fg: "#fff" };
 
   return (
     <div
       className={cn(sizeClass, "flex items-center justify-center rounded-md flex-shrink-0")}
-      style={bgStyle}
+      style={{ background: colors.bg }}
     >
-      <svg
-        className={cn(iconSize, iconColor)}
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2.5}
-          d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-        />
-      </svg>
+      <Palette className={iconSize} style={{ color: colors.fg }} strokeWidth={2.5} />
     </div>
   );
 }

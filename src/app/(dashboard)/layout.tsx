@@ -27,6 +27,7 @@ import { QuickSwitcher } from "@/components/navigation/quick-switcher";
 import { DailyNoteButton } from "@/components/navigation/daily-note-button";
 import { ScrollRestoration } from "@/components/navigation/scroll-restoration";
 import { RateLimitIndicator } from "@/components/ui/rate-limit-indicator";
+import { useSettingsSync } from "@/hooks/use-settings-sync";
 
 export default function DashboardLayout({
   children,
@@ -36,6 +37,9 @@ export default function DashboardLayout({
   const { data: session, status } = useSession();
   const router = useRouter();
   const { sidebarOpen, toggleSidebar } = useVaultStore();
+
+  // Sync settings with GitHub cloud
+  useSettingsSync();
 
   useEffect(() => {
     if (status === "unauthenticated") {

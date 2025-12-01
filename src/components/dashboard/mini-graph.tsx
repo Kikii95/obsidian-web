@@ -85,6 +85,7 @@ function MiniGraphComponent({
       .attr("stroke-width", 1.5);
 
     // Draw nodes - larger and more visible
+    // Use --foreground for stroke (white on dark, black on light)
     const node = g
       .append("g")
       .attr("class", "nodes")
@@ -94,7 +95,7 @@ function MiniGraphComponent({
       .append("circle")
       .attr("r", 6)
       .attr("fill", "hsl(var(--primary))")
-      .attr("stroke", "hsl(var(--primary-foreground))")
+      .attr("stroke", "hsl(var(--foreground))")
       .attr("stroke-width", 2)
       .style("cursor", "pointer")
       .on("click", (_, d) => {
@@ -117,10 +118,10 @@ function MiniGraphComponent({
       node.attr("cx", (d) => d.x || 0).attr("cy", (d) => d.y || 0);
     });
 
-    // Simple zoom
+    // Zoom with extended range for more dezoom
     const zoom = d3
       .zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.5, 3])
+      .scaleExtent([0.1, 5])
       .on("zoom", (event) => {
         g.attr("transform", event.transform);
       });

@@ -165,6 +165,25 @@ function filterTree(files: VaultFile[], query: string): VaultFile[] {
   return result;
 }
 
+// Navigate to a subfolder in the tree
+function getSubTree(files: VaultFile[], rootPath: string): VaultFile[] {
+  if (!rootPath) return files;
+
+  const pathParts = rootPath.split("/").filter(Boolean);
+  let current = files;
+
+  for (const part of pathParts) {
+    const folder = current.find((f) => f.type === "dir" && f.name === part);
+    if (folder?.children) {
+      current = folder.children;
+    } else {
+      return []; // Path not found
+    }
+  }
+
+  return current;
+}
+
 export function VaultSidebar() {
   const { data: session } = useSession();
   const { settings } = useSettingsStore();
@@ -189,13 +208,21 @@ export function VaultSidebar() {
   const sortBy = settings.sidebarSortBy ?? "name";
   const hidePatterns = settings.hidePatterns ?? [];
   const customFolderOrders = settings.customFolderOrders ?? {};
+  const vaultRootPath = settings.vaultRootPath ?? "";
 
-  // Filter by patterns, search query, and sort tree
+  // Get the subtree based on vaultRootPath, then filter and sort
   const filteredTree = useMemo(() => {
-    const withoutHidden = filterByPatterns(tree, hidePatterns);
+    // First, navigate to the vault root subfolder
+    const subTree = getSubTree(tree, vaultRootPath);
+    const withoutHidden = filterByPatterns(subTree, hidePatterns);
     const filtered = filterTree(withoutHidden, searchQuery);
     return sortTree(filtered, sortBy, customFolderOrders);
-  }, [tree, searchQuery, sortBy, hidePatterns, customFolderOrders]);
+  }, [tree, vaultRootPath, searchQuery, sortBy, hidePatterns, customFolderOrders]);
+
+  // Build full path for a folder (prepend vaultRootPath if set)
+  const getFullPath = useCallback((folder: string) => {
+    return vaultRootPath ? `${vaultRootPath}/${folder}` : folder;
+  }, [vaultRootPath]);
 
   const fetchTree = useCallback(async (applyDefaults = false, forceRefresh = false) => {
     if (!session) return;
@@ -209,7 +236,7 @@ export function VaultSidebar() {
         setTree(cacheStatus.tree);
         if (applyDefaults && settings.defaultExpandedFolders.length > 0) {
           settings.defaultExpandedFolders.forEach((folder) => {
-            expandFolder(folder);
+            expandFolder(getFullPath(folder));
           });
         }
         return;
@@ -220,7 +247,7 @@ export function VaultSidebar() {
         setTree(cacheStatus.tree);
         if (applyDefaults && settings.defaultExpandedFolders.length > 0) {
           settings.defaultExpandedFolders.forEach((folder) => {
-            expandFolder(folder);
+            expandFolder(getFullPath(folder));
           });
         }
 
@@ -248,7 +275,7 @@ export function VaultSidebar() {
       // Apply default expanded folders on initial load
       if (applyDefaults && settings.defaultExpandedFolders.length > 0) {
         settings.defaultExpandedFolders.forEach((folder) => {
-          expandFolder(folder);
+          expandFolder(getFullPath(folder));
         });
       }
     } catch (error) {
@@ -258,7 +285,7 @@ export function VaultSidebar() {
     } finally {
       setTreeLoading(false);
     }
-  }, [session, setTree, setTreeLoading, setTreeError, settings.defaultExpandedFolders, expandFolder]);
+  }, [session, setTree, setTreeLoading, setTreeError, settings.defaultExpandedFolders, expandFolder, getFullPath]);
 
   useEffect(() => {
     if (session && tree.length === 0) {

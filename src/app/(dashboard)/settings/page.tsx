@@ -34,6 +34,7 @@ import {
   Lock,
   Network,
   FolderTree,
+  FolderRoot,
   RotateCcw,
   Type,
   X,
@@ -58,12 +59,43 @@ const SECURITY_SETTINGS_KEYS: (keyof UserSettings)[] = [
   "requirePinOnPrivateFolder",
 ];
 
-// Get top-level folder names from tree
-function getTopLevelFolders(files: VaultFile[]): string[] {
-  return files
+// Get top-level folder names from tree (respecting vaultRootPath)
+function getTopLevelFolders(files: VaultFile[], vaultRootPath: string = ""): string[] {
+  // If vaultRootPath is set, find that subfolder first
+  let targetFiles = files;
+
+  if (vaultRootPath) {
+    const pathParts = vaultRootPath.split("/").filter(Boolean);
+    for (const part of pathParts) {
+      const folder = targetFiles.find((f) => f.type === "dir" && f.name === part);
+      if (folder?.children) {
+        targetFiles = folder.children;
+      } else {
+        // Path not found, return empty
+        return [];
+      }
+    }
+  }
+
+  return targetFiles
     .filter((f) => f.type === "dir")
     .map((f) => f.name)
     .sort();
+}
+
+// Get all folder paths from tree (for vault root picker)
+function getAllFolderPaths(files: VaultFile[], prefix: string = ""): string[] {
+  const paths: string[] = [];
+  for (const file of files) {
+    if (file.type === "dir") {
+      const path = prefix ? `${prefix}/${file.name}` : file.name;
+      paths.push(path);
+      if (file.children) {
+        paths.push(...getAllFolderPaths(file.children, path));
+      }
+    }
+  }
+  return paths;
 }
 
 // Deep compare two objects (for detecting changes)
@@ -153,8 +185,14 @@ export default function SettingsPage() {
     resetSettings();
   };
 
-  // Get top-level folders only (cleaner UI)
-  const topLevelFolders = getTopLevelFolders(tree);
+  // Get all folder paths for vault root picker
+  const allFolderPaths = useMemo(() => getAllFolderPaths(tree), [tree]);
+
+  // Get top-level folders only (cleaner UI) - respecting vaultRootPath
+  const topLevelFolders = useMemo(
+    () => getTopLevelFolders(tree, draft.vaultRootPath),
+    [tree, draft.vaultRootPath]
+  );
 
   useEffect(() => {
     loadCacheStats();
@@ -425,6 +463,42 @@ export default function SettingsPage() {
           <CardDescription>Configuration de la navigation</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Vault Root Path */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <FolderRoot className="h-4 w-4" />
+              Dossier racine du vault
+            </Label>
+            <p className="text-sm text-muted-foreground mb-3">
+              Si votre vault est dans un sous-dossier du repo (ex: <code>MonVault/</code>), définissez-le ici
+            </p>
+            <Select
+              value={draft.vaultRootPath || "__repo_root__"}
+              onValueChange={(value) =>
+                updateDraft("vaultRootPath", value === "__repo_root__" ? "" : value)
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Racine du repo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__repo_root__">
+                  / (Racine du repo)
+                </SelectItem>
+                {allFolderPaths.map((path) => (
+                  <SelectItem key={path} value={path}>
+                    {path}/
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {draft.vaultRootPath && (
+              <p className="text-xs text-primary">
+                Vault actif : <code>{draft.vaultRootPath}/</code>
+              </p>
+            )}
+          </div>
+
           {/* Default expanded folders */}
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
@@ -432,7 +506,10 @@ export default function SettingsPage() {
               Dossiers dépliés par défaut
             </Label>
             <p className="text-sm text-muted-foreground mb-3">
-              Dossiers racine à ouvrir automatiquement au chargement
+              Dossiers à ouvrir automatiquement au chargement
+              {draft.vaultRootPath && (
+                <span className="text-primary"> (relatifs à {draft.vaultRootPath}/)</span>
+              )}
             </p>
             {topLevelFolders.length === 0 ? (
               <p className="text-sm text-muted-foreground italic">

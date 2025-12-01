@@ -2,13 +2,23 @@
 
 import { useEffect } from "react";
 
-const THEME_STORAGE_KEY = "obsidian-web-theme";
+// Settings store key (same as zustand persist)
+const SETTINGS_STORAGE_KEY = "obsidian-web-settings";
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    const storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-    if (storedTheme) {
-      document.documentElement.setAttribute("data-theme", storedTheme);
+    // Read theme from settings store (zustand persist format)
+    try {
+      const stored = localStorage.getItem(SETTINGS_STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        const theme = parsed?.state?.settings?.theme;
+        if (theme) {
+          document.documentElement.setAttribute("data-theme", theme);
+        }
+      }
+    } catch {
+      // Ignore parse errors
     }
   }, []);
 

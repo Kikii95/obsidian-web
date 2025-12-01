@@ -1,6 +1,14 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+// Detect if running on mobile device
+export function isMobileDevice(): boolean {
+  if (typeof window === "undefined") return false;
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+    navigator.userAgent
+  );
+}
+
 export type ActivityPeriod = "30" | "90" | "180" | "365";
 export type DashboardLayout = "compact" | "spacious" | "minimal";
 export type SidebarSortBy = "name" | "type";
@@ -22,7 +30,8 @@ export interface UserSettings {
   enableKeyboardShortcuts: boolean; // Ctrl+S to save, Esc to cancel
 
   // Sidebar
-  defaultExpandedFolders: string[]; // Folders to expand by default
+  vaultRootPath: string; // Custom vault root path (e.g. "MonVault" if repo is root/MonVault/...)
+  defaultExpandedFolders: string[]; // Folders to expand by default (relative to vaultRootPath)
   sidebarWidth: number;
   sidebarSortBy: SidebarSortBy; // Sort files by name or type
   showFileIcons: boolean; // Show colored icons by file type
@@ -50,6 +59,10 @@ export interface UserSettings {
 
   // Daily Notes
   dailyNotesFolder: string; // Folder path for daily notes (e.g. "Daily", "Journal/Daily")
+
+  // Cloud Sync
+  syncToCloud: boolean; // Sync settings to GitHub (disabled on mobile by default)
+  theme: string; // Current theme ID (synced with cloud)
 }
 
 interface SettingsState {
@@ -61,6 +74,12 @@ interface SettingsState {
   setFolderOrder: (parentPath: string, order: string[]) => void;
   moveFolderInOrder: (parentPath: string, folderName: string, direction: "up" | "down") => void;
   clearFolderOrder: (parentPath: string) => void;
+  // Cloud sync
+  cloudSha: string | null; // SHA of settings file in GitHub
+  isSyncing: boolean;
+  lastSyncError: string | null;
+  loadFromCloud: () => Promise<void>;
+  saveToCloud: () => Promise<void>;
 }
 
 const defaultSettings: UserSettings = {
@@ -79,6 +98,7 @@ const defaultSettings: UserSettings = {
   enableKeyboardShortcuts: true,
 
   // Sidebar
+  vaultRootPath: "", // Empty = repo root
   defaultExpandedFolders: [],
   sidebarWidth: 256,
   sidebarSortBy: "name",
@@ -107,17 +127,26 @@ const defaultSettings: UserSettings = {
 
   // Daily Notes
   dailyNotesFolder: "Daily",
+
+  // Cloud Sync
+  syncToCloud: true, // Sync to GitHub by default
+  theme: "magenta", // Default theme
 };
 
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set, get) => ({
       settings: defaultSettings,
+      cloudSha: null,
+      isSyncing: false,
+      lastSyncError: null,
 
-      updateSettings: (partial) =>
+      updateSettings: (partial) => {
         set((state) => ({
           settings: { ...state.settings, ...partial },
-        })),
+        }));
+        // Auto-save to cloud if enabled (debounced in component)
+      },
 
       resetSettings: () =>
         set({ settings: defaultSettings }),
@@ -187,9 +216,88 @@ export const useSettingsStore = create<SettingsState>()(
           };
         });
       },
+
+      // Load settings from GitHub cloud
+      loadFromCloud: async () => {
+        const { settings, isSyncing } = get();
+        if (isSyncing || !settings.syncToCloud) return;
+
+        set({ isSyncing: true, lastSyncError: null });
+
+        try {
+          const mobile = isMobileDevice();
+          const response = await fetch(`/api/github/settings?mobile=${mobile}`);
+
+          if (!response.ok) {
+            throw new Error("Failed to load settings from cloud");
+          }
+
+          const data = await response.json();
+
+          if (data.exists && data.settings) {
+            // Merge cloud settings with local (cloud takes priority)
+            set((state) => ({
+              settings: { ...state.settings, ...data.settings },
+              cloudSha: data.sha,
+              isSyncing: false,
+            }));
+          } else {
+            // No cloud settings yet, upload current local settings
+            set({ isSyncing: false });
+            get().saveToCloud();
+          }
+        } catch (error) {
+          console.error("Error loading settings from cloud:", error);
+          set({
+            isSyncing: false,
+            lastSyncError: error instanceof Error ? error.message : "Unknown error",
+          });
+        }
+      },
+
+      // Save settings to GitHub cloud
+      saveToCloud: async () => {
+        const { settings, cloudSha, isSyncing } = get();
+        if (isSyncing || !settings.syncToCloud) return;
+
+        set({ isSyncing: true, lastSyncError: null });
+
+        try {
+          const mobile = isMobileDevice();
+          const response = await fetch("/api/github/settings", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              settings,
+              sha: cloudSha,
+              mobile,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to save settings to cloud");
+          }
+
+          const data = await response.json();
+          set({
+            cloudSha: data.sha,
+            isSyncing: false,
+          });
+        } catch (error) {
+          console.error("Error saving settings to cloud:", error);
+          set({
+            isSyncing: false,
+            lastSyncError: error instanceof Error ? error.message : "Unknown error",
+          });
+        }
+      },
     }),
     {
       name: "obsidian-web-settings",
+      // Exclude cloud-related state from persistence (only local)
+      partialize: (state) => ({
+        settings: state.settings,
+      }),
     }
   )
 );

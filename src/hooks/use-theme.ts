@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSettingsStore } from "@/lib/settings-store";
 
 // ═══════════════════════════════════════════════
 // TYPES
@@ -145,74 +146,30 @@ export const getThemeMode = (themeId: Theme): ThemeMode => {
 };
 
 // ═══════════════════════════════════════════════
-// STORAGE
+// HOOK - Uses settings store for cloud sync
 // ═══════════════════════════════════════════════
-
-const THEME_STORAGE_KEY = "obsidian-web-theme";
-const MODE_STORAGE_KEY = "obsidian-web-theme-mode";
-
-// ═══════════════════════════════════════════════
-// HOOK
-// ═══════════════════════════════════════════════
-
-// Custom event for cross-component sync
-const THEME_CHANGE_EVENT = "obsidian-theme-change";
 
 export function useTheme() {
-  const [theme, setThemeState] = useState<Theme>("magenta");
-  const [mode, setModeState] = useState<ThemeMode>("dark");
+  const { settings, updateSettings } = useSettingsStore();
   const [mounted, setMounted] = useState(false);
 
-  // Initialize from localStorage
+  // Get theme from settings (synced with cloud)
+  const themeFromSettings = settings.theme as Theme;
+  const theme: Theme = themes.some((t) => t.id === themeFromSettings)
+    ? themeFromSettings
+    : "magenta";
+  const mode = getThemeMode(theme);
+
+  // Apply theme on mount and when it changes
   useEffect(() => {
     setMounted(true);
+    applyTheme(theme);
+  }, [theme]);
 
-    const storedTheme = localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
-    const storedMode = localStorage.getItem(MODE_STORAGE_KEY) as ThemeMode | null;
-
-    if (storedTheme && themes.some((t) => t.id === storedTheme)) {
-      setThemeState(storedTheme);
-      applyTheme(storedTheme);
-
-      // Sync mode with theme
-      const themeMode = getThemeMode(storedTheme);
-      setModeState(themeMode);
-      localStorage.setItem(MODE_STORAGE_KEY, themeMode);
-    } else if (storedMode) {
-      setModeState(storedMode);
-    }
-  }, []);
-
-  // Listen for theme changes from other components
-  useEffect(() => {
-    const handleThemeChange = (e: CustomEvent<{ theme: Theme; mode: ThemeMode }>) => {
-      setThemeState(e.detail.theme);
-      setModeState(e.detail.mode);
-    };
-
-    window.addEventListener(THEME_CHANGE_EVENT, handleThemeChange as EventListener);
-    return () => {
-      window.removeEventListener(THEME_CHANGE_EVENT, handleThemeChange as EventListener);
-    };
-  }, []);
-
-  // Set theme directly
+  // Set theme - updates settings (triggers cloud sync via useSettingsSync)
   const setTheme = (newTheme: Theme) => {
-    setThemeState(newTheme);
-    localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+    updateSettings({ theme: newTheme });
     applyTheme(newTheme);
-
-    // Update mode to match theme
-    const themeMode = getThemeMode(newTheme);
-    setModeState(themeMode);
-    localStorage.setItem(MODE_STORAGE_KEY, themeMode);
-
-    // Dispatch event for cross-component sync
-    window.dispatchEvent(
-      new CustomEvent(THEME_CHANGE_EVENT, {
-        detail: { theme: newTheme, mode: themeMode },
-      })
-    );
   };
 
   // Toggle between dark/light mode (switches to paired theme)

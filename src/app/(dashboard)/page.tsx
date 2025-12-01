@@ -211,10 +211,38 @@ export default function HomePage() {
     return getRecentNotes(tree, settings.recentNotesCount);
   }, [tree, settings.recentNotesCount]);
 
-  // Build note URL
-  const getNoteUrl = (path: string) => {
-    const cleanPath = path.replace(/\.md$/, "");
-    return `/note/${cleanPath.split("/").map(encodeURIComponent).join("/")}`;
+  // Build file URL based on type
+  const getFileUrl = (path: string) => {
+    const fileType = getFileType(path);
+    const cleanPath = path
+      .replace(/\.md$/, "")
+      .replace(/\.canvas$/, "")
+      .replace(/\.pdf$/, "")
+      .replace(/\.(png|jpg|jpeg|gif|svg|webp|bmp|ico)$/i, "");
+    const encodedPath = cleanPath.split("/").map(encodeURIComponent).join("/");
+
+    if (fileType === "image" || fileType === "pdf") {
+      return `/file/${encodedPath}`;
+    }
+    if (fileType === "canvas") {
+      return `/canvas/${encodedPath}`;
+    }
+    return `/note/${encodedPath}`;
+  };
+
+  // Get icon component based on file type
+  const getFileIcon = (path: string) => {
+    const fileType = getFileType(path);
+    switch (fileType) {
+      case "image":
+        return <Image className="h-4 w-4 text-emerald-500 shrink-0" />;
+      case "pdf":
+        return <FileText className="h-4 w-4 text-red-500 shrink-0" />;
+      case "canvas":
+        return <LayoutDashboard className="h-4 w-4 text-purple-500 shrink-0" />;
+      default:
+        return <FileText className="h-4 w-4 text-muted-foreground shrink-0" />;
+    }
   };
 
   // Layout-specific classes
@@ -387,9 +415,9 @@ export default function HomePage() {
                       key={note.path}
                       className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50 group"
                     >
-                      <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                      {getFileIcon(note.path)}
                       <Link
-                        href={getNoteUrl(note.path)}
+                        href={getFileUrl(note.path)}
                         className="flex-1 min-w-0 hover:text-primary"
                       >
                         <span className="text-sm block truncate">{note.name}</span>
@@ -443,10 +471,10 @@ export default function HomePage() {
                   return (
                     <Link
                       key={note.path}
-                      href={getNoteUrl(note.path)}
+                      href={getFileUrl(note.path)}
                       className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50 group"
                     >
-                      <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                      {getFileIcon(note.path)}
                       <div className="flex-1 min-w-0 group-hover:text-primary">
                         <span className="text-sm block truncate">{note.name}</span>
                         {folder && (

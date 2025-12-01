@@ -7,7 +7,7 @@ import { ConfirmDialog } from "@/components/dialogs";
 import { PinDialog } from "@/components/lock/pin-dialog";
 import { githubClient } from "@/services/github-client";
 import { useSettingsStore } from "@/lib/settings-store";
-import { useLockStore } from "@/lib/lock-store";
+import { useLockStore, isPathLocked } from "@/lib/lock-store";
 
 interface DeleteNoteDialogProps {
   path: string;
@@ -22,8 +22,15 @@ export function DeleteNoteDialog({ path, sha, noteName, trigger }: DeleteNoteDia
   const [showPinDialog, setShowPinDialog] = useState(false);
   const [pendingDelete, setPendingDelete] = useState(false);
 
-  // Check if PIN verification is needed
-  const needsPinVerification = settings.requirePinOnDelete && hasPinConfigured && !isUnlocked;
+  // Check if note is in a locked folder (_private)
+  const isNoteLocked = isPathLocked(path);
+
+  // PIN verification needed if:
+  // 1. Note is locked (always require PIN for locked notes, even if session unlocked)
+  // 2. OR requirePinOnDelete is true AND not currently unlocked
+  const needsPinVerification = hasPinConfigured && (
+    isNoteLocked || (settings.requirePinOnDelete && !isUnlocked)
+  );
 
   const handleDelete = async () => {
     if (needsPinVerification) {

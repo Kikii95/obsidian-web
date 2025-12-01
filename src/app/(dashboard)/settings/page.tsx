@@ -55,7 +55,6 @@ import type { VaultFile } from "@/types";
 const SECURITY_SETTINGS_KEYS: (keyof UserSettings)[] = [
   "lockTimeout",
   "requirePinOnDelete",
-  "requirePinOnPrivateFolder",
 ];
 
 // Get top-level folder names from tree
@@ -600,19 +599,6 @@ export default function SettingsPage() {
             />
           </div>
 
-          {/* Require PIN for private folders */}
-          <div className="flex items-center justify-between">
-            <div>
-              <Label>PIN pour dossiers privés</Label>
-              <p className="text-sm text-muted-foreground">
-                Demander le code pour accéder aux dossiers _private
-              </p>
-            </div>
-            <Switch
-              checked={draft.requirePinOnPrivateFolder}
-              onCheckedChange={(checked) => updateDraft("requirePinOnPrivateFolder", checked)}
-            />
-          </div>
         </CardContent>
       </Card>
 

@@ -12,10 +12,15 @@ const UNLOCK_EXPIRY_KEY = "obsidian-web-unlock-expiry";
 
 // Get timeout from settings (in minutes, convert to ms)
 function getUnlockTimeout(): number {
-  const timeout = useSettingsStore.getState().settings.lockTimeout;
-  // 0 = never (use 24 hours as "never")
-  if (timeout === 0) return 24 * 60 * 60 * 1000;
-  return timeout * 60 * 1000;
+  try {
+    const timeout = useSettingsStore.getState().settings?.lockTimeout ?? 5;
+    // 0 = never (use 24 hours as "never")
+    if (timeout === 0) return 24 * 60 * 60 * 1000;
+    return timeout * 60 * 1000;
+  } catch {
+    // Fallback if settings store not ready
+    return 5 * 60 * 1000;
+  }
 }
 
 interface LockState {

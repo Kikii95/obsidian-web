@@ -31,8 +31,7 @@ export interface UserSettings {
 
   // Lock system
   lockTimeout: number; // Minutes before auto-lock (0 = never)
-  requirePinOnDelete: boolean;
-  requirePinOnPrivateFolder: boolean;
+  requirePinOnDelete: boolean; // Require PIN to delete any file (when PIN configured)
 
   // Graph
   showOrphanNotes: boolean;
@@ -89,7 +88,6 @@ const defaultSettings: UserSettings = {
   // Lock system
   lockTimeout: 5, // 5 minutes
   requirePinOnDelete: true,
-  requirePinOnPrivateFolder: true,
 
   // Graph
   showOrphanNotes: false,
@@ -124,16 +122,26 @@ export const useSettingsStore = create<SettingsState>()(
 
       // Get folder order for a specific parent path ("" = root)
       getFolderOrder: (parentPath: string) => {
-        return get().settings.customFolderOrders?.[parentPath] || [];
+        try {
+          const orders = get().settings?.customFolderOrders;
+          if (!orders || typeof orders !== 'object') return [];
+          const order = orders[parentPath];
+          return Array.isArray(order) ? order : [];
+        } catch {
+          return [];
+        }
       },
 
       // Set folder order for a specific parent path
       setFolderOrder: (parentPath: string, order: string[]) => {
+        if (!Array.isArray(order)) return;
         set((state) => ({
           settings: {
             ...state.settings,
             customFolderOrders: {
-              ...(state.settings.customFolderOrders ?? {}),
+              ...((state.settings?.customFolderOrders && typeof state.settings.customFolderOrders === 'object')
+                ? state.settings.customFolderOrders
+                : {}),
               [parentPath]: order,
             },
           },
@@ -164,7 +172,10 @@ export const useSettingsStore = create<SettingsState>()(
       // Clear folder order for a specific parent path
       clearFolderOrder: (parentPath: string) => {
         set((state) => {
-          const newOrders = { ...(state.settings.customFolderOrders ?? {}) };
+          const existingOrders = state.settings?.customFolderOrders;
+          const newOrders = (existingOrders && typeof existingOrders === 'object')
+            ? { ...existingOrders }
+            : {};
           delete newOrders[parentPath];
           return {
             settings: {

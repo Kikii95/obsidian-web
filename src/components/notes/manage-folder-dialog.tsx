@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2, FolderPen, FolderX, AlertTriangle, Lock } from "lucide-react";
 import { useVaultStore } from "@/lib/store";
 import { useLockStore } from "@/lib/lock-store";
+import { useSettingsStore } from "@/lib/settings-store";
 import { githubClient } from "@/services/github-client";
 import { FolderTreePicker } from "./folder-tree-picker";
 import { PinDialog } from "@/components/lock/pin-dialog";
@@ -64,9 +65,21 @@ function containsLockedFiles(folder: VaultFile): boolean {
   return false;
 }
 
+// Check if folder is or contains a _private folder (recursively)
+function containsPrivateFolder(folder: VaultFile): boolean {
+  const lowerName = folder.name.toLowerCase();
+  if (lowerName === "_private" || lowerName.startsWith("_private.")) return true;
+  if (!folder.children) return false;
+  for (const child of folder.children) {
+    if (child.type === "dir" && containsPrivateFolder(child)) return true;
+  }
+  return false;
+}
+
 export function ManageFolderDialog({ mode, open, onOpenChange }: ManageFolderDialogProps) {
   const { tree, triggerTreeRefresh } = useVaultStore();
-  const { hasPinConfigured } = useLockStore();
+  const { hasPinConfigured, isUnlocked } = useLockStore();
+  const { settings } = useSettingsStore();
   const [selectedFolder, setSelectedFolder] = useState<string>("");
   const [newName, setNewName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -101,6 +114,23 @@ export function ManageFolderDialog({ mode, open, onOpenChange }: ManageFolderDia
     if (!selectedFolderData) return false;
     return containsLockedFiles(selectedFolderData);
   }, [selectedFolderData]);
+
+  // Contains or is a _private folder
+  const hasPrivateFolder = useMemo(() => {
+    if (!selectedFolderData) return false;
+    return containsPrivateFolder(selectedFolderData);
+  }, [selectedFolderData]);
+
+  // Folder contains sensitive content (locked files or _private)
+  const hasSensitiveContent = hasLockedFiles || hasPrivateFolder;
+
+  // PIN verification logic (same as note deletion):
+  // For folders with locked/_private content:
+  //   - Ask PIN if requirePinOnDelete is ON (even if unlocked)
+  //   - Don't ask ONLY if unlocked AND requirePinOnDelete is OFF
+  const needsPinVerification = hasPinConfigured && hasSensitiveContent && (
+    settings.requirePinOnDelete || !isUnlocked
+  );
 
   const folderName = getFolderName(selectedFolder);
   const isConfirmValid = confirmText.toLowerCase() === folderName.toLowerCase();
@@ -147,8 +177,8 @@ export function ManageFolderDialog({ mode, open, onOpenChange }: ManageFolderDia
       return;
     }
 
-    // If folder contains locked files and PIN is configured, require PIN first
-    if (hasLockedFiles && hasPinConfigured && !pinVerified) {
+    // If folder contains locked files or _private and PIN verification needed
+    if (needsPinVerification && !pinVerified) {
       setShowPinDialog(true);
       return;
     }
@@ -258,13 +288,19 @@ export function ManageFolderDialog({ mode, open, onOpenChange }: ManageFolderDia
                   Tous les fichiers seront définitivement supprimés.
                 </p>
               </div>
-              {hasLockedFiles && (
+              {hasSensitiveContent && (
                 <div className="flex items-center gap-2 p-3 bg-amber-500/10 rounded-md border border-amber-500/30">
                   <Lock className="h-5 w-5 text-amber-500 shrink-0" />
                   <p className="text-sm text-amber-600 dark:text-amber-400">
-                    <strong>Contenu privé détecté !</strong>
+                    <strong>Contenu protégé détecté !</strong>
                     <br />
-                    <span className="text-xs">Ce dossier contient un dossier _private/ qui sera supprimé.</span>
+                    <span className="text-xs">
+                      {hasPrivateFolder && hasLockedFiles
+                        ? "Ce dossier contient des fichiers verrouillés et un dossier _private/."
+                        : hasPrivateFolder
+                          ? "Ce dossier contient un dossier _private/."
+                          : "Ce dossier contient des fichiers verrouillés."}
+                    </span>
                   </p>
                 </div>
               )}

@@ -10,8 +10,10 @@ export type ThemeMode = "dark" | "light";
 
 export type Theme =
   // Dark themes (ordered by hue 0→360)
+  | "carmine"      // 0
   | "crimson"      // 15
   | "peach-dark"   // 25
+  | "brown"        // 30
   | "sunset"       // 35
   | "sand-dark"    // 50
   | "cyber"        // 85
@@ -27,8 +29,10 @@ export type Theme =
   | "rose"         // 350
   | "mono"         // achromatic
   // Light themes (same order)
+  | "carmine-light"
   | "crimson-light"
   | "peach"
+  | "brown-light"
   | "sunset-light"
   | "sand"
   | "cyber-light"
@@ -61,9 +65,11 @@ export const themes: ThemeOption[] = [
   // ─────────────────────────────────────────────
   // DARK THEMES (hue 0→360)
   // ─────────────────────────────────────────────
-  // 🔴 Reds / Oranges
+  // 🔴 Reds / Oranges / Browns
+  { id: "carmine", name: "Carmine", emoji: "❤️", description: "Rouge carmin", mode: "dark", pair: "carmine-light" },
   { id: "crimson", name: "Crimson", emoji: "🔴", description: "Rouge intense", mode: "dark", pair: "crimson-light" },
   { id: "peach-dark", name: "Peach", emoji: "🍑", description: "Pêche doux", mode: "dark", pair: "peach" },
+  { id: "brown", name: "Brown", emoji: "🟤", description: "Marron chaud", mode: "dark", pair: "brown-light" },
   { id: "sunset", name: "Sunset", emoji: "🟠", description: "Orange chaud", mode: "dark", pair: "sunset-light" },
   { id: "sand-dark", name: "Sand", emoji: "🏖️", description: "Sable chaud", mode: "dark", pair: "sand" },
   // 💛 Yellow
@@ -87,9 +93,11 @@ export const themes: ThemeOption[] = [
   // ─────────────────────────────────────────────
   // LIGHT THEMES (same order)
   // ─────────────────────────────────────────────
-  // 🔴 Reds / Oranges
+  // 🔴 Reds / Oranges / Browns
+  { id: "carmine-light", name: "Carmine", emoji: "❤️", description: "Rouge carmin", mode: "light", pair: "carmine" },
   { id: "crimson-light", name: "Crimson", emoji: "🔴", description: "Rouge clair", mode: "light", pair: "crimson" },
   { id: "peach", name: "Peach", emoji: "🍑", description: "Pêche doux", mode: "light", pair: "peach-dark" },
+  { id: "brown-light", name: "Brown", emoji: "🟤", description: "Marron clair", mode: "light", pair: "brown" },
   { id: "sunset-light", name: "Sunset", emoji: "🟠", description: "Orange clair", mode: "light", pair: "sunset" },
   { id: "sand", name: "Sand", emoji: "🏖️", description: "Sable chaud", mode: "light", pair: "sand-dark" },
   // 💛 Yellow

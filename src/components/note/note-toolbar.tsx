@@ -208,6 +208,7 @@ export const NoteToolbar = memo(function NoteToolbar({
               path={note.path}
               sha={note.sha}
               noteName={noteName}
+              isLocked={note.isLocked}
               trigger={
                 <Button
                   variant="ghost"
@@ -349,6 +350,7 @@ export const NoteToolbar = memo(function NoteToolbar({
                 path={note.path}
                 sha={note.sha}
                 noteName={noteName}
+                isLocked={note.isLocked}
                 trigger={
                   <DropdownMenuItem
                     onSelect={(e) => e.preventDefault()}

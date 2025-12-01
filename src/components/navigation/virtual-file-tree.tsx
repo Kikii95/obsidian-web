@@ -185,10 +185,9 @@ const VirtualTreeItem = memo(function VirtualTreeItem({
           title="Déverrouiller pour voir le contenu"
         >
           {indentGuides}
-          <Lock className="h-3 w-3 shrink-0" />
+          <div className="w-3 shrink-0" />
           <span className="shrink-0">{icon}</span>
           <span className="truncate font-medium">{displayName}</span>
-          <span className="text-xs ml-auto opacity-70">🔒</span>
         </Link>
       );
     }

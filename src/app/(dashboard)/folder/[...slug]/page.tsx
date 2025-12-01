@@ -13,27 +13,46 @@ import {
   LayoutDashboard,
   File,
   ArrowUpDown,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useVaultStore } from "@/lib/store";
 import { useSettingsStore } from "@/lib/settings-store";
+import { useLockStore } from "@/lib/lock-store";
 import { decodeSlugSegments } from "@/lib/path-utils";
 import { getFileType, isViewableFile } from "@/lib/file-types";
 import { cn } from "@/lib/utils";
 import { ReorderFoldersDialog } from "@/components/notes/reorder-folders-dialog";
 import type { VaultFile } from "@/types";
 
+// Check if folder name indicates a private folder
+function isPrivateFolderName(name: string): boolean {
+  const lowerName = name.toLowerCase();
+  return lowerName === "_private" || lowerName.startsWith("_private.");
+}
+
 export default function FolderPage() {
   const params = useParams();
   const { tree } = useVaultStore();
-  const { getFolderOrder } = useSettingsStore();
+  const { getFolderOrder, settings } = useSettingsStore();
+  const { hasPinConfigured, isUnlocked } = useLockStore();
   const [reorderDialogOpen, setReorderDialogOpen] = useState(false);
+
+  // Should we hide children of _private folders?
+  const hidePrivateChildren =
+    settings.requirePinOnPrivateFolder &&
+    hasPinConfigured &&
+    !isUnlocked;
 
   // Parse slug
   const slug = params.slug as string[];
   const decodedSlug = useMemo(() => decodeSlugSegments(slug || []), [slug]);
   const folderPath = decodedSlug.join("/");
   const folderName = decodedSlug[decodedSlug.length - 1] || "Root";
+
+  // Check if this is a _private folder that should be locked
+  const isPrivateFolder = isPrivateFolderName(folderName);
+  const shouldHideContent = isPrivateFolder && hidePrivateChildren;
 
   // Find the folder in the tree
   const folderContent = useMemo(() => {
@@ -148,16 +167,27 @@ export default function FolderPage() {
 
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
-          <div className="p-3 rounded-xl bg-primary/10">
-            <FolderOpen className="h-8 w-8 text-primary" />
+          <div className={cn(
+            "p-3 rounded-xl",
+            isPrivateFolder ? "bg-amber-500/10" : "bg-primary/10"
+          )}>
+            {isPrivateFolder ? (
+              <Lock className="h-8 w-8 text-amber-500" />
+            ) : (
+              <FolderOpen className="h-8 w-8 text-primary" />
+            )}
           </div>
           <div className="flex-1">
             <h1 className="text-2xl font-bold">{folderName}</h1>
-            <p className="text-sm text-muted-foreground">
-              {stats.folders} dossier{stats.folders > 1 ? "s" : ""} · {stats.files} fichier{stats.files > 1 ? "s" : ""}
-            </p>
+            {shouldHideContent ? (
+              <p className="text-sm text-amber-500">Dossier verrouillé</p>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                {stats.folders} dossier{stats.folders > 1 ? "s" : ""} · {stats.files} fichier{stats.files > 1 ? "s" : ""}
+              </p>
+            )}
           </div>
-          {stats.folders > 1 && (
+          {!shouldHideContent && stats.folders > 1 && (
             <Button
               variant="outline"
               size="sm"
@@ -171,7 +201,20 @@ export default function FolderPage() {
         </div>
 
         {/* Content Grid */}
-        {sortedContent.length === 0 ? (
+        {shouldHideContent ? (
+          <div className="text-center py-12 border border-dashed border-amber-500/30 rounded-lg bg-amber-500/5">
+            <Lock className="h-12 w-12 mx-auto text-amber-500 mb-3" />
+            <p className="text-amber-600 dark:text-amber-400 font-medium mb-2">
+              Contenu verrouillé
+            </p>
+            <p className="text-sm text-muted-foreground mb-4">
+              Déverrouillez votre vault pour voir le contenu de ce dossier
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Cliquez sur le cadenas dans le header pour déverrouiller
+            </p>
+          </div>
+        ) : sortedContent.length === 0 ? (
           <div className="text-center py-12 border border-dashed border-border rounded-lg">
             <Folder className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
             <p className="text-muted-foreground">Ce dossier est vide</p>

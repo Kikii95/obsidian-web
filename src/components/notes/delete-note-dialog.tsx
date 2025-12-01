@@ -13,23 +13,27 @@ interface DeleteNoteDialogProps {
   path: string;
   sha: string;
   noteName: string;
+  isLocked?: boolean; // Frontmatter lock (private: true, #lock)
   trigger?: React.ReactNode;
 }
 
-export function DeleteNoteDialog({ path, sha, noteName, trigger }: DeleteNoteDialogProps) {
+export function DeleteNoteDialog({ path, sha, noteName, isLocked = false, trigger }: DeleteNoteDialogProps) {
   const { settings } = useSettingsStore();
   const { hasPinConfigured, isUnlocked } = useLockStore();
   const [showPinDialog, setShowPinDialog] = useState(false);
   const [pendingDelete, setPendingDelete] = useState(false);
 
-  // Check if note is in a locked folder (_private)
-  const isNoteLocked = isPathLocked(path);
+  // Check if note is in a _private folder
+  const isInPrivateFolder = isPathLocked(path);
 
   // PIN verification needed if:
-  // 1. Note is locked (always require PIN for locked notes, even if session unlocked)
-  // 2. OR requirePinOnDelete is true AND not currently unlocked
-  const needsPinVerification = hasPinConfigured && (
-    isNoteLocked || (settings.requirePinOnDelete && !isUnlocked)
+  // 1. Note has frontmatter lock (always require PIN)
+  // 2. OR note is in _private folder AND requirePinOnPrivateFolder is enabled
+  // 3. OR requirePinOnDelete is true (for any note)
+  const needsPinVerification = hasPinConfigured && !isUnlocked && (
+    isLocked ||
+    (isInPrivateFolder && settings.requirePinOnPrivateFolder) ||
+    settings.requirePinOnDelete
   );
 
   const handleDelete = async () => {

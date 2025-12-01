@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -33,16 +33,25 @@ export default function FilePage() {
   const [error, setError] = useState<string | null>(null);
 
   const slug = params.slug as string[];
-  const decodedSlug = slug?.map((s) => decodeURIComponent(s)) || [];
+  // Stable string for dependency comparison
+  const slugKey = slug?.join("/") || "";
+  const decodedSlug = useMemo(
+    () => slug?.map((s) => decodeURIComponent(s)) || [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [slugKey]
+  );
 
   const fetchFile = useCallback(async () => {
-    if (decodedSlug.length === 0) return;
+    if (!slugKey) return;
 
     setIsLoading(true);
     setError(null);
 
+    // Decode the slug parts for file path
+    const pathParts = slugKey.split("/").map((s) => decodeURIComponent(s));
+
     for (const ext of SUPPORTED_EXTENSIONS) {
-      const filePath = `${decodedSlug.join("/")}${ext}`;
+      const filePath = `${pathParts.join("/")}${ext}`;
 
       try {
         const data = await githubClient.readBinaryFile(filePath);
@@ -56,7 +65,7 @@ export default function FilePage() {
 
     setError("Fichier non trouvé");
     setIsLoading(false);
-  }, [decodedSlug]);
+  }, [slugKey]);
 
   useEffect(() => {
     fetchFile();

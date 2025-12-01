@@ -4,6 +4,15 @@
  */
 
 import type { VaultFile } from "@/types";
+import { useRateLimitStore } from "@/lib/rate-limit-store";
+
+// Rate limit info from API responses
+interface RateLimitInfo {
+  limit: number;
+  remaining: number;
+  reset: number;
+  used: number;
+}
 
 interface NoteData {
   path: string;
@@ -46,8 +55,29 @@ interface ApiError extends Error {
   status?: number;
 }
 
+// Base response type with optional rate limit
+interface ApiResponse<T> {
+  data: T;
+  rateLimit?: RateLimitInfo;
+}
+
 /**
- * Base fetch wrapper with error handling
+ * Update rate limit store if rate limit info is present
+ */
+function updateRateLimitFromResponse(data: Record<string, unknown>) {
+  if (data.rateLimit && typeof data.rateLimit === "object") {
+    const rl = data.rateLimit as RateLimitInfo;
+    if (rl.limit && rl.remaining !== undefined && rl.reset) {
+      // Update the store (only works in client context)
+      if (typeof window !== "undefined") {
+        useRateLimitStore.getState().setRateLimit(rl);
+      }
+    }
+  }
+}
+
+/**
+ * Base fetch wrapper with error handling and rate limit tracking
  */
 async function apiFetch<T>(
   url: string,
@@ -68,6 +98,9 @@ async function apiFetch<T>(
     error.status = response.status;
     throw error;
   }
+
+  // Extract rate limit info if present
+  updateRateLimitFromResponse(data);
 
   return data as T;
 }

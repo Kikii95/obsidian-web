@@ -21,6 +21,7 @@ import { ImportNoteDialog } from "@/components/notes/import-note-dialog";
 import { githubClient } from "@/services/github-client";
 import { useSettingsStore, type SidebarSortBy } from "@/lib/settings-store";
 import { getFileType } from "@/lib/file-types";
+import { cacheTree, getTreeCacheStatus } from "@/lib/tree-cache";
 import type { VaultFile } from "@/types";
 
 // Extract all folder paths from tree recursively
@@ -190,15 +191,53 @@ export function VaultSidebar() {
     return sortTree(filtered, sortBy, customFolderOrder);
   }, [tree, searchQuery, sortBy, hidePatterns, customFolderOrder]);
 
-  const fetchTree = useCallback(async (applyDefaults = false) => {
+  const fetchTree = useCallback(async (applyDefaults = false, forceRefresh = false) => {
     if (!session) return;
 
+    // Check cache status first (stale-while-revalidate)
+    if (!forceRefresh) {
+      const cacheStatus = await getTreeCacheStatus();
+
+      if (cacheStatus.status === "fresh" && cacheStatus.tree) {
+        // Cache is fresh - use it directly, no API call needed
+        setTree(cacheStatus.tree);
+        if (applyDefaults && settings.defaultExpandedFolders.length > 0) {
+          settings.defaultExpandedFolders.forEach((folder) => {
+            expandFolder(folder);
+          });
+        }
+        return;
+      }
+
+      if (cacheStatus.status === "stale" && cacheStatus.tree) {
+        // Cache is stale - use it immediately, then revalidate in background
+        setTree(cacheStatus.tree);
+        if (applyDefaults && settings.defaultExpandedFolders.length > 0) {
+          settings.defaultExpandedFolders.forEach((folder) => {
+            expandFolder(folder);
+          });
+        }
+
+        // Revalidate in background (don't show loading)
+        githubClient.getTree().then((freshTree) => {
+          setTree(freshTree);
+          cacheTree(freshTree);
+        }).catch(console.warn);
+
+        return;
+      }
+    }
+
+    // No cache or expired - fetch fresh with loading state
     setTreeLoading(true);
     setTreeError(null);
 
     try {
       const tree = await githubClient.getTree();
       setTree(tree);
+
+      // Cache the fresh data
+      await cacheTree(tree);
 
       // Apply default expanded folders on initial load
       if (applyDefaults && settings.defaultExpandedFolders.length > 0) {
@@ -224,7 +263,7 @@ export function VaultSidebar() {
   // Auto-refresh when treeRefreshTrigger changes (from create/rename/move/delete)
   useEffect(() => {
     if (session && treeRefreshTrigger > 0) {
-      fetchTree();
+      fetchTree(false, true); // Force refresh after mutations
     }
   }, [session, treeRefreshTrigger, fetchTree]);
 
@@ -252,7 +291,7 @@ export function VaultSidebar() {
         <div className="flex flex-col items-center justify-center gap-3 text-center py-8">
           <AlertCircle className="h-8 w-8 text-destructive" />
           <p className="text-sm text-muted-foreground">{treeError}</p>
-          <Button variant="outline" size="sm" onClick={() => fetchTree()}>
+          <Button variant="outline" size="sm" onClick={() => fetchTree(false, true)}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Réessayer
           </Button>
@@ -267,7 +306,7 @@ export function VaultSidebar() {
         <div className="flex flex-col items-center justify-center gap-3 text-center py-8">
           <FolderTree className="h-8 w-8 text-muted-foreground" />
           <p className="text-sm text-muted-foreground">Vault vide</p>
-          <Button variant="outline" size="sm" onClick={() => fetchTree()}>
+          <Button variant="outline" size="sm" onClick={() => fetchTree(false, true)}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Rafraîchir
           </Button>
@@ -401,7 +440,7 @@ export function VaultSidebar() {
               className="h-6 w-6"
               onClick={(e) => {
                 e.preventDefault();
-                fetchTree();
+                fetchTree(false, true); // Force refresh (bypass cache)
               }}
               title="Rafraîchir"
             >

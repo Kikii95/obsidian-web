@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { createOctokit, getFullVaultTree } from "@/lib/github";
+import { createOctokit, getFullVaultTree, getLastRateLimit } from "@/lib/github";
 import { isPrivatePath } from "@/lib/privacy";
 import type { VaultFile } from "@/types";
 
@@ -25,7 +25,10 @@ export async function GET() {
     // Build tree structure
     const tree = buildTree(filesWithLockStatus);
 
-    return NextResponse.json({ tree });
+    // Include rate limit info in response
+    const rateLimit = getLastRateLimit();
+
+    return NextResponse.json({ tree, rateLimit });
   } catch (error) {
     console.error("Error fetching vault tree:", error);
     return NextResponse.json(

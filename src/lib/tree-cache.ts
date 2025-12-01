@@ -1,16 +1,26 @@
 /**
  * Tree caching system using Cache API
- * Stores vault tree for offline navigation
+ * Implements stale-while-revalidate pattern for optimal UX
  */
 
 import type { VaultFile } from "@/types";
 
-const CACHE_NAME = "obsidian-tree-v1";
+const CACHE_NAME = "obsidian-tree-v2";
 const TREE_KEY = "/cached-tree";
+
+// Cache settings
+const CACHE_MAX_AGE = 5 * 60 * 1000; // 5 minutes - consider fresh
+const CACHE_STALE_AGE = 30 * 60 * 1000; // 30 minutes - serve stale, revalidate in background
 
 interface CachedTree {
   tree: VaultFile[];
   cachedAt: number;
+}
+
+export interface CacheStatus {
+  status: "fresh" | "stale" | "expired" | "none";
+  age: number; // in seconds
+  tree: VaultFile[] | null;
 }
 
 /**
@@ -56,6 +66,43 @@ export async function getCachedTree(): Promise<VaultFile[] | null> {
   } catch (error) {
     console.warn("Failed to get cached tree:", error);
     return null;
+  }
+}
+
+/**
+ * Get cache status with stale-while-revalidate logic
+ * Returns status indicating if we should use cached data and/or fetch fresh
+ */
+export async function getTreeCacheStatus(): Promise<CacheStatus> {
+  if (typeof window === "undefined" || !("caches" in window)) {
+    return { status: "none", age: 0, tree: null };
+  }
+
+  try {
+    const cache = await caches.open(CACHE_NAME);
+    const response = await cache.match(TREE_KEY);
+
+    if (!response) {
+      return { status: "none", age: 0, tree: null };
+    }
+
+    const data: CachedTree = await response.json();
+    const age = Date.now() - data.cachedAt;
+    const ageSeconds = Math.floor(age / 1000);
+
+    if (age < CACHE_MAX_AGE) {
+      // Fresh - use cache, no need to revalidate
+      return { status: "fresh", age: ageSeconds, tree: data.tree };
+    } else if (age < CACHE_STALE_AGE) {
+      // Stale - use cache but revalidate in background
+      return { status: "stale", age: ageSeconds, tree: data.tree };
+    } else {
+      // Expired - don't use cache, fetch fresh
+      return { status: "expired", age: ageSeconds, tree: null };
+    }
+  } catch (error) {
+    console.warn("Failed to get tree cache status:", error);
+    return { status: "none", age: 0, tree: null };
   }
 }
 

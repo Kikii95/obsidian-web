@@ -26,6 +26,7 @@ import { HeaderDateTime } from "@/components/ui/header-date-time";
 import { QuickSwitcher } from "@/components/navigation/quick-switcher";
 import { DailyNoteButton } from "@/components/navigation/daily-note-button";
 import { ScrollRestoration } from "@/components/navigation/scroll-restoration";
+import { RateLimitIndicator } from "@/components/ui/rate-limit-indicator";
 
 export default function DashboardLayout({
   children,
@@ -112,6 +113,9 @@ export default function DashboardLayout({
 
           {/* Right side */}
           <div className="flex items-center gap-2">
+            {/* Rate Limit Indicator */}
+            <RateLimitIndicator />
+
             {/* Global Lock Status */}
             <GlobalLockStatus />
 

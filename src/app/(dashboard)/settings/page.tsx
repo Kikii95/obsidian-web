@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useDebouncedCallback } from "@/hooks/use-debounce";
 import {
   Card,
   CardContent,
@@ -74,6 +75,48 @@ export default function SettingsPage() {
   });
   const [isClearing, setIsClearing] = useState(false);
 
+  // Local state for sliders (immediate UI feedback)
+  const [sliderValues, setSliderValues] = useState({
+    recentNotesCount: settings.recentNotesCount,
+    editorFontSize: settings.editorFontSize ?? 16,
+    editorLineHeight: settings.editorLineHeight ?? 1.6,
+    editorMaxWidth: settings.editorMaxWidth ?? 800,
+    graphForceStrength: Math.abs(settings.graphForceStrength),
+    graphLinkDistance: settings.graphLinkDistance,
+    graphGravityStrength: settings.graphGravityStrength ?? 0.05,
+  });
+
+  // Debounced update to store (300ms delay)
+  const debouncedUpdateSettings = useDebouncedCallback(
+    (partial: Partial<UserSettings>) => {
+      updateSettings(partial);
+    },
+    300
+  );
+
+  // Update local state immediately, debounce store update
+  const handleSliderChange = useCallback(
+    (key: keyof typeof sliderValues, value: number, transform?: (v: number) => number) => {
+      setSliderValues((prev) => ({ ...prev, [key]: value }));
+      const storeValue = transform ? transform(value) : value;
+      debouncedUpdateSettings({ [key]: storeValue } as Partial<UserSettings>);
+    },
+    [debouncedUpdateSettings]
+  );
+
+  // Sync local state when settings change externally (e.g., reset)
+  useEffect(() => {
+    setSliderValues({
+      recentNotesCount: settings.recentNotesCount,
+      editorFontSize: settings.editorFontSize ?? 16,
+      editorLineHeight: settings.editorLineHeight ?? 1.6,
+      editorMaxWidth: settings.editorMaxWidth ?? 800,
+      graphForceStrength: Math.abs(settings.graphForceStrength),
+      graphLinkDistance: settings.graphLinkDistance,
+      graphGravityStrength: settings.graphGravityStrength ?? 0.05,
+    });
+  }, [settings]);
+
   // Get top-level folders only (cleaner UI)
   const topLevelFolders = getTopLevelFolders(tree);
 
@@ -139,9 +182,9 @@ export default function SettingsPage() {
             <Label>Nombre de notes récentes</Label>
             <div className="flex items-center gap-4">
               <Slider
-                value={[settings.recentNotesCount]}
+                value={[sliderValues.recentNotesCount]}
                 onValueChange={([value]) =>
-                  updateSettings({ recentNotesCount: value })
+                  handleSliderChange("recentNotesCount", value)
                 }
                 min={3}
                 max={15}
@@ -149,7 +192,7 @@ export default function SettingsPage() {
                 className="flex-1"
               />
               <span className="w-8 text-center font-mono">
-                {settings.recentNotesCount}
+                {sliderValues.recentNotesCount}
               </span>
             </div>
           </div>
@@ -250,9 +293,9 @@ export default function SettingsPage() {
             <Label>Taille de police</Label>
             <div className="flex items-center gap-4">
               <Slider
-                value={[settings.editorFontSize ?? 16]}
+                value={[sliderValues.editorFontSize]}
                 onValueChange={([value]) =>
-                  updateSettings({ editorFontSize: value })
+                  handleSliderChange("editorFontSize", value)
                 }
                 min={12}
                 max={24}
@@ -260,7 +303,7 @@ export default function SettingsPage() {
                 className="flex-1"
               />
               <span className="w-12 text-center font-mono text-sm">
-                {settings.editorFontSize ?? 16}px
+                {sliderValues.editorFontSize}px
               </span>
             </div>
           </div>
@@ -270,9 +313,9 @@ export default function SettingsPage() {
             <Label>Interligne</Label>
             <div className="flex items-center gap-4">
               <Slider
-                value={[(settings.editorLineHeight ?? 1.6) * 10]}
+                value={[sliderValues.editorLineHeight * 10]}
                 onValueChange={([value]) =>
-                  updateSettings({ editorLineHeight: value / 10 })
+                  handleSliderChange("editorLineHeight", value / 10)
                 }
                 min={12}
                 max={24}
@@ -280,7 +323,7 @@ export default function SettingsPage() {
                 className="flex-1"
               />
               <span className="w-12 text-center font-mono text-sm">
-                {(settings.editorLineHeight ?? 1.6).toFixed(1)}
+                {sliderValues.editorLineHeight.toFixed(1)}
               </span>
             </div>
           </div>
@@ -290,9 +333,9 @@ export default function SettingsPage() {
             <Label>Largeur max du contenu</Label>
             <div className="flex items-center gap-4">
               <Slider
-                value={[settings.editorMaxWidth ?? 800]}
+                value={[sliderValues.editorMaxWidth]}
                 onValueChange={([value]) =>
-                  updateSettings({ editorMaxWidth: value })
+                  handleSliderChange("editorMaxWidth", value)
                 }
                 min={500}
                 max={1400}
@@ -300,7 +343,7 @@ export default function SettingsPage() {
                 className="flex-1"
               />
               <span className="w-16 text-center font-mono text-sm">
-                {settings.editorMaxWidth ?? 800}px
+                {sliderValues.editorMaxWidth}px
               </span>
             </div>
           </div>
@@ -683,9 +726,9 @@ export default function SettingsPage() {
             </p>
             <div className="flex items-center gap-4">
               <Slider
-                value={[Math.abs(settings.graphForceStrength)]}
+                value={[sliderValues.graphForceStrength]}
                 onValueChange={([value]) =>
-                  updateSettings({ graphForceStrength: -value })
+                  handleSliderChange("graphForceStrength", value, (v) => -v)
                 }
                 min={1}
                 max={500}
@@ -693,7 +736,7 @@ export default function SettingsPage() {
                 className="flex-1"
               />
               <span className="w-12 text-center font-mono text-sm">
-                {Math.abs(settings.graphForceStrength)}
+                {sliderValues.graphForceStrength}
               </span>
             </div>
           </div>
@@ -706,9 +749,9 @@ export default function SettingsPage() {
             </p>
             <div className="flex items-center gap-4">
               <Slider
-                value={[settings.graphLinkDistance]}
+                value={[sliderValues.graphLinkDistance]}
                 onValueChange={([value]) =>
-                  updateSettings({ graphLinkDistance: value })
+                  handleSliderChange("graphLinkDistance", value)
                 }
                 min={5}
                 max={200}
@@ -716,7 +759,7 @@ export default function SettingsPage() {
                 className="flex-1"
               />
               <span className="w-12 text-center font-mono text-sm">
-                {settings.graphLinkDistance}px
+                {sliderValues.graphLinkDistance}px
               </span>
             </div>
           </div>
@@ -729,9 +772,9 @@ export default function SettingsPage() {
             </p>
             <div className="flex items-center gap-4">
               <Slider
-                value={[(settings.graphGravityStrength ?? 0.05) * 100]}
+                value={[sliderValues.graphGravityStrength * 100]}
                 onValueChange={([value]) =>
-                  updateSettings({ graphGravityStrength: value / 100 })
+                  handleSliderChange("graphGravityStrength", value / 100)
                 }
                 min={0}
                 max={30}
@@ -739,7 +782,7 @@ export default function SettingsPage() {
                 className="flex-1"
               />
               <span className="w-12 text-center font-mono text-sm">
-                {(settings.graphGravityStrength ?? 0.05).toFixed(2)}
+                {sliderValues.graphGravityStrength.toFixed(2)}
               </span>
             </div>
           </div>

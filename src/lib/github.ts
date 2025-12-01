@@ -5,8 +5,39 @@ const REPO_OWNER = process.env.GITHUB_REPO_OWNER!;
 const REPO_NAME = process.env.GITHUB_REPO_NAME!;
 const BRANCH = process.env.GITHUB_BRANCH || "master";
 
+// Rate limit info type
+export interface RateLimitInfo {
+  limit: number;
+  remaining: number;
+  reset: number;
+  used: number;
+}
+
+// Last rate limit from any API call
+let lastRateLimit: RateLimitInfo | null = null;
+
 export function createOctokit(accessToken: string) {
-  return new Octokit({ auth: accessToken });
+  const octokit = new Octokit({ auth: accessToken });
+
+  // Hook into all responses to track rate limits
+  octokit.hook.after("request", async (response) => {
+    const headers = response.headers;
+    if (headers["x-ratelimit-limit"]) {
+      lastRateLimit = {
+        limit: parseInt(headers["x-ratelimit-limit"] as string, 10),
+        remaining: parseInt(headers["x-ratelimit-remaining"] as string, 10),
+        reset: parseInt(headers["x-ratelimit-reset"] as string, 10),
+        used: parseInt(headers["x-ratelimit-used"] as string || "0", 10),
+      };
+    }
+  });
+
+  return octokit;
+}
+
+// Get the last captured rate limit
+export function getLastRateLimit(): RateLimitInfo | null {
+  return lastRateLimit;
 }
 
 /**

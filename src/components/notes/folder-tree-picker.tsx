@@ -5,6 +5,7 @@ import { ChevronRight, Folder, FolderOpen, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useSettingsStore } from "@/lib/settings-store";
 import type { VaultFile } from "@/types";
 
 interface FolderTreePickerProps {
@@ -24,6 +25,7 @@ export function FolderTreePicker({
   currentPath,
   showRoot = true,
 }: FolderTreePickerProps) {
+  const { getFolderOrder } = useSettingsStore();
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
     new Set()
   );
@@ -38,10 +40,33 @@ export function FolderTreePicker({
     setExpandedFolders(newExpanded);
   };
 
-  // Get only directories from tree
+  // Sort directories with custom order
+  const sortDirectories = (dirs: VaultFile[], parentPath: string): VaultFile[] => {
+    let customOrder: string[] = [];
+    try {
+      const order = getFolderOrder(parentPath);
+      customOrder = Array.isArray(order) ? order : [];
+    } catch {
+      customOrder = [];
+    }
+
+    return [...dirs].sort((a, b) => {
+      if (customOrder.length > 0) {
+        const aIndex = customOrder.indexOf(a.name);
+        const bIndex = customOrder.indexOf(b.name);
+        if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+        if (aIndex !== -1) return -1;
+        if (bIndex !== -1) return 1;
+      }
+      return a.name.localeCompare(b.name);
+    });
+  };
+
+  // Get only directories from tree (sorted)
   const directories = useMemo(() => {
-    return tree.filter((f) => f.type === "dir");
-  }, [tree]);
+    const dirs = tree.filter((f) => f.type === "dir");
+    return sortDirectories(dirs, ""); // Root level
+  }, [tree, getFolderOrder]);
 
   // Get parent folder from path
   const getParentFolder = (path: string): string => {
@@ -92,6 +117,7 @@ export function FolderTreePicker({
               expandedFolders={expandedFolders}
               toggleFolder={toggleFolder}
               isCurrentFolder={isCurrentFolder}
+              sortDirectories={sortDirectories}
             />
           ))}
         </div>
@@ -108,6 +134,7 @@ interface FolderTreeItemProps {
   expandedFolders: Set<string>;
   toggleFolder: (path: string) => void;
   isCurrentFolder: (path: string) => boolean;
+  sortDirectories: (dirs: VaultFile[], parentPath: string) => VaultFile[];
 }
 
 function FolderTreeItem({
@@ -118,15 +145,17 @@ function FolderTreeItem({
   expandedFolders,
   toggleFolder,
   isCurrentFolder,
+  sortDirectories,
 }: FolderTreeItemProps) {
   const isExpanded = expandedFolders.has(folder.path);
   const isSelected = selectedPath === folder.path;
   const isCurrent = isCurrentFolder(folder.path);
 
-  // Get child directories
+  // Get child directories (sorted with custom order)
   const childDirs = useMemo(() => {
-    return (folder.children || []).filter((f) => f.type === "dir");
-  }, [folder.children]);
+    const dirs = (folder.children || []).filter((f) => f.type === "dir");
+    return sortDirectories(dirs, folder.path);
+  }, [folder.children, folder.path, sortDirectories]);
 
   const hasChildren = childDirs.length > 0;
 
@@ -204,6 +233,7 @@ function FolderTreeItem({
               expandedFolders={expandedFolders}
               toggleFolder={toggleFolder}
               isCurrentFolder={isCurrentFolder}
+              sortDirectories={sortDirectories}
             />
           ))}
         </div>

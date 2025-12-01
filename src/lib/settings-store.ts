@@ -222,7 +222,13 @@ export const useSettingsStore = create<SettingsState>()(
       // Load settings from GitHub cloud
       loadFromCloud: async () => {
         const { settings, isSyncing } = get();
-        if (isSyncing || !settings.syncToCloud) return;
+        if (isSyncing) return;
+
+        // If sync disabled, mark as loaded immediately (use localStorage settings)
+        if (!settings.syncToCloud) {
+          set({ hasLoadedFromCloud: true });
+          return;
+        }
 
         set({ isSyncing: true, lastSyncError: null });
 
@@ -253,6 +259,7 @@ export const useSettingsStore = create<SettingsState>()(
           console.error("Error loading settings from cloud:", error);
           set({
             isSyncing: false,
+            hasLoadedFromCloud: true, // Still mark as loaded so UI isn't blocked
             lastSyncError: error instanceof Error ? error.message : "Unknown error",
           });
         }

@@ -28,9 +28,9 @@ export function ReorderFoldersDialog({
 }: ReorderFoldersDialogProps) {
   const { getFolderOrder, setFolderOrder, clearFolderOrder } = useSettingsStore();
 
-  // Get folder names only (dirs)
-  const folderNames = folders
-    .filter((f) => f.type === "dir")
+  // Get folder names only (dirs) - with defensive check
+  const folderNames = (Array.isArray(folders) ? folders : [])
+    .filter((f) => f && f.type === "dir" && typeof f.name === "string")
     .map((f) => f.name);
 
   // Local state for reordering
@@ -39,22 +39,34 @@ export function ReorderFoldersDialog({
   // Initialize order from settings or default alphabetical
   useEffect(() => {
     if (open) {
-      const savedOrder = getFolderOrder(parentPath);
-      if (savedOrder.length > 0) {
-        // Merge saved order with current folders (handle new/deleted folders)
-        const merged = [
-          ...savedOrder.filter((name) => folderNames.includes(name)),
-          ...folderNames.filter((name) => !savedOrder.includes(name)),
-        ];
-        setOrder(merged);
-      } else {
-        // Default alphabetical
+      try {
+        const savedOrder = getFolderOrder(parentPath);
+        // Defensive: ensure savedOrder is an array of strings
+        const validSavedOrder = Array.isArray(savedOrder)
+          ? savedOrder.filter((item) => typeof item === "string")
+          : [];
+
+        if (validSavedOrder.length > 0) {
+          // Merge saved order with current folders (handle new/deleted folders)
+          const merged = [
+            ...validSavedOrder.filter((name) => folderNames.includes(name)),
+            ...folderNames.filter((name) => !validSavedOrder.includes(name)),
+          ];
+          setOrder(merged);
+        } else {
+          // Default alphabetical
+          setOrder([...folderNames].sort((a, b) =>
+            a.toLowerCase().localeCompare(b.toLowerCase())
+          ));
+        }
+      } catch {
+        // Fallback to alphabetical on any error
         setOrder([...folderNames].sort((a, b) =>
           a.toLowerCase().localeCompare(b.toLowerCase())
         ));
       }
     }
-  }, [open, parentPath, getFolderOrder, folderNames]);
+  }, [open, parentPath, getFolderOrder, folderNames.join(",")]);
 
   const moveUp = (index: number) => {
     if (index === 0) return;
@@ -71,12 +83,22 @@ export function ReorderFoldersDialog({
   };
 
   const handleSave = () => {
-    setFolderOrder(parentPath, order);
+    try {
+      // Only save valid string arrays
+      const validOrder = order.filter((item) => typeof item === "string");
+      setFolderOrder(parentPath, validOrder);
+    } catch {
+      // Ignore save errors
+    }
     onOpenChange(false);
   };
 
   const handleReset = () => {
-    clearFolderOrder(parentPath);
+    try {
+      clearFolderOrder(parentPath);
+    } catch {
+      // Ignore clear errors
+    }
     setOrder([...folderNames].sort((a, b) =>
       a.toLowerCase().localeCompare(b.toLowerCase())
     ));

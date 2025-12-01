@@ -14,10 +14,13 @@ import {
   FileText,
   LayoutDashboard,
   ExternalLink,
+  Pin,
+  PinOff,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useVaultStore } from "@/lib/store";
 import { useSettingsStore } from "@/lib/settings-store";
+import { usePinnedStore } from "@/lib/pinned-store";
 import { getFileType } from "@/lib/file-types";
 import { useFlattenedTree, type FlatTreeItem } from "@/hooks/use-flattened-tree";
 import type { VaultFile } from "@/types";
@@ -232,24 +235,63 @@ const VirtualTreeItem = memo(function VirtualTreeItem({
     );
   }
 
+  // Pin functionality
+  const { pinnedNotes, pinNote, unpinNote } = usePinnedStore();
+  const isPinned = pinnedNotes.some((p) => p.path === file.path);
+  const canPin = ["markdown", "image", "pdf", "canvas"].includes(fileType);
+
+  const handleTogglePin = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isPinned) {
+      unpinNote(file.path);
+    } else {
+      pinNote(file.path, displayName);
+    }
+  };
+
   return (
-    <Link
-      href={filePath}
-      className={cn(
-        "flex items-center gap-1 w-full h-full px-2 text-sm rounded-md transition-all overflow-hidden",
-        "hover:bg-muted/50",
-        isActive
-          ? "bg-primary/10 text-primary font-medium"
-          : "text-muted-foreground hover:text-foreground"
+    <div className="flex items-center w-full h-full group">
+      <Link
+        href={filePath}
+        className={cn(
+          "flex items-center gap-1 flex-1 h-full px-2 text-sm rounded-md transition-all overflow-hidden",
+          "hover:bg-muted/50",
+          isActive
+            ? "bg-primary/10 text-primary font-medium"
+            : "text-muted-foreground hover:text-foreground"
+        )}
+      >
+        {indentGuides}
+        <div className="w-4 shrink-0" />
+        <span className="shrink-0">{icon}</span>
+        <span className="truncate">{displayName}</span>
+        {file.isLocked && (
+          <Lock className="h-3.5 w-3.5 ml-1 shrink-0 text-amber-500" />
+        )}
+        {isPinned && (
+          <Pin className="h-3 w-3 ml-1 shrink-0 text-primary" />
+        )}
+      </Link>
+      {/* Pin button on hover */}
+      {canPin && (
+        <button
+          onClick={handleTogglePin}
+          className={cn(
+            "p-1 mr-1 rounded transition-opacity",
+            isPinned
+              ? "opacity-100 hover:bg-primary/20 text-primary"
+              : "opacity-0 group-hover:opacity-100 hover:bg-primary/20 text-muted-foreground hover:text-primary"
+          )}
+          title={isPinned ? "Désépingler" : "Épingler"}
+        >
+          {isPinned ? (
+            <PinOff className="h-3 w-3" />
+          ) : (
+            <Pin className="h-3 w-3" />
+          )}
+        </button>
       )}
-    >
-      {indentGuides}
-      <div className="w-4 shrink-0" />
-      <span className="shrink-0">{icon}</span>
-      <span className="truncate">{displayName}</span>
-      {file.isLocked && (
-        <Lock className="h-3.5 w-3.5 ml-1 shrink-0 text-amber-500" />
-      )}
-    </Link>
+    </div>
   );
 });

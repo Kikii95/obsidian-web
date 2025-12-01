@@ -550,6 +550,244 @@
 }
 
 /* ============================================
+   SOFT DARK THEMES - Unique colors, dark background
+   ============================================ */
+
+/* ============================================
+   THEME: CREAM DARK 🍦
+   Beige crème - version sombre
+   ============================================ */
+.dark[data-theme="cream-dark"] {
+  --theme-hue: 40;
+  --background: oklch(0.14 0.02 40);
+  --foreground: oklch(0.90 0.02 40);
+  --card: oklch(0.18 0.025 40);
+  --card-foreground: oklch(0.90 0.02 40);
+  --popover: oklch(0.16 0.02 40);
+  --popover-foreground: oklch(0.90 0.02 40);
+  --primary: oklch(0.70 0.14 40);
+  --primary-foreground: oklch(0.12 0.01 40);
+  --secondary: oklch(0.22 0.03 40);
+  --secondary-foreground: oklch(0.90 0.02 40);
+  --muted: oklch(0.20 0.025 40);
+  --muted-foreground: oklch(0.65 0.02 40);
+  --accent: oklch(0.70 0.14 40);
+  --accent-foreground: oklch(0.12 0.01 40);
+  --destructive: oklch(0.55 0.22 15);
+  --border: oklch(0.28 0.03 40);
+  --input: oklch(0.20 0.025 40);
+  --ring: oklch(0.70 0.14 40);
+  --chart-1: oklch(0.70 0.14 40);
+  --chart-2: oklch(0.65 0.12 50);
+  --chart-3: oklch(0.60 0.10 30);
+  --chart-4: oklch(0.75 0.16 45);
+  --chart-5: oklch(0.55 0.08 35);
+  --sidebar: oklch(0.12 0.02 40);
+  --sidebar-foreground: oklch(0.90 0.02 40);
+  --sidebar-primary: oklch(0.70 0.14 40);
+  --sidebar-primary-foreground: oklch(0.12 0.01 40);
+  --sidebar-accent: oklch(0.22 0.025 40);
+  --sidebar-accent-foreground: oklch(0.90 0.02 40);
+  --sidebar-border: oklch(0.26 0.025 40);
+  --sidebar-ring: oklch(0.70 0.14 40);
+}
+
+/* ============================================
+   THEME: CLOUD DARK ☁️
+   Bleu ciel - version sombre
+   ============================================ */
+.dark[data-theme="cloud-dark"] {
+  --theme-hue: 210;
+  --background: oklch(0.14 0.02 210);
+  --foreground: oklch(0.90 0.02 210);
+  --card: oklch(0.18 0.025 210);
+  --card-foreground: oklch(0.90 0.02 210);
+  --popover: oklch(0.16 0.02 210);
+  --popover-foreground: oklch(0.90 0.02 210);
+  --primary: oklch(0.65 0.12 210);
+  --primary-foreground: oklch(0.12 0.01 210);
+  --secondary: oklch(0.22 0.03 210);
+  --secondary-foreground: oklch(0.90 0.02 210);
+  --muted: oklch(0.20 0.025 210);
+  --muted-foreground: oklch(0.65 0.02 210);
+  --accent: oklch(0.65 0.12 210);
+  --accent-foreground: oklch(0.12 0.01 210);
+  --destructive: oklch(0.55 0.22 15);
+  --border: oklch(0.28 0.03 210);
+  --input: oklch(0.20 0.025 210);
+  --ring: oklch(0.65 0.12 210);
+  --chart-1: oklch(0.65 0.12 210);
+  --chart-2: oklch(0.60 0.10 230);
+  --chart-3: oklch(0.55 0.08 190);
+  --chart-4: oklch(0.70 0.14 220);
+  --chart-5: oklch(0.50 0.06 200);
+  --sidebar: oklch(0.12 0.02 210);
+  --sidebar-foreground: oklch(0.90 0.02 210);
+  --sidebar-primary: oklch(0.65 0.12 210);
+  --sidebar-primary-foreground: oklch(0.12 0.01 210);
+  --sidebar-accent: oklch(0.22 0.025 210);
+  --sidebar-accent-foreground: oklch(0.90 0.02 210);
+  --sidebar-border: oklch(0.26 0.025 210);
+  --sidebar-ring: oklch(0.65 0.12 210);
+}
+
+/* ============================================
+   THEME: SAGE DARK 🧘
+   Vert sauge - version sombre
+   ============================================ */
+.dark[data-theme="sage-dark"] {
+  --theme-hue: 140;
+  --background: oklch(0.14 0.02 140);
+  --foreground: oklch(0.90 0.02 140);
+  --card: oklch(0.18 0.025 140);
+  --card-foreground: oklch(0.90 0.02 140);
+  --popover: oklch(0.16 0.02 140);
+  --popover-foreground: oklch(0.90 0.02 140);
+  --primary: oklch(0.60 0.12 140);
+  --primary-foreground: oklch(0.12 0.01 140);
+  --secondary: oklch(0.22 0.03 140);
+  --secondary-foreground: oklch(0.90 0.02 140);
+  --muted: oklch(0.20 0.025 140);
+  --muted-foreground: oklch(0.65 0.02 140);
+  --accent: oklch(0.60 0.12 140);
+  --accent-foreground: oklch(0.12 0.01 140);
+  --destructive: oklch(0.55 0.22 15);
+  --border: oklch(0.28 0.03 140);
+  --input: oklch(0.20 0.025 140);
+  --ring: oklch(0.60 0.12 140);
+  --chart-1: oklch(0.60 0.12 140);
+  --chart-2: oklch(0.55 0.10 160);
+  --chart-3: oklch(0.50 0.08 120);
+  --chart-4: oklch(0.65 0.14 150);
+  --chart-5: oklch(0.45 0.06 130);
+  --sidebar: oklch(0.12 0.02 140);
+  --sidebar-foreground: oklch(0.90 0.02 140);
+  --sidebar-primary: oklch(0.60 0.12 140);
+  --sidebar-primary-foreground: oklch(0.12 0.01 140);
+  --sidebar-accent: oklch(0.22 0.025 140);
+  --sidebar-accent-foreground: oklch(0.90 0.02 140);
+  --sidebar-border: oklch(0.26 0.025 140);
+  --sidebar-ring: oklch(0.60 0.12 140);
+}
+
+/* ============================================
+   THEME: PEACH DARK 🍑
+   Pêche doux - version sombre
+   ============================================ */
+.dark[data-theme="peach-dark"] {
+  --theme-hue: 25;
+  --background: oklch(0.14 0.02 25);
+  --foreground: oklch(0.90 0.02 25);
+  --card: oklch(0.18 0.025 25);
+  --card-foreground: oklch(0.90 0.02 25);
+  --popover: oklch(0.16 0.02 25);
+  --popover-foreground: oklch(0.90 0.02 25);
+  --primary: oklch(0.68 0.16 25);
+  --primary-foreground: oklch(0.12 0.01 25);
+  --secondary: oklch(0.22 0.03 25);
+  --secondary-foreground: oklch(0.90 0.02 25);
+  --muted: oklch(0.20 0.025 25);
+  --muted-foreground: oklch(0.65 0.02 25);
+  --accent: oklch(0.68 0.16 25);
+  --accent-foreground: oklch(0.12 0.01 25);
+  --destructive: oklch(0.55 0.22 15);
+  --border: oklch(0.28 0.03 25);
+  --input: oklch(0.20 0.025 25);
+  --ring: oklch(0.68 0.16 25);
+  --chart-1: oklch(0.68 0.16 25);
+  --chart-2: oklch(0.63 0.14 40);
+  --chart-3: oklch(0.58 0.12 10);
+  --chart-4: oklch(0.73 0.18 35);
+  --chart-5: oklch(0.53 0.10 20);
+  --sidebar: oklch(0.12 0.02 25);
+  --sidebar-foreground: oklch(0.90 0.02 25);
+  --sidebar-primary: oklch(0.68 0.16 25);
+  --sidebar-primary-foreground: oklch(0.12 0.01 25);
+  --sidebar-accent: oklch(0.22 0.025 25);
+  --sidebar-accent-foreground: oklch(0.90 0.02 25);
+  --sidebar-border: oklch(0.26 0.025 25);
+  --sidebar-ring: oklch(0.68 0.16 25);
+}
+
+/* ============================================
+   THEME: MIST DARK 🌫️
+   Gris bleuté - version sombre
+   ============================================ */
+.dark[data-theme="mist-dark"] {
+  --theme-hue: 230;
+  --background: oklch(0.14 0.015 230);
+  --foreground: oklch(0.88 0.015 230);
+  --card: oklch(0.18 0.02 230);
+  --card-foreground: oklch(0.88 0.015 230);
+  --popover: oklch(0.16 0.015 230);
+  --popover-foreground: oklch(0.88 0.015 230);
+  --primary: oklch(0.60 0.10 230);
+  --primary-foreground: oklch(0.12 0.01 230);
+  --secondary: oklch(0.22 0.02 230);
+  --secondary-foreground: oklch(0.88 0.015 230);
+  --muted: oklch(0.20 0.018 230);
+  --muted-foreground: oklch(0.62 0.015 230);
+  --accent: oklch(0.60 0.10 230);
+  --accent-foreground: oklch(0.12 0.01 230);
+  --destructive: oklch(0.55 0.22 15);
+  --border: oklch(0.28 0.02 230);
+  --input: oklch(0.20 0.018 230);
+  --ring: oklch(0.60 0.10 230);
+  --chart-1: oklch(0.60 0.10 230);
+  --chart-2: oklch(0.55 0.08 250);
+  --chart-3: oklch(0.50 0.06 210);
+  --chart-4: oklch(0.65 0.12 240);
+  --chart-5: oklch(0.45 0.04 220);
+  --sidebar: oklch(0.12 0.015 230);
+  --sidebar-foreground: oklch(0.88 0.015 230);
+  --sidebar-primary: oklch(0.60 0.10 230);
+  --sidebar-primary-foreground: oklch(0.12 0.01 230);
+  --sidebar-accent: oklch(0.22 0.018 230);
+  --sidebar-accent-foreground: oklch(0.88 0.015 230);
+  --sidebar-border: oklch(0.26 0.018 230);
+  --sidebar-ring: oklch(0.60 0.10 230);
+}
+
+/* ============================================
+   THEME: SAND DARK 🏖️
+   Sable chaud - version sombre
+   ============================================ */
+.dark[data-theme="sand-dark"] {
+  --theme-hue: 50;
+  --background: oklch(0.14 0.02 50);
+  --foreground: oklch(0.90 0.02 50);
+  --card: oklch(0.18 0.025 50);
+  --card-foreground: oklch(0.90 0.02 50);
+  --popover: oklch(0.16 0.02 50);
+  --popover-foreground: oklch(0.90 0.02 50);
+  --primary: oklch(0.65 0.12 50);
+  --primary-foreground: oklch(0.12 0.01 50);
+  --secondary: oklch(0.22 0.03 50);
+  --secondary-foreground: oklch(0.90 0.02 50);
+  --muted: oklch(0.20 0.025 50);
+  --muted-foreground: oklch(0.65 0.02 50);
+  --accent: oklch(0.65 0.12 50);
+  --accent-foreground: oklch(0.12 0.01 50);
+  --destructive: oklch(0.55 0.22 15);
+  --border: oklch(0.28 0.03 50);
+  --input: oklch(0.20 0.025 50);
+  --ring: oklch(0.65 0.12 50);
+  --chart-1: oklch(0.65 0.12 50);
+  --chart-2: oklch(0.60 0.10 65);
+  --chart-3: oklch(0.55 0.08 35);
+  --chart-4: oklch(0.70 0.14 60);
+  --chart-5: oklch(0.50 0.06 45);
+  --sidebar: oklch(0.12 0.02 50);
+  --sidebar-foreground: oklch(0.90 0.02 50);
+  --sidebar-primary: oklch(0.65 0.12 50);
+  --sidebar-primary-foreground: oklch(0.12 0.01 50);
+  --sidebar-accent: oklch(0.22 0.025 50);
+  --sidebar-accent-foreground: oklch(0.90 0.02 50);
+  --sidebar-border: oklch(0.26 0.025 50);
+  --sidebar-ring: oklch(0.65 0.12 50);
+}
+
+/* ============================================
    LIGHT THEMES - Soft & Eye-Friendly
    ============================================ */
 
@@ -785,6 +1023,401 @@
   --sidebar-accent-foreground: oklch(0.25 0.02 50);
   --sidebar-border: oklch(0.86 0.028 50);
   --sidebar-ring: oklch(0.52 0.10 50);
+}
+
+/* ============================================
+   LIGHT VARIANTS OF VIBRANT THEMES
+   Same hues, light backgrounds for eye comfort
+   ============================================ */
+
+/* ============================================
+   THEME: MAGENTA LIGHT 💜
+   Violet vibrant - version claire
+   ============================================ */
+.dark[data-theme="magenta-light"] {
+  --theme-hue: 320;
+  --background: oklch(0.96 0.02 320);
+  --foreground: oklch(0.20 0.03 320);
+  --card: oklch(0.94 0.025 320);
+  --card-foreground: oklch(0.20 0.03 320);
+  --popover: oklch(0.97 0.015 320);
+  --popover-foreground: oklch(0.20 0.03 320);
+  --primary: oklch(0.55 0.22 320);
+  --primary-foreground: oklch(0.98 0.01 320);
+  --secondary: oklch(0.90 0.03 320);
+  --secondary-foreground: oklch(0.20 0.03 320);
+  --muted: oklch(0.92 0.02 320);
+  --muted-foreground: oklch(0.45 0.03 320);
+  --accent: oklch(0.55 0.22 320);
+  --accent-foreground: oklch(0.98 0.01 320);
+  --destructive: oklch(0.55 0.22 15);
+  --border: oklch(0.85 0.03 320);
+  --input: oklch(0.92 0.02 320);
+  --ring: oklch(0.55 0.22 320);
+  --chart-1: oklch(0.55 0.22 320);
+  --chart-2: oklch(0.60 0.18 340);
+  --chart-3: oklch(0.50 0.15 300);
+  --chart-4: oklch(0.65 0.20 330);
+  --chart-5: oklch(0.45 0.12 310);
+  --sidebar: oklch(0.94 0.02 320);
+  --sidebar-foreground: oklch(0.20 0.03 320);
+  --sidebar-primary: oklch(0.55 0.22 320);
+  --sidebar-primary-foreground: oklch(0.98 0.01 320);
+  --sidebar-accent: oklch(0.90 0.025 320);
+  --sidebar-accent-foreground: oklch(0.20 0.03 320);
+  --sidebar-border: oklch(0.87 0.028 320);
+  --sidebar-ring: oklch(0.55 0.22 320);
+}
+
+/* ============================================
+   THEME: OCEAN LIGHT 🔵
+   Bleu profond - version claire
+   ============================================ */
+.dark[data-theme="ocean-light"] {
+  --theme-hue: 220;
+  --background: oklch(0.96 0.02 220);
+  --foreground: oklch(0.20 0.03 220);
+  --card: oklch(0.94 0.025 220);
+  --card-foreground: oklch(0.20 0.03 220);
+  --popover: oklch(0.97 0.015 220);
+  --popover-foreground: oklch(0.20 0.03 220);
+  --primary: oklch(0.50 0.18 220);
+  --primary-foreground: oklch(0.98 0.01 220);
+  --secondary: oklch(0.90 0.03 220);
+  --secondary-foreground: oklch(0.20 0.03 220);
+  --muted: oklch(0.92 0.02 220);
+  --muted-foreground: oklch(0.45 0.03 220);
+  --accent: oklch(0.50 0.18 220);
+  --accent-foreground: oklch(0.98 0.01 220);
+  --destructive: oklch(0.55 0.22 15);
+  --border: oklch(0.85 0.03 220);
+  --input: oklch(0.92 0.02 220);
+  --ring: oklch(0.50 0.18 220);
+  --chart-1: oklch(0.50 0.18 220);
+  --chart-2: oklch(0.55 0.15 240);
+  --chart-3: oklch(0.45 0.12 200);
+  --chart-4: oklch(0.60 0.18 230);
+  --chart-5: oklch(0.40 0.10 210);
+  --sidebar: oklch(0.94 0.02 220);
+  --sidebar-foreground: oklch(0.20 0.03 220);
+  --sidebar-primary: oklch(0.50 0.18 220);
+  --sidebar-primary-foreground: oklch(0.98 0.01 220);
+  --sidebar-accent: oklch(0.90 0.025 220);
+  --sidebar-accent-foreground: oklch(0.20 0.03 220);
+  --sidebar-border: oklch(0.87 0.028 220);
+  --sidebar-ring: oklch(0.50 0.18 220);
+}
+
+/* ============================================
+   THEME: FOREST LIGHT 🟢
+   Vert émeraude - version claire
+   ============================================ */
+.dark[data-theme="forest-light"] {
+  --theme-hue: 150;
+  --background: oklch(0.96 0.02 150);
+  --foreground: oklch(0.20 0.03 150);
+  --card: oklch(0.94 0.025 150);
+  --card-foreground: oklch(0.20 0.03 150);
+  --popover: oklch(0.97 0.015 150);
+  --popover-foreground: oklch(0.20 0.03 150);
+  --primary: oklch(0.50 0.15 150);
+  --primary-foreground: oklch(0.98 0.01 150);
+  --secondary: oklch(0.90 0.03 150);
+  --secondary-foreground: oklch(0.20 0.03 150);
+  --muted: oklch(0.92 0.02 150);
+  --muted-foreground: oklch(0.45 0.03 150);
+  --accent: oklch(0.50 0.15 150);
+  --accent-foreground: oklch(0.98 0.01 150);
+  --destructive: oklch(0.55 0.22 15);
+  --border: oklch(0.85 0.03 150);
+  --input: oklch(0.92 0.02 150);
+  --ring: oklch(0.50 0.15 150);
+  --chart-1: oklch(0.50 0.15 150);
+  --chart-2: oklch(0.55 0.12 170);
+  --chart-3: oklch(0.45 0.10 130);
+  --chart-4: oklch(0.60 0.15 160);
+  --chart-5: oklch(0.40 0.08 140);
+  --sidebar: oklch(0.94 0.02 150);
+  --sidebar-foreground: oklch(0.20 0.03 150);
+  --sidebar-primary: oklch(0.50 0.15 150);
+  --sidebar-primary-foreground: oklch(0.98 0.01 150);
+  --sidebar-accent: oklch(0.90 0.025 150);
+  --sidebar-accent-foreground: oklch(0.20 0.03 150);
+  --sidebar-border: oklch(0.87 0.028 150);
+  --sidebar-ring: oklch(0.50 0.15 150);
+}
+
+/* ============================================
+   THEME: SUNSET LIGHT 🟠
+   Orange chaud - version claire
+   ============================================ */
+.dark[data-theme="sunset-light"] {
+  --theme-hue: 35;
+  --background: oklch(0.96 0.02 35);
+  --foreground: oklch(0.22 0.03 35);
+  --card: oklch(0.94 0.025 35);
+  --card-foreground: oklch(0.22 0.03 35);
+  --popover: oklch(0.97 0.015 35);
+  --popover-foreground: oklch(0.22 0.03 35);
+  --primary: oklch(0.60 0.18 35);
+  --primary-foreground: oklch(0.98 0.01 35);
+  --secondary: oklch(0.90 0.03 35);
+  --secondary-foreground: oklch(0.22 0.03 35);
+  --muted: oklch(0.92 0.02 35);
+  --muted-foreground: oklch(0.48 0.03 35);
+  --accent: oklch(0.60 0.18 35);
+  --accent-foreground: oklch(0.98 0.01 35);
+  --destructive: oklch(0.55 0.22 15);
+  --border: oklch(0.85 0.03 35);
+  --input: oklch(0.92 0.02 35);
+  --ring: oklch(0.60 0.18 35);
+  --chart-1: oklch(0.60 0.18 35);
+  --chart-2: oklch(0.65 0.15 50);
+  --chart-3: oklch(0.55 0.12 20);
+  --chart-4: oklch(0.70 0.18 45);
+  --chart-5: oklch(0.50 0.10 30);
+  --sidebar: oklch(0.94 0.02 35);
+  --sidebar-foreground: oklch(0.22 0.03 35);
+  --sidebar-primary: oklch(0.60 0.18 35);
+  --sidebar-primary-foreground: oklch(0.98 0.01 35);
+  --sidebar-accent: oklch(0.90 0.025 35);
+  --sidebar-accent-foreground: oklch(0.22 0.03 35);
+  --sidebar-border: oklch(0.87 0.028 35);
+  --sidebar-ring: oklch(0.60 0.18 35);
+}
+
+/* ============================================
+   THEME: ROSE LIGHT 🌸
+   Rose pastel - version claire
+   ============================================ */
+.dark[data-theme="rose-light"] {
+  --theme-hue: 350;
+  --background: oklch(0.96 0.02 350);
+  --foreground: oklch(0.20 0.03 350);
+  --card: oklch(0.94 0.025 350);
+  --card-foreground: oklch(0.20 0.03 350);
+  --popover: oklch(0.97 0.015 350);
+  --popover-foreground: oklch(0.20 0.03 350);
+  --primary: oklch(0.60 0.18 350);
+  --primary-foreground: oklch(0.98 0.01 350);
+  --secondary: oklch(0.90 0.03 350);
+  --secondary-foreground: oklch(0.20 0.03 350);
+  --muted: oklch(0.92 0.02 350);
+  --muted-foreground: oklch(0.45 0.03 350);
+  --accent: oklch(0.60 0.18 350);
+  --accent-foreground: oklch(0.98 0.01 350);
+  --destructive: oklch(0.55 0.22 15);
+  --border: oklch(0.85 0.03 350);
+  --input: oklch(0.92 0.02 350);
+  --ring: oklch(0.60 0.18 350);
+  --chart-1: oklch(0.60 0.18 350);
+  --chart-2: oklch(0.65 0.15 10);
+  --chart-3: oklch(0.55 0.12 330);
+  --chart-4: oklch(0.70 0.18 360);
+  --chart-5: oklch(0.50 0.10 340);
+  --sidebar: oklch(0.94 0.02 350);
+  --sidebar-foreground: oklch(0.20 0.03 350);
+  --sidebar-primary: oklch(0.60 0.18 350);
+  --sidebar-primary-foreground: oklch(0.98 0.01 350);
+  --sidebar-accent: oklch(0.90 0.025 350);
+  --sidebar-accent-foreground: oklch(0.20 0.03 350);
+  --sidebar-border: oklch(0.87 0.028 350);
+  --sidebar-ring: oklch(0.60 0.18 350);
+}
+
+/* ============================================
+   THEME: CRIMSON LIGHT 🔴
+   Rouge intense - version claire
+   ============================================ */
+.dark[data-theme="crimson-light"] {
+  --theme-hue: 15;
+  --background: oklch(0.96 0.02 15);
+  --foreground: oklch(0.22 0.03 15);
+  --card: oklch(0.94 0.025 15);
+  --card-foreground: oklch(0.22 0.03 15);
+  --popover: oklch(0.97 0.015 15);
+  --popover-foreground: oklch(0.22 0.03 15);
+  --primary: oklch(0.55 0.20 15);
+  --primary-foreground: oklch(0.98 0.01 15);
+  --secondary: oklch(0.90 0.03 15);
+  --secondary-foreground: oklch(0.22 0.03 15);
+  --muted: oklch(0.92 0.02 15);
+  --muted-foreground: oklch(0.48 0.03 15);
+  --accent: oklch(0.55 0.20 15);
+  --accent-foreground: oklch(0.98 0.01 15);
+  --destructive: oklch(0.55 0.22 15);
+  --border: oklch(0.85 0.03 15);
+  --input: oklch(0.92 0.02 15);
+  --ring: oklch(0.55 0.20 15);
+  --chart-1: oklch(0.55 0.20 15);
+  --chart-2: oklch(0.60 0.17 30);
+  --chart-3: oklch(0.50 0.15 0);
+  --chart-4: oklch(0.65 0.20 25);
+  --chart-5: oklch(0.45 0.12 10);
+  --sidebar: oklch(0.94 0.02 15);
+  --sidebar-foreground: oklch(0.22 0.03 15);
+  --sidebar-primary: oklch(0.55 0.20 15);
+  --sidebar-primary-foreground: oklch(0.98 0.01 15);
+  --sidebar-accent: oklch(0.90 0.025 15);
+  --sidebar-accent-foreground: oklch(0.22 0.03 15);
+  --sidebar-border: oklch(0.87 0.028 15);
+  --sidebar-ring: oklch(0.55 0.20 15);
+}
+
+/* ============================================
+   THEME: CYBER LIGHT 💛
+   Jaune néon - version claire
+   ============================================ */
+.dark[data-theme="cyber-light"] {
+  --theme-hue: 85;
+  --background: oklch(0.96 0.02 85);
+  --foreground: oklch(0.22 0.03 85);
+  --card: oklch(0.94 0.025 85);
+  --card-foreground: oklch(0.22 0.03 85);
+  --popover: oklch(0.97 0.015 85);
+  --popover-foreground: oklch(0.22 0.03 85);
+  --primary: oklch(0.55 0.15 85);
+  --primary-foreground: oklch(0.15 0.02 85);
+  --secondary: oklch(0.90 0.03 85);
+  --secondary-foreground: oklch(0.22 0.03 85);
+  --muted: oklch(0.92 0.02 85);
+  --muted-foreground: oklch(0.48 0.03 85);
+  --accent: oklch(0.55 0.15 85);
+  --accent-foreground: oklch(0.15 0.02 85);
+  --destructive: oklch(0.55 0.22 15);
+  --border: oklch(0.85 0.03 85);
+  --input: oklch(0.92 0.02 85);
+  --ring: oklch(0.55 0.15 85);
+  --chart-1: oklch(0.55 0.15 85);
+  --chart-2: oklch(0.60 0.12 100);
+  --chart-3: oklch(0.50 0.10 70);
+  --chart-4: oklch(0.65 0.15 95);
+  --chart-5: oklch(0.45 0.08 80);
+  --sidebar: oklch(0.94 0.02 85);
+  --sidebar-foreground: oklch(0.22 0.03 85);
+  --sidebar-primary: oklch(0.55 0.15 85);
+  --sidebar-primary-foreground: oklch(0.15 0.02 85);
+  --sidebar-accent: oklch(0.90 0.025 85);
+  --sidebar-accent-foreground: oklch(0.22 0.03 85);
+  --sidebar-border: oklch(0.87 0.028 85);
+  --sidebar-ring: oklch(0.55 0.15 85);
+}
+
+/* ============================================
+   THEME: LAVENDER LIGHT 🟣
+   Violet doux - version claire
+   ============================================ */
+.dark[data-theme="lavender-light"] {
+  --theme-hue: 280;
+  --background: oklch(0.96 0.02 280);
+  --foreground: oklch(0.20 0.03 280);
+  --card: oklch(0.94 0.025 280);
+  --card-foreground: oklch(0.20 0.03 280);
+  --popover: oklch(0.97 0.015 280);
+  --popover-foreground: oklch(0.20 0.03 280);
+  --primary: oklch(0.55 0.18 280);
+  --primary-foreground: oklch(0.98 0.01 280);
+  --secondary: oklch(0.90 0.03 280);
+  --secondary-foreground: oklch(0.20 0.03 280);
+  --muted: oklch(0.92 0.02 280);
+  --muted-foreground: oklch(0.45 0.03 280);
+  --accent: oklch(0.55 0.18 280);
+  --accent-foreground: oklch(0.98 0.01 280);
+  --destructive: oklch(0.55 0.22 15);
+  --border: oklch(0.85 0.03 280);
+  --input: oklch(0.92 0.02 280);
+  --ring: oklch(0.55 0.18 280);
+  --chart-1: oklch(0.55 0.18 280);
+  --chart-2: oklch(0.60 0.15 300);
+  --chart-3: oklch(0.50 0.12 260);
+  --chart-4: oklch(0.65 0.18 290);
+  --chart-5: oklch(0.45 0.10 270);
+  --sidebar: oklch(0.94 0.02 280);
+  --sidebar-foreground: oklch(0.20 0.03 280);
+  --sidebar-primary: oklch(0.55 0.18 280);
+  --sidebar-primary-foreground: oklch(0.98 0.01 280);
+  --sidebar-accent: oklch(0.90 0.025 280);
+  --sidebar-accent-foreground: oklch(0.20 0.03 280);
+  --sidebar-border: oklch(0.87 0.028 280);
+  --sidebar-ring: oklch(0.55 0.18 280);
+}
+
+/* ============================================
+   THEME: MINT LIGHT 🌿
+   Menthe fraîche - version claire
+   ============================================ */
+.dark[data-theme="mint-light"] {
+  --theme-hue: 170;
+  --background: oklch(0.96 0.02 170);
+  --foreground: oklch(0.20 0.03 170);
+  --card: oklch(0.94 0.025 170);
+  --card-foreground: oklch(0.20 0.03 170);
+  --popover: oklch(0.97 0.015 170);
+  --popover-foreground: oklch(0.20 0.03 170);
+  --primary: oklch(0.50 0.12 170);
+  --primary-foreground: oklch(0.98 0.01 170);
+  --secondary: oklch(0.90 0.03 170);
+  --secondary-foreground: oklch(0.20 0.03 170);
+  --muted: oklch(0.92 0.02 170);
+  --muted-foreground: oklch(0.45 0.03 170);
+  --accent: oklch(0.50 0.12 170);
+  --accent-foreground: oklch(0.98 0.01 170);
+  --destructive: oklch(0.55 0.22 15);
+  --border: oklch(0.85 0.03 170);
+  --input: oklch(0.92 0.02 170);
+  --ring: oklch(0.50 0.12 170);
+  --chart-1: oklch(0.50 0.12 170);
+  --chart-2: oklch(0.55 0.10 190);
+  --chart-3: oklch(0.45 0.08 150);
+  --chart-4: oklch(0.60 0.12 180);
+  --chart-5: oklch(0.40 0.06 160);
+  --sidebar: oklch(0.94 0.02 170);
+  --sidebar-foreground: oklch(0.20 0.03 170);
+  --sidebar-primary: oklch(0.50 0.12 170);
+  --sidebar-primary-foreground: oklch(0.98 0.01 170);
+  --sidebar-accent: oklch(0.90 0.025 170);
+  --sidebar-accent-foreground: oklch(0.20 0.03 170);
+  --sidebar-border: oklch(0.87 0.028 170);
+  --sidebar-ring: oklch(0.50 0.12 170);
+}
+
+/* ============================================
+   THEME: TURQUOISE LIGHT 🩵
+   Cyan tropical - version claire
+   ============================================ */
+.dark[data-theme="turquoise-light"] {
+  --theme-hue: 190;
+  --background: oklch(0.96 0.02 190);
+  --foreground: oklch(0.20 0.03 190);
+  --card: oklch(0.94 0.025 190);
+  --card-foreground: oklch(0.20 0.03 190);
+  --popover: oklch(0.97 0.015 190);
+  --popover-foreground: oklch(0.20 0.03 190);
+  --primary: oklch(0.50 0.12 190);
+  --primary-foreground: oklch(0.98 0.01 190);
+  --secondary: oklch(0.90 0.03 190);
+  --secondary-foreground: oklch(0.20 0.03 190);
+  --muted: oklch(0.92 0.02 190);
+  --muted-foreground: oklch(0.45 0.03 190);
+  --accent: oklch(0.50 0.12 190);
+  --accent-foreground: oklch(0.98 0.01 190);
+  --destructive: oklch(0.55 0.22 15);
+  --border: oklch(0.85 0.03 190);
+  --input: oklch(0.92 0.02 190);
+  --ring: oklch(0.50 0.12 190);
+  --chart-1: oklch(0.50 0.12 190);
+  --chart-2: oklch(0.55 0.10 210);
+  --chart-3: oklch(0.45 0.08 170);
+  --chart-4: oklch(0.60 0.12 200);
+  --chart-5: oklch(0.40 0.06 180);
+  --sidebar: oklch(0.94 0.02 190);
+  --sidebar-foreground: oklch(0.20 0.03 190);
+  --sidebar-primary: oklch(0.50 0.12 190);
+  --sidebar-primary-foreground: oklch(0.98 0.01 190);
+  --sidebar-accent: oklch(0.90 0.025 190);
+  --sidebar-accent-foreground: oklch(0.20 0.03 190);
+  --sidebar-border: oklch(0.87 0.028 190);
+  --sidebar-ring: oklch(0.50 0.12 190);
 }
 
 @layer base {

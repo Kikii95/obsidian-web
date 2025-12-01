@@ -10,7 +10,7 @@ export type ThemeMode = "dark" | "light";
 
 export type Theme =
   // Dark themes (ordered by hue 0→360)
-  | "carmine"      // 0
+  | "carmine"      // 25 (vrai rouge)
   | "crimson"      // 15
   | "peach-dark"   // 25
   | "brown"        // 30
@@ -155,6 +155,9 @@ const MODE_STORAGE_KEY = "obsidian-web-theme-mode";
 // HOOK
 // ═══════════════════════════════════════════════
 
+// Custom event for cross-component sync
+const THEME_CHANGE_EVENT = "obsidian-theme-change";
+
 export function useTheme() {
   const [theme, setThemeState] = useState<Theme>("magenta");
   const [mode, setModeState] = useState<ThemeMode>("dark");
@@ -180,6 +183,19 @@ export function useTheme() {
     }
   }, []);
 
+  // Listen for theme changes from other components
+  useEffect(() => {
+    const handleThemeChange = (e: CustomEvent<{ theme: Theme; mode: ThemeMode }>) => {
+      setThemeState(e.detail.theme);
+      setModeState(e.detail.mode);
+    };
+
+    window.addEventListener(THEME_CHANGE_EVENT, handleThemeChange as EventListener);
+    return () => {
+      window.removeEventListener(THEME_CHANGE_EVENT, handleThemeChange as EventListener);
+    };
+  }, []);
+
   // Set theme directly
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
@@ -190,6 +206,13 @@ export function useTheme() {
     const themeMode = getThemeMode(newTheme);
     setModeState(themeMode);
     localStorage.setItem(MODE_STORAGE_KEY, themeMode);
+
+    // Dispatch event for cross-component sync
+    window.dispatchEvent(
+      new CustomEvent(THEME_CHANGE_EVENT, {
+        detail: { theme: newTheme, mode: themeMode },
+      })
+    );
   };
 
   // Toggle between dark/light mode (switches to paired theme)

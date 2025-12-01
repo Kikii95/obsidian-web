@@ -125,11 +125,12 @@ export function ManageFolderDialog({ mode, open, onOpenChange }: ManageFolderDia
   const hasSensitiveContent = hasLockedFiles || hasPrivateFolder;
 
   // PIN verification logic (same as note deletion):
-  // For folders with locked/_private content:
-  //   - Ask PIN if requirePinOnDelete is ON (even if unlocked)
-  //   - Don't ask ONLY if unlocked AND requirePinOnDelete is OFF
-  const needsPinVerification = hasPinConfigured && hasSensitiveContent && (
-    settings.requirePinOnDelete || !isUnlocked
+  // - If requirePinOnDelete is ON → always ask PIN (for any folder)
+  // - If requirePinOnDelete is OFF:
+  //   - For folders with locked/_private content → ask PIN only if not unlocked
+  //   - For normal folders → never ask PIN
+  const needsPinVerification = hasPinConfigured && (
+    settings.requirePinOnDelete || (hasSensitiveContent && !isUnlocked)
   );
 
   const folderName = getFolderName(selectedFolder);

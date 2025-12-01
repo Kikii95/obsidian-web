@@ -28,15 +28,12 @@ export function DeleteNoteDialog({ path, sha, noteName, isLocked = false, trigge
   const isLockedOrPrivate = isLocked || isInPrivateFolder;
 
   // PIN verification logic:
-  // For locked/_private files:
-  //   - Ask PIN if requirePinOnDelete is ON (even if unlocked)
-  //   - Don't ask ONLY if unlocked AND requirePinOnDelete is OFF
-  // For normal files:
-  //   - Ask PIN if requirePinOnDelete is ON and not unlocked
+  // - If requirePinOnDelete is ON → always ask PIN (for any file)
+  // - If requirePinOnDelete is OFF:
+  //   - For locked/_private files → ask PIN only if not unlocked
+  //   - For normal files → never ask PIN
   const needsPinVerification = hasPinConfigured && (
-    isLockedOrPrivate
-      ? (settings.requirePinOnDelete || !isUnlocked)
-      : (settings.requirePinOnDelete && !isUnlocked)
+    settings.requirePinOnDelete || (isLockedOrPrivate && !isUnlocked)
   );
 
   const handleDelete = async () => {

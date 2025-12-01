@@ -77,6 +77,7 @@ interface SettingsState {
   // Cloud sync
   cloudSha: string | null; // SHA of settings file in GitHub
   isSyncing: boolean;
+  hasLoadedFromCloud: boolean; // True after first successful cloud load
   lastSyncError: string | null;
   loadFromCloud: () => Promise<void>;
   saveToCloud: () => Promise<void>;
@@ -139,6 +140,7 @@ export const useSettingsStore = create<SettingsState>()(
       settings: defaultSettings,
       cloudSha: null,
       isSyncing: false,
+      hasLoadedFromCloud: false,
       lastSyncError: null,
 
       updateSettings: (partial) => {
@@ -240,10 +242,11 @@ export const useSettingsStore = create<SettingsState>()(
               settings: { ...state.settings, ...data.settings },
               cloudSha: data.sha,
               isSyncing: false,
+              hasLoadedFromCloud: true,
             }));
           } else {
             // No cloud settings yet, upload current local settings
-            set({ isSyncing: false });
+            set({ isSyncing: false, hasLoadedFromCloud: true });
             get().saveToCloud();
           }
         } catch (error) {

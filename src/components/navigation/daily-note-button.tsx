@@ -48,10 +48,12 @@ tags: [daily]
 export function DailyNoteButton() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { settings } = useSettingsStore();
+  const { settings, hasLoadedFromCloud, isSyncing } = useSettingsStore();
 
   // Get daily notes folder from settings (default: "Daily")
+  // Wait for cloud settings to load to avoid race condition
   const dailyFolder = settings.dailyNotesFolder || "Daily";
+  const isReady = hasLoadedFromCloud && !isSyncing;
 
   const handleClick = useCallback(async () => {
     setIsLoading(true);
@@ -104,10 +106,10 @@ export function DailyNoteButton() {
       variant="ghost"
       size="icon"
       onClick={handleClick}
-      disabled={isLoading}
-      title="Note du jour"
+      disabled={isLoading || !isReady}
+      title={isReady ? "Note du jour" : "Chargement des paramètres..."}
     >
-      {isLoading ? (
+      {isLoading || !isReady ? (
         <Loader2 className="h-5 w-5 animate-spin" />
       ) : (
         <Calendar className="h-5 w-5" />

@@ -45,7 +45,7 @@ import {
   Settings2,
 } from "lucide-react";
 import Link from "next/link";
-import { useTheme, themes } from "@/hooks/use-theme";
+import { useTheme } from "@/hooks/use-theme";
 import { getCacheStats, clearNotesCache } from "@/lib/note-cache";
 import { useSettingsStore, type UserSettings, type ActivityPeriod, type DashboardLayout, type SidebarSortBy, type DateFormat } from "@/lib/settings-store";
 import { useVaultStore } from "@/lib/store";
@@ -60,7 +60,7 @@ function getTopLevelFolders(files: VaultFile[]): string[] {
 }
 
 export default function SettingsPage() {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, mode, themesForCurrentMode } = useTheme();
   const { settings, updateSettings, resetSettings } = useSettingsStore();
   const { tree } = useVaultStore();
 
@@ -839,12 +839,15 @@ export default function SettingsPage() {
           <CardTitle className="flex items-center gap-2">
             <Palette className="h-5 w-5 text-primary" />
             Thème
+            <span className="ml-auto text-xs font-normal text-muted-foreground">
+              {mode === "dark" ? "🌙 Mode sombre" : "☀️ Mode clair"}
+            </span>
           </CardTitle>
-          <CardDescription>Personnalise l'apparence</CardDescription>
+          <CardDescription>Personnalise l'apparence (change le mode via le header)</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
-            {themes.map((t) => (
+            {themesForCurrentMode.map((t) => (
               <button
                 key={t.id}
                 onClick={() => setTheme(t.id)}

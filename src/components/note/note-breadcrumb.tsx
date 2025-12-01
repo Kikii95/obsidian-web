@@ -3,6 +3,7 @@
 import { memo } from "react";
 import Link from "next/link";
 import { ChevronRight, Home } from "lucide-react";
+import { useSettingsStore } from "@/lib/settings-store";
 
 interface BreadcrumbItem {
   name: string;
@@ -27,12 +28,18 @@ function buildFolderUrl(path: string): string {
 export const NoteBreadcrumb = memo(function NoteBreadcrumb({
   items,
 }: NoteBreadcrumbProps) {
+  const { settings } = useSettingsStore();
+  const vaultRootPath = settings.vaultRootPath || "";
+  const homeHref = vaultRootPath
+    ? `/folder/${vaultRootPath.split("/").map(encodeURIComponent).join("/")}`
+    : "/folder";
+
   return (
     <nav className="flex items-center gap-1 text-sm text-muted-foreground flex-wrap min-w-0 overflow-hidden">
       <Link
-        href="/folder"
+        href={homeHref}
         className="hover:text-foreground transition-colors shrink-0"
-        title="Vault"
+        title="Vault Root"
       >
         <Home className="h-3.5 w-3.5" />
       </Link>

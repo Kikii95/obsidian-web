@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { githubClient } from "@/services/github-client";
 import type { ObsidianCanvasData } from "@/types/canvas";
+import { useSettingsStore } from "@/lib/settings-store";
 
 // Lazy load CanvasViewer (React Flow is heavy)
 const CanvasViewer = dynamic(
@@ -95,6 +96,13 @@ export default function CanvasPage() {
 
   const fileName = decodedSlug[decodedSlug.length - 1] || "Canvas";
 
+  // Vault root path for Home link
+  const { settings } = useSettingsStore();
+  const vaultRootPath = settings.vaultRootPath || "";
+  const homeHref = vaultRootPath
+    ? `/folder/${vaultRootPath.split("/").map(encodeURIComponent).join("/")}`
+    : "/folder";
+
   if (isLoading) {
     return (
       <div className="p-6 max-w-4xl mx-auto">
@@ -148,9 +156,9 @@ export default function CanvasPage() {
       {/* Breadcrumb */}
       <div className="flex items-center gap-1 text-sm px-4 py-3 border-b border-border/50 shrink-0 overflow-x-auto">
         <Link
-          href="/folder"
+          href={homeHref}
           className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
-          title="Vault"
+          title="Vault Root"
         >
           <Home className="h-3.5 w-3.5" />
         </Link>

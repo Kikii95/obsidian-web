@@ -139,20 +139,28 @@ export default function FilePage() {
         >
           Vault
         </Link>
-        {breadcrumbs?.map((crumb, index) => (
-          <div key={index} className="flex items-center gap-1 shrink-0">
-            <ChevronRight className="h-3 w-3 text-muted-foreground" />
-            {crumb.isLast ? (
-              <span className="font-medium flex items-center gap-1.5">
-                {fileType === "image" && <Image className="h-4 w-4 text-emerald-500" />}
-                {fileType === "pdf" && <FileText className="h-4 w-4 text-red-500" />}
-                {crumb.name}
-              </span>
-            ) : (
-              <span className="text-muted-foreground">{crumb.name}</span>
-            )}
-          </div>
-        ))}
+        {breadcrumbs?.map((crumb, index) => {
+          const folderPath = `/folder/${crumb.path.split("/").map(encodeURIComponent).join("/")}`;
+          return (
+            <div key={index} className="flex items-center gap-1 shrink-0">
+              <ChevronRight className="h-3 w-3 text-muted-foreground" />
+              {crumb.isLast ? (
+                <span className="font-medium flex items-center gap-1.5">
+                  {fileType === "image" && <Image className="h-4 w-4 text-emerald-500" />}
+                  {fileType === "pdf" && <FileText className="h-4 w-4 text-red-500" />}
+                  {crumb.name}
+                </span>
+              ) : (
+                <Link
+                  href={folderPath}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {crumb.name}
+                </Link>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* Viewer */}

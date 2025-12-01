@@ -85,7 +85,7 @@ function MiniGraphComponent({
       .attr("stroke-width", 1.5);
 
     // Draw nodes - larger and more visible
-    // Use --foreground for stroke (white on dark, black on light)
+    // Use --foreground for fill (white on dark, black on light) and --primary for stroke
     const node = g
       .append("g")
       .attr("class", "nodes")
@@ -94,8 +94,8 @@ function MiniGraphComponent({
       .enter()
       .append("circle")
       .attr("r", 6)
-      .attr("fill", "hsl(var(--primary))")
-      .attr("stroke", "hsl(var(--foreground))")
+      .attr("fill", "hsl(var(--foreground))")
+      .attr("stroke", "hsl(var(--primary))")
       .attr("stroke-width", 2)
       .style("cursor", "pointer")
       .on("click", (_, d) => {

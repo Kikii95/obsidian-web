@@ -83,20 +83,6 @@ function getTopLevelFolders(files: VaultFile[], vaultRootPath: string = ""): str
     .sort();
 }
 
-// Get all folder paths from tree (for vault root picker)
-function getAllFolderPaths(files: VaultFile[], prefix: string = ""): string[] {
-  const paths: string[] = [];
-  for (const file of files) {
-    if (file.type === "dir") {
-      const path = prefix ? `${prefix}/${file.name}` : file.name;
-      paths.push(path);
-      if (file.children) {
-        paths.push(...getAllFolderPaths(file.children, path));
-      }
-    }
-  }
-  return paths;
-}
 
 // Deep compare two objects (for detecting changes)
 function deepEqual(a: unknown, b: unknown): boolean {
@@ -184,9 +170,6 @@ export default function SettingsPage() {
   const handleReset = () => {
     resetSettings();
   };
-
-  // Get all folder paths for vault root picker
-  const allFolderPaths = useMemo(() => getAllFolderPaths(tree), [tree]);
 
   // Get top-level folders only (cleaner UI) - respecting vaultRootPath
   const topLevelFolders = useMemo(
@@ -470,7 +453,7 @@ export default function SettingsPage() {
               Dossier racine du vault
             </Label>
             <p className="text-sm text-muted-foreground mb-3">
-              Si votre vault est dans un sous-dossier du repo (ex: <code>MonVault/</code>), définissez-le ici
+              Si votre vault est dans un sous-dossier du repo (ex: <code>MonVault/</code>)
             </p>
             <Select
               value={draft.vaultRootPath || "__repo_root__"}
@@ -482,21 +465,16 @@ export default function SettingsPage() {
                 <SelectValue placeholder="Racine du repo" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__repo_root__">
-                  / (Racine du repo)
-                </SelectItem>
-                {allFolderPaths.map((path) => (
-                  <SelectItem key={path} value={path}>
-                    {path}/
-                  </SelectItem>
-                ))}
+                <SelectItem value="__repo_root__">/ (Racine du repo)</SelectItem>
+                {tree
+                  .filter((f) => f.type === "dir")
+                  .map((folder) => (
+                    <SelectItem key={folder.name} value={folder.name}>
+                      {folder.name}/
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
-            {draft.vaultRootPath && (
-              <p className="text-xs text-primary">
-                Vault actif : <code>{draft.vaultRootPath}/</code>
-              </p>
-            )}
           </div>
 
           {/* Default expanded folders */}

@@ -176,16 +176,33 @@ const { isOnline } = useOnlineStatus();
 
 ### `use-theme.ts`
 
-**Purpose**: Theme management with localStorage persistence.
+**Purpose**: Theme management integrated with settings store.
 
 ```typescript
-const { theme, setTheme, themes, currentTheme } = useTheme();
+const { theme, setTheme, themes, currentTheme, mode, setMode } = useTheme();
 ```
 
 **Features**:
-- 12 color themes (OKLCH-based)
-- Persists to localStorage
+- 36 color themes (18 dark + 18 light, OKLCH-based)
+- Synced via settings store (cloud sync enabled)
+- Light/Dark mode toggle with filtered theme dropdown
 - Applies `data-theme` attribute to HTML
+
+---
+
+### `use-settings-sync.ts` (Phase 12)
+
+**Purpose**: Cloud sync for user settings via GitHub.
+
+```typescript
+useSettingsSync(); // Called in layout, auto-syncs settings
+```
+
+**Features**:
+- Auto-loads settings from GitHub on login
+- Auto-saves on settings change (2s debounce)
+- Separate desktop/mobile profiles
+- Files: `.obsidian-web/settings-desktop.json` and `.obsidian-web/settings-mobile.json`
 
 ---
 
@@ -506,7 +523,7 @@ Added loading states for remaining dynamic routes:
 
 **Settings Store (`lib/settings-store.ts`):**
 
-Zustand store with localStorage persistence for user preferences.
+Zustand store with localStorage persistence + GitHub cloud sync for user preferences.
 
 ```typescript
 interface UserSettings {
@@ -514,10 +531,14 @@ interface UserSettings {
   recentNotesCount: number;      // 3-15
   showMiniGraph: boolean;
   activityDefaultPeriod: "30" | "90" | "180" | "365";
+  dashboardLayout: "compact" | "spacious" | "minimal";
 
   // Sidebar
+  vaultRootPath: string;         // Custom root folder (e.g., "MonVault")
   defaultExpandedFolders: string[];
   sidebarWidth: number;
+  sidebarSortBy: "name" | "type";
+  customFolderOrders: Record<string, string[]>;  // Per-folder ordering
 
   // Lock system
   lockTimeout: number;           // Minutes (0 = never)
@@ -529,8 +550,20 @@ interface UserSettings {
   graphForceStrength: number;    // -1 to -500
   graphLinkDistance: number;     // 5 to 200
   graphGravityStrength: number;  // 0 to 0.3
-  graphDefaultZoom: number;      // 0.1 to 2
+  graphDefaultZoom: number;      // 0.1 to 5
+
+  // Cloud Sync
+  syncToCloud: boolean;          // Sync settings to GitHub
+  theme: string;                 // Current theme (synced)
 }
+```
+
+**Cloud Sync Methods:**
+
+```typescript
+loadFromCloud(): Promise<void>  // Load from GitHub on login
+saveToCloud(): Promise<void>    // Save to GitHub (debounced)
+isMobileDevice(): boolean       // Detect mobile for separate profile
 ```
 
 **Graph Live Settings:**
@@ -558,7 +591,8 @@ interface UserSettings {
 - `src/hooks/use-note-lock.ts` — Lock/unlock logic
 - `src/hooks/use-breadcrumb.ts` — Breadcrumb generation
 - `src/hooks/use-online-status.ts` — Network status
-- `src/hooks/use-theme.ts` — Theme management
+- `src/hooks/use-theme.ts` — Theme management (uses settings store)
+- `src/hooks/use-settings-sync.ts` — Cloud settings sync (Phase 12)
 - `src/hooks/use-dialog-action.ts` — Dialog async actions (Phase 3)
 
 ### Services
@@ -594,6 +628,7 @@ interface UserSettings {
 - `src/app/api/github/tree/route.ts` — File tree
 - `src/app/api/github/graph/route.ts` — Graph data
 - `src/app/api/github/activity/route.ts` — Commit history (Phase 6)
+- `src/app/api/github/settings/route.ts` — Cloud settings sync (Phase 12)
 - `src/app/api/github/read/route.ts` — Read note
 - `src/app/api/github/save/route.ts` — Save note
 - `src/app/api/github/create/route.ts` — Create note
@@ -618,4 +653,61 @@ interface UserSettings {
 
 ---
 
-*Last updated: 2025-11-30*
+## Phase 12 — Cloud Settings Sync (Completed)
+
+### Overview
+
+Implemented GitHub-based settings synchronization with separate profiles for desktop and mobile devices.
+
+### Architecture
+
+```
+┌──────────────┐     ┌──────────────┐     ┌─────────────────────────────┐
+│   Browser    │────►│ Settings API │────►│  GitHub Vault Repository    │
+│  (Zustand)   │◄────│  (Next.js)   │◄────│  .obsidian-web/             │
+└──────────────┘     └──────────────┘     │   ├── settings-desktop.json │
+                                          │   └── settings-mobile.json  │
+                                          └─────────────────────────────┘
+```
+
+### Files
+
+| File | Description |
+|------|-------------|
+| `src/app/api/github/settings/route.ts` | GET/POST API with `?mobile=true` param |
+| `src/hooks/use-settings-sync.ts` | Auto-load on login, auto-save on change (2s debounce) |
+| `src/lib/settings-store.ts` | Extended with `loadFromCloud()`, `saveToCloud()`, `isMobileDevice()` |
+
+### Features
+
+1. **Automatic Detection** — `isMobileDevice()` checks user agent for mobile patterns
+2. **Separate Profiles** — Desktop and mobile have independent settings files
+3. **Auto-Sync** — Settings load on login, save 2s after any change
+4. **Theme Integration** — Theme now stored in settings (synced across devices)
+5. **Vault Root Path** — Define subfolder as vault root (e.g., repo is `vault-repo` but actual vault is `vault-repo/MonVault/`)
+
+### Vault Root Path
+
+Allows users with nested vault structures to define a custom root:
+
+```typescript
+// Settings
+vaultRootPath: "MonVault"  // repo root → MonVault/
+
+// Sidebar filtering
+function getSubTree(files: VaultFile[], rootPath: string): VaultFile[] {
+  if (!rootPath) return files;
+  const pathParts = rootPath.split("/").filter(Boolean);
+  let current = files;
+  for (const part of pathParts) {
+    const folder = current.find((f) => f.type === "dir" && f.name === part);
+    if (folder?.children) { current = folder.children; }
+    else { return []; }
+  }
+  return current;
+}
+```
+
+---
+
+*Last updated: 2025-12-01*

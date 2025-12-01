@@ -42,12 +42,19 @@ A modern web-based viewer for Obsidian vaults, powered by GitHub as the backend 
 - **iOS Ready** — Apple touch icons, splash screens
 
 ### Customization (Phase 9)
-- **12 Color Themes** — Magenta, Ocean, Forest, Sunset, Turquoise, Mono, and more
+- **36 Color Themes** — 18 dark + 18 light themes (Magenta, Ocean, Forest, Turquoise, Carmine, Brown, Mono...)
+- **Mode Toggle** — Light/Dark mode switch with filtered theme dropdown
 - **Editor Settings** — Font size, line height, max width, frontmatter toggle
-- **Sidebar Settings** — Sort by name/type, hide patterns, custom folder order
+- **Sidebar Settings** — Sort by name/type, hide patterns, custom folder order, vault root path
 - **Header Settings** — Date/time display with format options (FR/EN/ISO)
-- **General Settings** — Auto-save delay configuration
+- **General Settings** — Auto-save delay, daily notes folder configuration
 - **Dashboard Layout** — Compact, spacious, or minimal views
+
+### Cloud Sync (Phase 12)
+- **Settings Sync** — Automatic sync to GitHub (`.obsidian-web/settings-{desktop,mobile}.json`)
+- **Separate Profiles** — Desktop and mobile settings stored independently
+- **Auto Detection** — Automatic mobile device detection via user agent
+- **Vault Root Path** — Define custom root folder for vaults in subfolders (e.g., `MonVault/`)
 
 ### Obsidian-like Features (Phase 10)
 - **Quick Switcher** — Ctrl+P to instantly search and navigate to any note
@@ -153,7 +160,8 @@ src/
 │   │       ├── backlinks/ # Backlinks (P10)
 │   │       ├── tags/      # Tags list (P10)
 │   │       ├── templates/ # Templates list (P10)
-│   │       └── history/   # Version history (P10)
+│   │       ├── history/   # Version history (P10)
+│   │       └── settings/  # Cloud settings sync (P12)
 │   └── layout.tsx         # Root layout
 ├── components/
 │   ├── dashboard/         # Dashboard widgets (mini-graph, activity-heatmap)
@@ -165,11 +173,12 @@ src/
 │   ├── notes/             # CRUD dialogs
 │   ├── ui/                # shadcn/ui components
 │   └── viewer/            # Markdown, image, PDF, canvas viewers
-├── hooks/                 # Custom React hooks (8 hooks)
+├── hooks/                 # Custom React hooks (9 hooks)
 │   ├── use-note-data.ts   # Note fetching + offline cache
 │   ├── use-note-editor.ts # Editor state management
 │   ├── use-note-export.ts # MD/PDF export
 │   ├── use-dialog-action.ts # Dialog async actions
+│   ├── use-settings-sync.ts # Cloud settings sync (P12)
 │   └── ...                # See docs/ARCHITECTURE.md
 ├── services/              # API clients
 │   └── github-client.ts   # Centralized GitHub API
@@ -216,9 +225,10 @@ docker run -p 3000:3000 --env-file .env.local obsidian-web
 For detailed information about the codebase architecture, custom hooks, and optimization patterns, see **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**.
 
 Key highlights:
-- **7 Custom Hooks** — Extracted from monolithic components
+- **9 Custom Hooks** — Extracted from monolithic components
 - **Centralized API Client** — `githubClient` for all GitHub operations
 - **Offline-first** — Cache API for notes and file tree
+- **Cloud Sync** — Settings synced to GitHub with desktop/mobile profiles
 - **React.memo** — Optimized heavy components (ForceGraph, MarkdownRenderer)
 
 ## Contributing

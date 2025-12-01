@@ -28,6 +28,7 @@ import { LockedNoteView } from "@/components/lock/locked-note-view";
 import { PinDialog } from "@/components/lock/pin-dialog";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { useLockStore, isPathLocked } from "@/lib/lock-store";
+import { useVaultStore } from "@/lib/store";
 import { useNoteData } from "@/hooks/use-note-data";
 import { useNoteEditor } from "@/hooks/use-note-editor";
 import { useNoteExport } from "@/hooks/use-note-export";
@@ -36,18 +37,34 @@ import { useBreadcrumb, useSlugName } from "@/hooks/use-breadcrumb";
 import { decodeSlugSegments, buildFilePath } from "@/lib/path-utils";
 import { useSettingsStore } from "@/lib/settings-store";
 
+// Count markdown files recursively
+function countMdFiles(files: { type: string; name: string; children?: unknown[] }[]): number {
+  let count = 0;
+  for (const file of files) {
+    if (file.type === "file" && file.name.endsWith(".md")) {
+      count++;
+    } else if (file.type === "dir" && file.children) {
+      count += countMdFiles(file.children as { type: string; name: string; children?: unknown[] }[]);
+    }
+  }
+  return count;
+}
+
 export default function NotePage() {
   const params = useParams();
   const { isOnline } = useOnlineStatus();
   const { isUnlocked, initializeLockState } = useLockStore();
   const { settings } = useSettingsStore();
+  const { tree } = useVaultStore();
 
   // Editor style settings
   const editorMaxWidth = settings.editorMaxWidth ?? 800;
   const editorFontSize = settings.editorFontSize ?? 16;
   const editorLineHeight = settings.editorLineHeight ?? 1.6;
-  const defaultEditMode = settings.defaultEditMode ?? false;
   const enableKeyboardShortcuts = settings.enableKeyboardShortcuts ?? true;
+
+  // Count total md files for backlinks warning
+  const totalMdFiles = useMemo(() => countMdFiles(tree), [tree]);
 
   // Parse slug
   const slug = params.slug as string[];
@@ -80,7 +97,6 @@ export default function NotePage() {
   const editor = useNoteEditor({
     note,
     onNoteUpdate: updateNote,
-    defaultEditMode,
   });
 
   // Export hook
@@ -259,7 +275,7 @@ export default function NotePage() {
 
       {/* Backlinks section */}
       {!editor.isEditing && (
-        <NoteBacklinks notePath={filePath} />
+        <NoteBacklinks notePath={filePath} totalFiles={totalMdFiles} />
       )}
 
       {/* PIN Dialog for verifying PIN when removing lock */}

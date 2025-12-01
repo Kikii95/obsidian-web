@@ -369,20 +369,6 @@ export default function SettingsPage() {
             />
           </div>
 
-          {/* Default edit mode */}
-          <div className="flex items-center justify-between">
-            <div>
-              <Label>Mode édition par défaut</Label>
-              <p className="text-sm text-muted-foreground">
-                Ouvrir les notes en mode édition
-              </p>
-            </div>
-            <Switch
-              checked={draft.defaultEditMode ?? false}
-              onCheckedChange={(checked) => updateDraft("defaultEditMode", checked)}
-            />
-          </div>
-
           {/* Keyboard shortcuts */}
           <div className="flex items-center justify-between">
             <div>

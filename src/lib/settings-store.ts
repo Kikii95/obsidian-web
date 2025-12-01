@@ -19,7 +19,6 @@ export interface UserSettings {
   editorLineHeight: number; // 1.4-2.0
   editorMaxWidth: number; // 600-1200px
   showFrontmatter: boolean; // Show/hide frontmatter badges
-  defaultEditMode: boolean; // Start notes in edit mode
   enableKeyboardShortcuts: boolean; // Ctrl+S to save, Esc to cancel
 
   // Sidebar
@@ -77,7 +76,6 @@ const defaultSettings: UserSettings = {
   editorLineHeight: 1.6,
   editorMaxWidth: 800,
   showFrontmatter: true,
-  defaultEditMode: false,
   enableKeyboardShortcuts: true,
 
   // Sidebar

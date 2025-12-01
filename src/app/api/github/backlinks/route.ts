@@ -57,8 +57,8 @@ export async function GET(request: Request) {
 
     const backlinks: Backlink[] = [];
 
-    // Scan ALL files (or up to 500 for very large vaults)
-    const filesToScan = mdFiles.slice(0, 500);
+    // Scan ALL markdown files in the vault
+    const filesToScan = mdFiles;
 
     // Regex to find all wikilinks in content
     const wikilinkRegex = /\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g;

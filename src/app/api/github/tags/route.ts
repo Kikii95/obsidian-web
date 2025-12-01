@@ -62,8 +62,8 @@ export async function GET() {
     // Map to store tag info
     const tagsMap = new Map<string, TagInfo>();
 
-    // Limit files for performance
-    const filesToScan = mdFiles.slice(0, 200);
+    // Scan ALL markdown files (no cap - user triggers manually with warning)
+    const filesToScan = mdFiles;
 
     for (const file of filesToScan) {
       try {

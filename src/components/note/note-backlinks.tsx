@@ -21,12 +21,14 @@ interface BacklinksResponse {
 
 interface NoteBacklinksProps {
   notePath: string;
+  totalFiles?: number; // Total markdown files in vault (for warning message)
 }
 
 export const NoteBacklinks = memo(function NoteBacklinks({
   notePath,
+  totalFiles,
 }: NoteBacklinksProps) {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false); // Collapsed by default
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [data, setData] = useState<BacklinksResponse | null>(null);
@@ -92,7 +94,9 @@ export const NoteBacklinks = memo(function NoteBacklinks({
             <div className="px-4 py-6 text-center">
               <div className="flex items-center justify-center gap-1.5 text-xs text-amber-500 mb-3">
                 <AlertTriangle className="h-3.5 w-3.5" />
-                <span>Consomme des appels API (scanne le vault)</span>
+                <span>
+                  Consomme {totalFiles ?? "~"} appels API (1 par fichier md)
+                </span>
               </div>
               <Button
                 variant="outline"

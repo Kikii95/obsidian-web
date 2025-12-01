@@ -148,7 +148,7 @@ function getRecentNotes(items: VaultFile[], limit: number): RecentNote[] {
 
 export default function HomePage() {
   const { data: session } = useSession();
-  const { tree, setTree, setTreeLoading } = useVaultStore();
+  const { tree } = useVaultStore();
   const { pinnedNotes, unpinNote } = usePinnedStore();
   const { settings } = useSettingsStore();
 
@@ -169,39 +169,41 @@ export default function HomePage() {
     links: Array<{ source: string; target: string }>;
   } | null>(null);
 
-  const fetchData = useCallback(async () => {
+  // Fetch only graph data (tree is already fetched by VaultSidebar in layout)
+  const fetchGraphData = useCallback(async () => {
     try {
-      setTreeLoading(true);
-
-      const [treeData, graph] = await Promise.all([
-        githubClient.getTree(),
-        githubClient.getGraph(true), // Include orphans to get accurate stats
-      ]);
-
-      setTree(treeData);
+      const graph = await githubClient.getGraph(true); // Include orphans to get accurate stats
       setGraphData(graph);
-
-      const counts = countItems(treeData);
 
       // Use orphanNotes from API response
       const orphanCount = (graph as { orphanNotes?: number }).orphanNotes || 0;
 
-      setStats({
-        ...counts,
+      setStats((prev) => ({
+        ...prev,
         links: graph.links?.length || 0,
         orphanNotes: orphanCount,
         loading: false,
-      });
+      }));
     } catch {
       setStats((prev) => ({ ...prev, loading: false }));
-    } finally {
-      setTreeLoading(false);
     }
-  }, [setTree, setTreeLoading]);
+  }, []);
 
+  // Calculate stats when tree is available (from sidebar)
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (tree.length > 0) {
+      const counts = countItems(tree);
+      setStats((prev) => ({
+        ...prev,
+        ...counts,
+      }));
+    }
+  }, [tree]);
+
+  // Fetch graph data on mount
+  useEffect(() => {
+    fetchGraphData();
+  }, [fetchGraphData]);
 
   // Get recent notes based on settings
   const recentNotes = useMemo(() => {

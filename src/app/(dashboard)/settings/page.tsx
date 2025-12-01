@@ -46,7 +46,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useTheme } from "@/hooks/use-theme";
-import { ThemeLogo } from "@/components/theme/theme-switcher";
 import { getCacheStats, clearNotesCache } from "@/lib/note-cache";
 import { useSettingsStore, type UserSettings, type ActivityPeriod, type DashboardLayout, type SidebarSortBy, type DateFormat } from "@/lib/settings-store";
 import { useVaultStore } from "@/lib/store";
@@ -853,7 +852,7 @@ export default function SettingsPage() {
                 key={t.id}
                 onClick={() => setTheme(t.id)}
                 className={`
-                  flex flex-col items-center gap-1.5 p-3 rounded-lg border-2 transition-all
+                  flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all
                   hover:scale-105
                   ${
                     theme === t.id
@@ -862,7 +861,7 @@ export default function SettingsPage() {
                   }
                 `}
               >
-                <ThemeLogo themeOption={t} size="lg" />
+                <span className="text-2xl">{t.emoji}</span>
                 <span className="text-xs font-medium">{t.name}</span>
               </button>
             ))}

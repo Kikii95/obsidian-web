@@ -25,15 +25,18 @@ export function DeleteNoteDialog({ path, sha, noteName, isLocked = false, trigge
 
   // Check if note is in a _private folder
   const isInPrivateFolder = isPathLocked(path);
+  const isLockedOrPrivate = isLocked || isInPrivateFolder;
 
-  // PIN verification needed if:
-  // 1. Note has frontmatter lock (always require PIN)
-  // 2. OR note is in _private folder AND requirePinOnPrivateFolder is enabled
-  // 3. OR requirePinOnDelete is true (for any note)
-  const needsPinVerification = hasPinConfigured && !isUnlocked && (
-    isLocked ||
-    (isInPrivateFolder && settings.requirePinOnPrivateFolder) ||
-    settings.requirePinOnDelete
+  // PIN verification logic:
+  // For locked/_private files:
+  //   - Ask PIN if requirePinOnDelete is ON (even if unlocked)
+  //   - Don't ask ONLY if unlocked AND requirePinOnDelete is OFF
+  // For normal files:
+  //   - Ask PIN if requirePinOnDelete is ON and not unlocked
+  const needsPinVerification = hasPinConfigured && (
+    isLockedOrPrivate
+      ? (settings.requirePinOnDelete || !isUnlocked)
+      : (settings.requirePinOnDelete && !isUnlocked)
   );
 
   const handleDelete = async () => {

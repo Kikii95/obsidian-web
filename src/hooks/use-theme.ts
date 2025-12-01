@@ -42,7 +42,7 @@ export type Theme =
   | "lavender-light"
   | "magenta-light"
   | "rose-light"
-  | "mono-inverse";
+  | "mono-light";
 
 export interface ThemeOption {
   id: Theme;
@@ -82,7 +82,7 @@ export const themes: ThemeOption[] = [
   { id: "magenta", name: "Magenta", emoji: "💜", description: "Violet vibrant", mode: "dark", pair: "magenta-light" },
   { id: "rose", name: "Rose", emoji: "🌸", description: "Rose pastel", mode: "dark", pair: "rose-light" },
   // ⚫ Achromatic
-  { id: "mono", name: "Mono", emoji: "⚫", description: "Noir & blanc", mode: "dark", pair: "mono-inverse" },
+  { id: "mono", name: "Mono", emoji: "⚫", description: "Noir & blanc", mode: "dark", pair: "mono-light" },
 
   // ─────────────────────────────────────────────
   // LIGHT THEMES (same order)
@@ -108,7 +108,7 @@ export const themes: ThemeOption[] = [
   { id: "magenta-light", name: "Magenta", emoji: "💜", description: "Violet clair", mode: "light", pair: "magenta" },
   { id: "rose-light", name: "Rose", emoji: "🌸", description: "Rose clair", mode: "light", pair: "rose" },
   // ⚫ Achromatic
-  { id: "mono-inverse", name: "Mono", emoji: "⚪", description: "Blanc & noir", mode: "light", pair: "mono" },
+  { id: "mono-light", name: "Mono", emoji: "⚪", description: "Blanc & noir", mode: "light", pair: "mono" },
 ];
 
 // ═══════════════════════════════════════════════

@@ -25,6 +25,7 @@ import { GlobalLockStatus } from "@/components/lock/global-lock-status";
 import { HeaderDateTime } from "@/components/ui/header-date-time";
 import { QuickSwitcher } from "@/components/navigation/quick-switcher";
 import { DailyNoteButton } from "@/components/navigation/daily-note-button";
+import { ScrollRestoration } from "@/components/navigation/scroll-restoration";
 
 export default function DashboardLayout({
   children,
@@ -224,6 +225,9 @@ export default function DashboardLayout({
 
       {/* Quick Switcher (Ctrl+P) */}
       <QuickSwitcher />
+
+      {/* Scroll Restoration */}
+      <ScrollRestoration />
     </div>
   );
 }

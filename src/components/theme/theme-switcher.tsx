@@ -1,6 +1,6 @@
 "use client";
 
-import { Sun, Moon, Check } from "lucide-react";
+import { Sun, Moon, Check, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -10,8 +10,71 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { useTheme, type Theme } from "@/hooks/use-theme";
+import { useTheme, type Theme, type ThemeOption } from "@/hooks/use-theme";
 import { cn } from "@/lib/utils";
+
+// Hardcoded theme colors (OKLCH primary colors converted to hex approximations)
+const themeColors: Record<Theme, { bg: string; fg: string }> = {
+  // Dark themes
+  "carmine": { bg: "#dc2626", fg: "#fff" },
+  "crimson": { bg: "#e11d48", fg: "#fff" },
+  "peach-dark": { bg: "#f97316", fg: "#fff" },
+  "brown": { bg: "#a16207", fg: "#fff" },
+  "sunset": { bg: "#ea580c", fg: "#fff" },
+  "sand-dark": { bg: "#ca8a04", fg: "#000" },
+  "cyber": { bg: "#eab308", fg: "#000" },
+  "sage-dark": { bg: "#65a30d", fg: "#fff" },
+  "forest": { bg: "#16a34a", fg: "#fff" },
+  "mint": { bg: "#14b8a6", fg: "#fff" },
+  "turquoise": { bg: "#06b6d4", fg: "#fff" },
+  "cloud-dark": { bg: "#0ea5e9", fg: "#fff" },
+  "ocean": { bg: "#3b82f6", fg: "#fff" },
+  "mist-dark": { bg: "#6366f1", fg: "#fff" },
+  "lavender": { bg: "#8b5cf6", fg: "#fff" },
+  "magenta": { bg: "#d946ef", fg: "#fff" },
+  "rose": { bg: "#ec4899", fg: "#fff" },
+  "mono": { bg: "#1a1a1a", fg: "#fff" },
+  // Light themes
+  "carmine-light": { bg: "#dc2626", fg: "#fff" },
+  "crimson-light": { bg: "#e11d48", fg: "#fff" },
+  "peach": { bg: "#f97316", fg: "#fff" },
+  "brown-light": { bg: "#a16207", fg: "#fff" },
+  "sunset-light": { bg: "#ea580c", fg: "#fff" },
+  "sand": { bg: "#ca8a04", fg: "#000" },
+  "cyber-light": { bg: "#eab308", fg: "#000" },
+  "sage": { bg: "#65a30d", fg: "#fff" },
+  "forest-light": { bg: "#16a34a", fg: "#fff" },
+  "mint-light": { bg: "#14b8a6", fg: "#fff" },
+  "turquoise-light": { bg: "#06b6d4", fg: "#fff" },
+  "cloud": { bg: "#0ea5e9", fg: "#fff" },
+  "ocean-light": { bg: "#3b82f6", fg: "#fff" },
+  "mist": { bg: "#6366f1", fg: "#fff" },
+  "lavender-light": { bg: "#8b5cf6", fg: "#fff" },
+  "magenta-light": { bg: "#d946ef", fg: "#fff" },
+  "rose-light": { bg: "#ec4899", fg: "#fff" },
+  "mono-light": { bg: "#f5f5f5", fg: "#000" },
+};
+
+// Mini palette icon colored by theme (exported for Settings page)
+export function ThemeLogo({ themeOption, size = "md" }: { themeOption?: ThemeOption; size?: "sm" | "md" | "lg" }) {
+  const sizeClasses = {
+    sm: { container: "w-5 h-5", icon: "w-3 h-3" },
+    md: { container: "w-6 h-6", icon: "w-3.5 h-3.5" },
+    lg: { container: "w-8 h-8", icon: "w-4.5 h-4.5" },
+  };
+  const { container: sizeClass, icon: iconSize } = sizeClasses[size];
+
+  const colors = themeOption?.id ? themeColors[themeOption.id] : { bg: "#d946ef", fg: "#fff" };
+
+  return (
+    <div
+      className={cn(sizeClass, "flex items-center justify-center rounded-md flex-shrink-0")}
+      style={{ background: colors.bg }}
+    >
+      <Palette className={iconSize} style={{ color: colors.fg }} strokeWidth={2.5} />
+    </div>
+  );
+}
 
 export function ThemeSwitcher() {
   const { theme, setTheme, mode, toggleMode, currentTheme, themesForCurrentMode, mounted } = useTheme();
@@ -23,7 +86,7 @@ export function ThemeSwitcher() {
           <Moon className="h-5 w-5" />
         </Button>
         <Button variant="ghost" size="icon" disabled>
-          <span className="text-lg">💜</span>
+          <div className="w-6 h-6 rounded-md bg-muted animate-pulse" />
         </Button>
       </div>
     );
@@ -57,7 +120,7 @@ export function ThemeSwitcher() {
             className="relative"
             title={`Thème: ${currentTheme.name}`}
           >
-            <span className="text-lg">{currentTheme.emoji}</span>
+            <ThemeLogo themeOption={currentTheme} />
             <span className="sr-only">Changer de couleur</span>
           </Button>
         </DropdownMenuTrigger>
@@ -76,7 +139,7 @@ export function ThemeSwitcher() {
               )}
             >
               <div className="flex items-center gap-2">
-                <span className="text-base">{t.emoji}</span>
+                <ThemeLogo themeOption={t} size="sm" />
                 <div className="flex flex-col">
                   <span className="font-medium">{t.name}</span>
                   <span className="text-xs text-muted-foreground">

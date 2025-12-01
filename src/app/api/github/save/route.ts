@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { createOctokit, saveFileContent } from "@/lib/github";
+import { createOctokit, saveFileContent, getLastRateLimit } from "@/lib/github";
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,6 +34,7 @@ export async function POST(request: NextRequest) {
       success: true,
       sha: result.sha,
       message: "Fichier sauvegardé",
+      rateLimit: getLastRateLimit(),
     });
   } catch (error) {
     console.error("Error saving file:", error);

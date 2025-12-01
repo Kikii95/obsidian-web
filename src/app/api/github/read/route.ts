@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { createOctokit, getFileContent } from "@/lib/github";
+import { createOctokit, getFileContent, getLastRateLimit } from "@/lib/github";
 import { isNoteLocked } from "@/lib/lock-store";
 import matter from "gray-matter";
 
@@ -40,6 +40,7 @@ export async function GET(request: NextRequest) {
       frontmatter,
       wikilinks,
       isLocked,
+      rateLimit: getLastRateLimit(),
     });
   } catch (error) {
     console.error("Error reading file:", error);

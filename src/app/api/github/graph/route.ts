@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { createOctokit, getFullVaultTree, getFileContent } from "@/lib/github";
+import { createOctokit, getFullVaultTree, getFileContent, getLastRateLimit } from "@/lib/github";
 import { parseWikilinks } from "@/lib/wikilinks";
 import { filterPrivatePaths, isPrivateContent } from "@/lib/privacy";
 
@@ -145,6 +145,7 @@ export async function GET(request: Request) {
       totalNotes: mdFiles.length - privateFileIds.size,
       connectedNotes: connectedNodeIds.size,
       orphanNotes: nodes.size - connectedNodeIds.size,
+      rateLimit: getLastRateLimit(),
     });
   } catch (error) {
     console.error("Error building graph:", error);

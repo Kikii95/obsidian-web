@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { createOctokit, getFileContent, saveFileContent } from "@/lib/github";
+import { createOctokit, getFileContent, saveFileContent, getLastRateLimit } from "@/lib/github";
 import type { ObsidianCanvasData } from "@/types/canvas";
 
 export async function GET(request: NextRequest) {
@@ -37,6 +37,7 @@ export async function GET(request: NextRequest) {
       path,
       data: canvasData,
       sha,
+      rateLimit: getLastRateLimit(),
     });
   } catch (error) {
     console.error("Error reading canvas:", error);
@@ -81,6 +82,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       sha: result.sha,
       success: true,
+      rateLimit: getLastRateLimit(),
     });
   } catch (error) {
     console.error("Error saving canvas:", error);

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { createOctokit } from "@/lib/github";
+import { createOctokit, getLastRateLimit } from "@/lib/github";
 import { getMimeType } from "@/lib/file-types";
 
 const REPO_OWNER = process.env.GITHUB_REPO_OWNER!;
@@ -45,6 +45,7 @@ export async function GET(request: NextRequest) {
       size: data.size,
       mimeType,
       encoding: data.encoding,
+      rateLimit: getLastRateLimit(),
     });
   } catch (error) {
     console.error("Error reading binary file:", error);

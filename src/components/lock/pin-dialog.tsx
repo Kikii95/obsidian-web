@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Lock, Unlock, X, ShieldCheck } from "lucide-react";
+import { Lock, ShieldCheck, KeyRound } from "lucide-react";
 import { useLockStore } from "@/lib/lock-store";
 import { cn } from "@/lib/utils";
 
@@ -24,28 +24,49 @@ interface PinDialogProps {
 
 const PIN_LENGTH = 6;
 
+type ChangeStep = "old" | "new" | "confirm";
+
 export function PinDialog({ open, onOpenChange, onSuccess, mode = "unlock", contextMessage }: PinDialogProps) {
-  const { hasPinConfigured, setupPin, unlock, verifyPin } = useLockStore();
+  const { hasPinConfigured, setupPin, unlock, verifyPin, changePin } = useLockStore();
   const [pin, setPin] = useState<string[]>(Array(PIN_LENGTH).fill(""));
   const [confirmPin, setConfirmPin] = useState<string[]>(Array(PIN_LENGTH).fill(""));
+  const [newPin, setNewPin] = useState<string[]>(Array(PIN_LENGTH).fill(""));
   const [step, setStep] = useState<"enter" | "confirm">("enter");
+  const [changeStep, setChangeStep] = useState<ChangeStep>("old");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const confirmInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const newInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const isSetupMode = mode === "setup" || (!hasPinConfigured && mode === "unlock");
-  const isVerifyMode = mode === "verify"; // Just verify PIN without global unlock
-  const currentPin = step === "enter" ? pin : confirmPin;
-  const setCurrentPin = step === "enter" ? setPin : setConfirmPin;
-  const currentRefs = step === "enter" ? inputRefs : confirmInputRefs;
+  const isChangeMode = mode === "change";
+  const isVerifyMode = mode === "verify";
+
+  // Determine current PIN array and refs based on mode and step
+  const getCurrentPinState = () => {
+    if (isChangeMode) {
+      switch (changeStep) {
+        case "old": return { pin: pin, setPin: setPin, refs: inputRefs };
+        case "new": return { pin: newPin, setPin: setNewPin, refs: newInputRefs };
+        case "confirm": return { pin: confirmPin, setPin: setConfirmPin, refs: confirmInputRefs };
+      }
+    }
+    return step === "enter"
+      ? { pin: pin, setPin: setPin, refs: inputRefs }
+      : { pin: confirmPin, setPin: setConfirmPin, refs: confirmInputRefs };
+  };
+
+  const { pin: currentPin, setPin: setCurrentPin, refs: currentRefs } = getCurrentPinState();
 
   // Reset state when dialog opens
   useEffect(() => {
     if (open) {
       setPin(Array(PIN_LENGTH).fill(""));
       setConfirmPin(Array(PIN_LENGTH).fill(""));
+      setNewPin(Array(PIN_LENGTH).fill(""));
       setStep("enter");
+      setChangeStep("old");
       setError(null);
       setTimeout(() => inputRefs.current[0]?.focus(), 100);
     }
@@ -89,7 +110,45 @@ export function PinDialog({ open, onOpenChange, onSuccess, mode = "unlock", cont
     setIsLoading(true);
 
     try {
-      if (isSetupMode) {
+      if (isChangeMode) {
+        // Change PIN mode - 3 steps: old -> new -> confirm
+        if (changeStep === "old") {
+          // Verify old PIN
+          const isValid = await verifyPin(pinToCheck);
+          if (isValid) {
+            setChangeStep("new");
+            setError(null);
+            setTimeout(() => newInputRefs.current[0]?.focus(), 100);
+          } else {
+            setError("Code actuel incorrect");
+            setPin(Array(PIN_LENGTH).fill(""));
+            setTimeout(() => inputRefs.current[0]?.focus(), 100);
+          }
+        } else if (changeStep === "new") {
+          // Move to confirm step
+          setChangeStep("confirm");
+          setError(null);
+          setTimeout(() => confirmInputRefs.current[0]?.focus(), 100);
+        } else {
+          // Confirm step - check if new pins match
+          const newPinValue = newPin.join("");
+          if (pinToCheck !== newPinValue) {
+            setError("Les codes ne correspondent pas");
+            setConfirmPin(Array(PIN_LENGTH).fill(""));
+            setTimeout(() => confirmInputRefs.current[0]?.focus(), 100);
+          } else {
+            // Change PIN
+            const oldPinValue = pin.join("");
+            const success = await changePin(oldPinValue, newPinValue);
+            if (success) {
+              onOpenChange(false);
+              onSuccess?.();
+            } else {
+              setError("Erreur lors du changement");
+            }
+          }
+        }
+      } else if (isSetupMode) {
         if (step === "enter") {
           // First entry - move to confirm
           setStep("confirm");
@@ -137,6 +196,13 @@ export function PinDialog({ open, onOpenChange, onSuccess, mode = "unlock", cont
   };
 
   const getTitle = () => {
+    if (isChangeMode) {
+      switch (changeStep) {
+        case "old": return "Code actuel";
+        case "new": return "Nouveau code";
+        case "confirm": return "Confirmer le nouveau code";
+      }
+    }
     if (isSetupMode) {
       return step === "enter" ? "Configurer un code" : "Confirmer le code";
     }
@@ -147,6 +213,13 @@ export function PinDialog({ open, onOpenChange, onSuccess, mode = "unlock", cont
   };
 
   const getDescription = () => {
+    if (isChangeMode) {
+      switch (changeStep) {
+        case "old": return "Entrez votre code actuel pour le modifier";
+        case "new": return "Choisissez votre nouveau code à 6 chiffres";
+        case "confirm": return "Entrez à nouveau votre nouveau code";
+      }
+    }
     if (isSetupMode) {
       return step === "enter"
         ? "Choisissez un code à 6 chiffres pour protéger vos notes privées"
@@ -158,16 +231,47 @@ export function PinDialog({ open, onOpenChange, onSuccess, mode = "unlock", cont
     return "Entrez votre code pour accéder aux notes verrouillées";
   };
 
+  const getIcon = () => {
+    if (isChangeMode) return <KeyRound className="h-6 w-6 text-primary" />;
+    if (isSetupMode) return <ShieldCheck className="h-6 w-6 text-primary" />;
+    return <Lock className="h-6 w-6 text-primary" />;
+  };
+
+  const getStepCount = () => {
+    if (isChangeMode) return 3;
+    if (isSetupMode) return 2;
+    return 0;
+  };
+
+  const getCurrentStepIndex = () => {
+    if (isChangeMode) {
+      return changeStep === "old" ? 0 : changeStep === "new" ? 1 : 2;
+    }
+    if (isSetupMode) {
+      return step === "enter" ? 0 : 1;
+    }
+    return 0;
+  };
+
+  const stepCount = getStepCount();
+  const currentStepIndex = getCurrentStepIndex();
+
+  const getButtonLabel = () => {
+    if (isChangeMode) {
+      return changeStep === "confirm" ? "Valider" : "Suivant";
+    }
+    if (isSetupMode) {
+      return step === "enter" ? "Suivant" : "Valider";
+    }
+    return "Valider";
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
         <DialogHeader className="text-center">
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            {isSetupMode ? (
-              <ShieldCheck className="h-6 w-6 text-primary" />
-            ) : (
-              <Lock className="h-6 w-6 text-primary" />
-            )}
+            {getIcon()}
           </div>
           <DialogTitle className="text-center">{getTitle()}</DialogTitle>
           <DialogDescription className="text-center">
@@ -180,7 +284,7 @@ export function PinDialog({ open, onOpenChange, onSuccess, mode = "unlock", cont
           <div className="flex justify-center gap-2">
             {currentPin.map((digit, index) => (
               <input
-                key={`${step}-${index}`}
+                key={`${isChangeMode ? changeStep : step}-${index}`}
                 ref={(el) => { currentRefs.current[index] = el; }}
                 type="password"
                 inputMode="numeric"
@@ -200,17 +304,18 @@ export function PinDialog({ open, onOpenChange, onSuccess, mode = "unlock", cont
             ))}
           </div>
 
-          {/* Step indicator for setup */}
-          {isSetupMode && (
+          {/* Step indicator for setup/change */}
+          {stepCount > 0 && (
             <div className="flex justify-center gap-2">
-              <div className={cn(
-                "h-2 w-8 rounded-full transition-colors",
-                step === "enter" ? "bg-primary" : "bg-muted"
-              )} />
-              <div className={cn(
-                "h-2 w-8 rounded-full transition-colors",
-                step === "confirm" ? "bg-primary" : "bg-muted"
-              )} />
+              {Array.from({ length: stepCount }).map((_, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    "h-2 w-8 rounded-full transition-colors",
+                    i <= currentStepIndex ? "bg-primary" : "bg-muted"
+                  )}
+                />
+              ))}
             </div>
           )}
 
@@ -234,7 +339,7 @@ export function PinDialog({ open, onOpenChange, onSuccess, mode = "unlock", cont
               onClick={() => handleSubmit()}
               disabled={isLoading || currentPin.join("").length !== PIN_LENGTH}
             >
-              {isSetupMode && step === "enter" ? "Suivant" : "Valider"}
+              {getButtonLabel()}
             </Button>
           </div>
         </div>

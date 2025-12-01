@@ -118,6 +118,7 @@ export default function SettingsPage() {
   });
   const [isClearing, setIsClearing] = useState(false);
   const [showPinDialog, setShowPinDialog] = useState(false);
+  const [showChangePinDialog, setShowChangePinDialog] = useState(false);
 
   // Local draft state (all settings)
   const [draft, setDraft] = useState<UserSettings>(() => ({ ...settings }));
@@ -669,6 +670,19 @@ export default function SettingsPage() {
             />
           </div>
 
+          {/* Change PIN button */}
+          {hasPinConfigured && (
+            <div className="pt-4 border-t">
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => setShowChangePinDialog(true)}
+              >
+                Modifier le code PIN
+              </Button>
+            </div>
+          )}
+
         </CardContent>
       </Card>
 
@@ -957,6 +971,13 @@ export default function SettingsPage() {
         onOpenChange={setShowPinDialog}
         onSuccess={handlePinSuccess}
         mode="verify"
+      />
+
+      {/* PIN Dialog for changing PIN */}
+      <PinDialog
+        open={showChangePinDialog}
+        onOpenChange={setShowChangePinDialog}
+        mode="change"
       />
     </div>
   );

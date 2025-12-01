@@ -35,6 +35,7 @@ interface LockState {
   initializeLockState: () => void;
   setupPin: (pin: string) => Promise<void>;
   verifyPin: (pin: string) => Promise<boolean>;
+  changePin: (oldPin: string, newPin: string) => Promise<boolean>;
   unlock: (pin: string) => Promise<boolean>;
   lock: () => void;
   removePin: () => void;
@@ -124,6 +125,20 @@ export const useLockStore = create<LockState>((set, get) => ({
     if (!storedHash) return false;
     const inputHash = await hashPin(pin);
     return inputHash === storedHash;
+  },
+
+  changePin: async (oldPin: string, newPin: string) => {
+    // First verify old PIN
+    const isValid = await get().verifyPin(oldPin);
+    if (!isValid) return false;
+
+    // Setup new PIN
+    const hash = await hashPin(newPin);
+    const expiry = Date.now() + getUnlockTimeout();
+    setStoredHash(hash);
+    setStoredUnlockExpiry(expiry);
+    set({ hasPinConfigured: true, isUnlocked: true, unlockExpiry: expiry });
+    return true;
   },
 
   unlock: async (pin: string) => {

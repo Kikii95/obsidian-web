@@ -81,12 +81,28 @@ export default function DashboardLayout({
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-72 p-0">
+              <SheetContent side="left" className="w-72 p-0 flex flex-col">
                 <SheetTitle className="sr-only">Navigation</SheetTitle>
                 <div className="p-4 border-b border-border/50">
                   <Logo showText />
                 </div>
-                <VaultSidebar />
+                {/* Mobile quick actions */}
+                <div className="p-2 border-b border-border/50 flex items-center gap-1">
+                  <DailyNoteButton />
+                  <Button variant="ghost" size="icon" asChild title="Graph View">
+                    <Link href="/graph">
+                      <Network className="h-5 w-5" />
+                    </Link>
+                  </Button>
+                  <Button variant="ghost" size="icon" asChild title="Tags">
+                    <Link href="/tags">
+                      <Tag className="h-5 w-5" />
+                    </Link>
+                  </Button>
+                </div>
+                <div className="flex-1 overflow-auto">
+                  <VaultSidebar />
+                </div>
               </SheetContent>
             </Sheet>
 
@@ -130,18 +146,20 @@ export default function DashboardLayout({
               </Link>
             </Button>
 
-            {/* Daily Note button */}
-            <DailyNoteButton />
+            {/* Daily Note button - hidden on mobile (available in sidebar) */}
+            <div className="hidden sm:block">
+              <DailyNoteButton />
+            </div>
 
-            {/* Graph button */}
-            <Button variant="ghost" size="icon" asChild title="Graph View">
+            {/* Graph button - hidden on mobile (available in sidebar) */}
+            <Button variant="ghost" size="icon" asChild title="Graph View" className="hidden sm:flex">
               <Link href="/graph">
                 <Network className="h-5 w-5" />
               </Link>
             </Button>
 
-            {/* Tags button */}
-            <Button variant="ghost" size="icon" asChild title="Tags">
+            {/* Tags button - hidden on mobile (available in sidebar) */}
+            <Button variant="ghost" size="icon" asChild title="Tags" className="hidden sm:flex">
               <Link href="/tags">
                 <Tag className="h-5 w-5" />
               </Link>

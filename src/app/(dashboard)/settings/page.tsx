@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useDebouncedCallback } from "@/hooks/use-debounce";
+import { useState, useEffect, useMemo } from "react";
 import {
   Card,
   CardContent,
@@ -38,8 +37,9 @@ import {
   RotateCcw,
   Type,
   X,
-  Clock,
   Settings2,
+  Save,
+  AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { useTheme } from "@/hooks/use-theme";
@@ -57,6 +57,25 @@ function getTopLevelFolders(files: VaultFile[]): string[] {
     .sort();
 }
 
+// Deep compare two objects (for detecting changes)
+function deepEqual(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (typeof a !== typeof b) return false;
+  if (typeof a !== "object" || a === null || b === null) return false;
+
+  const keysA = Object.keys(a as Record<string, unknown>);
+  const keysB = Object.keys(b as Record<string, unknown>);
+
+  if (keysA.length !== keysB.length) return false;
+
+  for (const key of keysA) {
+    if (!deepEqual((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key])) {
+      return false;
+    }
+  }
+  return true;
+}
+
 export default function SettingsPage() {
   const { theme, setTheme, mode, themesForCurrentMode } = useTheme();
   const { settings, updateSettings, resetSettings } = useSettingsStore();
@@ -71,47 +90,38 @@ export default function SettingsPage() {
   });
   const [isClearing, setIsClearing] = useState(false);
 
-  // Local state for sliders (immediate UI feedback)
-  const [sliderValues, setSliderValues] = useState({
-    recentNotesCount: settings.recentNotesCount,
-    editorFontSize: settings.editorFontSize ?? 16,
-    editorLineHeight: settings.editorLineHeight ?? 1.6,
-    editorMaxWidth: settings.editorMaxWidth ?? 800,
-    graphForceStrength: Math.abs(settings.graphForceStrength),
-    graphLinkDistance: settings.graphLinkDistance,
-    graphGravityStrength: settings.graphGravityStrength ?? 0.05,
-  });
+  // Local draft state (all settings)
+  const [draft, setDraft] = useState<UserSettings>(() => ({ ...settings }));
 
-  // Debounced update to store (300ms delay)
-  const debouncedUpdateSettings = useDebouncedCallback(
-    (partial: Partial<UserSettings>) => {
-      updateSettings(partial);
-    },
-    300
-  );
-
-  // Update local state immediately, debounce store update
-  const handleSliderChange = useCallback(
-    (key: keyof typeof sliderValues, value: number, transform?: (v: number) => number) => {
-      setSliderValues((prev) => ({ ...prev, [key]: value }));
-      const storeValue = transform ? transform(value) : value;
-      debouncedUpdateSettings({ [key]: storeValue } as Partial<UserSettings>);
-    },
-    [debouncedUpdateSettings]
-  );
-
-  // Sync local state when settings change externally (e.g., reset)
+  // Sync draft when settings change externally (e.g., from another tab)
   useEffect(() => {
-    setSliderValues({
-      recentNotesCount: settings.recentNotesCount,
-      editorFontSize: settings.editorFontSize ?? 16,
-      editorLineHeight: settings.editorLineHeight ?? 1.6,
-      editorMaxWidth: settings.editorMaxWidth ?? 800,
-      graphForceStrength: Math.abs(settings.graphForceStrength),
-      graphLinkDistance: settings.graphLinkDistance,
-      graphGravityStrength: settings.graphGravityStrength ?? 0.05,
-    });
+    setDraft({ ...settings });
   }, [settings]);
+
+  // Check if there are unsaved changes
+  const hasChanges = useMemo(() => {
+    return !deepEqual(draft, settings);
+  }, [draft, settings]);
+
+  // Update a single setting in draft
+  const updateDraft = <K extends keyof UserSettings>(key: K, value: UserSettings[K]) => {
+    setDraft((prev) => ({ ...prev, [key]: value }));
+  };
+
+  // Save all changes to store
+  const handleSave = () => {
+    updateSettings(draft);
+  };
+
+  // Discard changes (revert to saved settings)
+  const handleDiscard = () => {
+    setDraft({ ...settings });
+  };
+
+  // Reset to defaults
+  const handleReset = () => {
+    resetSettings();
+  };
 
   // Get top-level folders only (cleaner UI)
   const topLevelFolders = getTopLevelFolders(tree);
@@ -133,15 +143,11 @@ export default function SettingsPage() {
   };
 
   const handleDefaultFolderChange = (folder: string) => {
-    const current = settings.defaultExpandedFolders;
+    const current = draft.defaultExpandedFolders;
     if (current.includes(folder)) {
-      updateSettings({
-        defaultExpandedFolders: current.filter((f) => f !== folder),
-      });
+      updateDraft("defaultExpandedFolders", current.filter((f) => f !== folder));
     } else {
-      updateSettings({
-        defaultExpandedFolders: [...current, folder],
-      });
+      updateDraft("defaultExpandedFolders", [...current, folder]);
     }
   };
 
@@ -156,11 +162,32 @@ export default function SettingsPage() {
       </Button>
 
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Paramètres</h1>
-        <Button variant="outline" size="sm" onClick={resetSettings}>
-          <RotateCcw className="h-4 w-4 mr-2" />
-          Réinitialiser
-        </Button>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold">Paramètres</h1>
+          {hasChanges && (
+            <Badge variant="outline" className="gap-1 text-amber-500 border-amber-500">
+              <AlertCircle className="h-3 w-3" />
+              Non sauvegardé
+            </Badge>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {hasChanges && (
+            <>
+              <Button variant="ghost" size="sm" onClick={handleDiscard}>
+                Annuler
+              </Button>
+              <Button size="sm" onClick={handleSave}>
+                <Save className="h-4 w-4 mr-2" />
+                Sauvegarder
+              </Button>
+            </>
+          )}
+          <Button variant="outline" size="sm" onClick={handleReset}>
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Défaut
+          </Button>
+        </div>
       </div>
 
       {/* Dashboard Settings */}
@@ -178,17 +205,15 @@ export default function SettingsPage() {
             <Label>Nombre de notes récentes</Label>
             <div className="flex items-center gap-4">
               <Slider
-                value={[sliderValues.recentNotesCount]}
-                onValueChange={([value]) =>
-                  handleSliderChange("recentNotesCount", value)
-                }
+                value={[draft.recentNotesCount]}
+                onValueChange={([value]) => updateDraft("recentNotesCount", value)}
                 min={3}
                 max={15}
                 step={1}
                 className="flex-1"
               />
               <span className="w-8 text-center font-mono">
-                {sliderValues.recentNotesCount}
+                {draft.recentNotesCount}
               </span>
             </div>
           </div>
@@ -202,10 +227,8 @@ export default function SettingsPage() {
               </p>
             </div>
             <Switch
-              checked={settings.showMiniGraph}
-              onCheckedChange={(checked) =>
-                updateSettings({ showMiniGraph: checked })
-              }
+              checked={draft.showMiniGraph}
+              onCheckedChange={(checked) => updateDraft("showMiniGraph", checked)}
             />
           </div>
 
@@ -218,10 +241,8 @@ export default function SettingsPage() {
               </p>
             </div>
             <Switch
-              checked={settings.showActivityHeatmap ?? true}
-              onCheckedChange={(checked) =>
-                updateSettings({ showActivityHeatmap: checked })
-              }
+              checked={draft.showActivityHeatmap ?? true}
+              onCheckedChange={(checked) => updateDraft("showActivityHeatmap", checked)}
             />
           </div>
 
@@ -229,10 +250,8 @@ export default function SettingsPage() {
           <div className="space-y-2">
             <Label>Période activité par défaut</Label>
             <Select
-              value={settings.activityDefaultPeriod ?? "90"}
-              onValueChange={(value) =>
-                updateSettings({ activityDefaultPeriod: value as ActivityPeriod })
-              }
+              value={draft.activityDefaultPeriod ?? "90"}
+              onValueChange={(value) => updateDraft("activityDefaultPeriod", value as ActivityPeriod)}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -253,10 +272,8 @@ export default function SettingsPage() {
           <div className="space-y-2">
             <Label>Layout du dashboard</Label>
             <Select
-              value={settings.dashboardLayout ?? "spacious"}
-              onValueChange={(value) =>
-                updateSettings({ dashboardLayout: value as DashboardLayout })
-              }
+              value={draft.dashboardLayout ?? "spacious"}
+              onValueChange={(value) => updateDraft("dashboardLayout", value as DashboardLayout)}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -289,17 +306,15 @@ export default function SettingsPage() {
             <Label>Taille de police</Label>
             <div className="flex items-center gap-4">
               <Slider
-                value={[sliderValues.editorFontSize]}
-                onValueChange={([value]) =>
-                  handleSliderChange("editorFontSize", value)
-                }
+                value={[draft.editorFontSize ?? 16]}
+                onValueChange={([value]) => updateDraft("editorFontSize", value)}
                 min={12}
                 max={24}
                 step={1}
                 className="flex-1"
               />
               <span className="w-12 text-center font-mono text-sm">
-                {sliderValues.editorFontSize}px
+                {draft.editorFontSize ?? 16}px
               </span>
             </div>
           </div>
@@ -309,17 +324,15 @@ export default function SettingsPage() {
             <Label>Interligne</Label>
             <div className="flex items-center gap-4">
               <Slider
-                value={[sliderValues.editorLineHeight * 10]}
-                onValueChange={([value]) =>
-                  handleSliderChange("editorLineHeight", value / 10)
-                }
+                value={[(draft.editorLineHeight ?? 1.6) * 10]}
+                onValueChange={([value]) => updateDraft("editorLineHeight", value / 10)}
                 min={12}
                 max={24}
                 step={1}
                 className="flex-1"
               />
               <span className="w-12 text-center font-mono text-sm">
-                {sliderValues.editorLineHeight.toFixed(1)}
+                {(draft.editorLineHeight ?? 1.6).toFixed(1)}
               </span>
             </div>
           </div>
@@ -329,17 +342,15 @@ export default function SettingsPage() {
             <Label>Largeur max du contenu</Label>
             <div className="flex items-center gap-4">
               <Slider
-                value={[sliderValues.editorMaxWidth]}
-                onValueChange={([value]) =>
-                  handleSliderChange("editorMaxWidth", value)
-                }
+                value={[draft.editorMaxWidth ?? 800]}
+                onValueChange={([value]) => updateDraft("editorMaxWidth", value)}
                 min={500}
                 max={1400}
                 step={50}
                 className="flex-1"
               />
               <span className="w-16 text-center font-mono text-sm">
-                {sliderValues.editorMaxWidth}px
+                {draft.editorMaxWidth ?? 800}px
               </span>
             </div>
           </div>
@@ -353,10 +364,8 @@ export default function SettingsPage() {
               </p>
             </div>
             <Switch
-              checked={settings.showFrontmatter ?? true}
-              onCheckedChange={(checked) =>
-                updateSettings({ showFrontmatter: checked })
-              }
+              checked={draft.showFrontmatter ?? true}
+              onCheckedChange={(checked) => updateDraft("showFrontmatter", checked)}
             />
           </div>
 
@@ -369,10 +378,8 @@ export default function SettingsPage() {
               </p>
             </div>
             <Switch
-              checked={settings.defaultEditMode ?? false}
-              onCheckedChange={(checked) =>
-                updateSettings({ defaultEditMode: checked })
-              }
+              checked={draft.defaultEditMode ?? false}
+              onCheckedChange={(checked) => updateDraft("defaultEditMode", checked)}
             />
           </div>
 
@@ -385,10 +392,8 @@ export default function SettingsPage() {
               </p>
             </div>
             <Switch
-              checked={settings.enableKeyboardShortcuts ?? true}
-              onCheckedChange={(checked) =>
-                updateSettings({ enableKeyboardShortcuts: checked })
-              }
+              checked={draft.enableKeyboardShortcuts ?? true}
+              onCheckedChange={(checked) => updateDraft("enableKeyboardShortcuts", checked)}
             />
           </div>
         </CardContent>
@@ -424,7 +429,7 @@ export default function SettingsPage() {
                     key={folder}
                     className={`
                       flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all
-                      ${settings.defaultExpandedFolders.includes(folder)
+                      ${draft.defaultExpandedFolders.includes(folder)
                         ? "border-primary bg-primary/10"
                         : "border-border hover:border-primary/50"
                       }
@@ -432,7 +437,7 @@ export default function SettingsPage() {
                   >
                     <input
                       type="checkbox"
-                      checked={settings.defaultExpandedFolders.includes(folder)}
+                      checked={draft.defaultExpandedFolders.includes(folder)}
                       onChange={() => handleDefaultFolderChange(folder)}
                       className="accent-primary"
                     />
@@ -441,9 +446,9 @@ export default function SettingsPage() {
                 ))}
               </div>
             )}
-            {settings.defaultExpandedFolders.length > 0 && (
+            {draft.defaultExpandedFolders.length > 0 && (
               <p className="text-xs text-muted-foreground mt-2">
-                {settings.defaultExpandedFolders.length} dossier(s) sélectionné(s)
+                {draft.defaultExpandedFolders.length} dossier(s) sélectionné(s)
               </p>
             )}
           </div>
@@ -452,10 +457,8 @@ export default function SettingsPage() {
           <div className="space-y-2">
             <Label>Tri des fichiers</Label>
             <Select
-              value={settings.sidebarSortBy ?? "name"}
-              onValueChange={(value) =>
-                updateSettings({ sidebarSortBy: value as SidebarSortBy })
-              }
+              value={draft.sidebarSortBy ?? "name"}
+              onValueChange={(value) => updateDraft("sidebarSortBy", value as SidebarSortBy)}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -479,10 +482,8 @@ export default function SettingsPage() {
               </p>
             </div>
             <Switch
-              checked={settings.showFileIcons ?? true}
-              onCheckedChange={(checked) =>
-                updateSettings({ showFileIcons: checked })
-              }
+              checked={draft.showFileIcons ?? true}
+              onCheckedChange={(checked) => updateDraft("showFileIcons", checked)}
             />
           </div>
 
@@ -493,16 +494,12 @@ export default function SettingsPage() {
               Patterns de fichiers à masquer (supporte *.ext)
             </p>
             <div className="flex flex-wrap gap-1.5 mb-2">
-              {(settings.hidePatterns ?? []).map((pattern) => (
+              {(draft.hidePatterns ?? []).map((pattern) => (
                 <Badge
                   key={pattern}
                   variant="secondary"
                   className="gap-1 cursor-pointer hover:bg-destructive/20"
-                  onClick={() =>
-                    updateSettings({
-                      hidePatterns: settings.hidePatterns.filter((p) => p !== pattern),
-                    })
-                  }
+                  onClick={() => updateDraft("hidePatterns", draft.hidePatterns.filter((p) => p !== pattern))}
                 >
                   {pattern}
                   <X className="h-3 w-3" />
@@ -515,10 +512,8 @@ export default function SettingsPage() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     const value = e.currentTarget.value.trim();
-                    if (value && !settings.hidePatterns?.includes(value)) {
-                      updateSettings({
-                        hidePatterns: [...(settings.hidePatterns ?? []), value],
-                      });
+                    if (value && !draft.hidePatterns?.includes(value)) {
+                      updateDraft("hidePatterns", [...(draft.hidePatterns ?? []), value]);
                       e.currentTarget.value = "";
                     }
                   }
@@ -548,10 +543,8 @@ export default function SettingsPage() {
           <div className="space-y-2">
             <Label>Verrouillage automatique</Label>
             <Select
-              value={String(settings.lockTimeout)}
-              onValueChange={(value) =>
-                updateSettings({ lockTimeout: Number(value) })
-              }
+              value={String(draft.lockTimeout)}
+              onValueChange={(value) => updateDraft("lockTimeout", Number(value))}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -579,10 +572,8 @@ export default function SettingsPage() {
               </p>
             </div>
             <Switch
-              checked={settings.requirePinOnDelete}
-              onCheckedChange={(checked) =>
-                updateSettings({ requirePinOnDelete: checked })
-              }
+              checked={draft.requirePinOnDelete}
+              onCheckedChange={(checked) => updateDraft("requirePinOnDelete", checked)}
             />
           </div>
 
@@ -595,10 +586,8 @@ export default function SettingsPage() {
               </p>
             </div>
             <Switch
-              checked={settings.requirePinOnPrivateFolder}
-              onCheckedChange={(checked) =>
-                updateSettings({ requirePinOnPrivateFolder: checked })
-              }
+              checked={draft.requirePinOnPrivateFolder}
+              onCheckedChange={(checked) => updateDraft("requirePinOnPrivateFolder", checked)}
             />
           </div>
         </CardContent>
@@ -623,10 +612,8 @@ export default function SettingsPage() {
               </p>
             </div>
             <Switch
-              checked={settings.showOrphanNotes}
-              onCheckedChange={(checked) =>
-                updateSettings({ showOrphanNotes: checked })
-              }
+              checked={draft.showOrphanNotes}
+              onCheckedChange={(checked) => updateDraft("showOrphanNotes", checked)}
             />
           </div>
 
@@ -638,17 +625,15 @@ export default function SettingsPage() {
             </p>
             <div className="flex items-center gap-4">
               <Slider
-                value={[sliderValues.graphForceStrength]}
-                onValueChange={([value]) =>
-                  handleSliderChange("graphForceStrength", value, (v) => -v)
-                }
+                value={[Math.abs(draft.graphForceStrength)]}
+                onValueChange={([value]) => updateDraft("graphForceStrength", -value)}
                 min={1}
                 max={500}
                 step={1}
                 className="flex-1"
               />
               <span className="w-12 text-center font-mono text-sm">
-                {sliderValues.graphForceStrength}
+                {Math.abs(draft.graphForceStrength)}
               </span>
             </div>
           </div>
@@ -661,17 +646,15 @@ export default function SettingsPage() {
             </p>
             <div className="flex items-center gap-4">
               <Slider
-                value={[sliderValues.graphLinkDistance]}
-                onValueChange={([value]) =>
-                  handleSliderChange("graphLinkDistance", value)
-                }
+                value={[draft.graphLinkDistance]}
+                onValueChange={([value]) => updateDraft("graphLinkDistance", value)}
                 min={5}
                 max={200}
                 step={5}
                 className="flex-1"
               />
               <span className="w-12 text-center font-mono text-sm">
-                {sliderValues.graphLinkDistance}px
+                {draft.graphLinkDistance}px
               </span>
             </div>
           </div>
@@ -684,17 +667,15 @@ export default function SettingsPage() {
             </p>
             <div className="flex items-center gap-4">
               <Slider
-                value={[sliderValues.graphGravityStrength * 100]}
-                onValueChange={([value]) =>
-                  handleSliderChange("graphGravityStrength", value / 100)
-                }
+                value={[(draft.graphGravityStrength ?? 0.05) * 100]}
+                onValueChange={([value]) => updateDraft("graphGravityStrength", value / 100)}
                 min={0}
                 max={30}
                 step={1}
                 className="flex-1"
               />
               <span className="w-12 text-center font-mono text-sm">
-                {sliderValues.graphGravityStrength.toFixed(2)}
+                {(draft.graphGravityStrength ?? 0.05).toFixed(2)}
               </span>
             </div>
           </div>
@@ -720,10 +701,8 @@ export default function SettingsPage() {
               </p>
             </div>
             <Switch
-              checked={settings.showDateTime ?? false}
-              onCheckedChange={(checked) =>
-                updateSettings({ showDateTime: checked })
-              }
+              checked={draft.showDateTime ?? false}
+              onCheckedChange={(checked) => updateDraft("showDateTime", checked)}
             />
           </div>
 
@@ -731,10 +710,8 @@ export default function SettingsPage() {
           <div className="space-y-2">
             <Label>Format de date</Label>
             <Select
-              value={settings.dateFormat ?? "fr"}
-              onValueChange={(value) =>
-                updateSettings({ dateFormat: value as DateFormat })
-              }
+              value={draft.dateFormat ?? "fr"}
+              onValueChange={(value) => updateDraft("dateFormat", value as DateFormat)}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -751,10 +728,8 @@ export default function SettingsPage() {
           <div className="space-y-2">
             <Label>Sauvegarde automatique</Label>
             <Select
-              value={String(settings.autoSaveDelay ?? 0)}
-              onValueChange={(value) =>
-                updateSettings({ autoSaveDelay: Number(value) })
-              }
+              value={String(draft.autoSaveDelay ?? 0)}
+              onValueChange={(value) => updateDraft("autoSaveDelay", Number(value))}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -776,10 +751,8 @@ export default function SettingsPage() {
           <div className="space-y-2">
             <Label>Dossier des Daily Notes</Label>
             <Input
-              value={settings.dailyNotesFolder ?? "Daily"}
-              onChange={(e) =>
-                updateSettings({ dailyNotesFolder: e.target.value })
-              }
+              value={draft.dailyNotesFolder ?? "Daily"}
+              onChange={(e) => updateDraft("dailyNotesFolder", e.target.value)}
               placeholder="Daily"
             />
             <p className="text-sm text-muted-foreground">

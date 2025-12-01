@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, memo } from "react";
-import { ChevronDown, ChevronRight, Link2, FileText, Loader2 } from "lucide-react";
+import { useState, memo, useCallback } from "react";
+import { ChevronDown, ChevronRight, Link2, FileText, Loader2, Search, AlertTriangle } from "lucide-react";
 import { PrefetchLink } from "@/components/ui/prefetch-link";
+import { Button } from "@/components/ui/button";
 import { encodePathSegments } from "@/lib/path-utils";
-import { cn } from "@/lib/utils";
 
 interface Backlink {
   path: string;
@@ -27,41 +27,34 @@ export const NoteBacklinks = memo(function NoteBacklinks({
   notePath,
 }: NoteBacklinksProps) {
   const [isOpen, setIsOpen] = useState(true);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
   const [data, setData] = useState<BacklinksResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchBacklinks() {
-      setIsLoading(true);
-      setError(null);
+  const fetchBacklinks = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    setHasSearched(true);
 
-      try {
-        const res = await fetch(
-          `/api/github/backlinks?path=${encodeURIComponent(notePath)}`
-        );
+    try {
+      const res = await fetch(
+        `/api/github/backlinks?path=${encodeURIComponent(notePath)}`
+      );
 
-        if (!res.ok) {
-          throw new Error("Failed to fetch backlinks");
-        }
-
-        const data = await res.json();
-        setData(data);
-      } catch (err) {
-        setError("Impossible de charger les backlinks");
-        console.error("Backlinks error:", err);
-      } finally {
-        setIsLoading(false);
+      if (!res.ok) {
+        throw new Error("Failed to fetch backlinks");
       }
+
+      const result = await res.json();
+      setData(result);
+    } catch (err) {
+      setError("Impossible de charger les backlinks");
+      console.error("Backlinks error:", err);
+    } finally {
+      setIsLoading(false);
     }
-
-    fetchBacklinks();
   }, [notePath]);
-
-  // Don't render if still loading and panel is closed
-  if (isLoading && !isOpen) {
-    return null;
-  }
 
   const hasBacklinks = data && data.backlinks.length > 0;
 
@@ -94,7 +87,24 @@ export const NoteBacklinks = memo(function NoteBacklinks({
       {/* Content */}
       {isOpen && (
         <div className="border-t border-border/50">
-          {isLoading ? (
+          {!hasSearched ? (
+            // Initial state - show search button with warning
+            <div className="px-4 py-6 text-center">
+              <div className="flex items-center justify-center gap-1.5 text-xs text-amber-500 mb-3">
+                <AlertTriangle className="h-3.5 w-3.5" />
+                <span>Consomme des appels API (scanne le vault)</span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchBacklinks}
+                className="gap-2"
+              >
+                <Search className="h-4 w-4" />
+                Rechercher les backlinks
+              </Button>
+            </div>
+          ) : isLoading ? (
             <div className="px-4 py-6 text-center text-sm text-muted-foreground">
               <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />
               Recherche des backlinks...

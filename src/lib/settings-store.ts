@@ -126,7 +126,7 @@ export const useSettingsStore = create<SettingsState>()(
 
       // Get folder order for a specific parent path ("" = root)
       getFolderOrder: (parentPath: string) => {
-        return get().settings.customFolderOrders[parentPath] || [];
+        return get().settings.customFolderOrders?.[parentPath] || [];
       },
 
       // Set folder order for a specific parent path
@@ -135,7 +135,7 @@ export const useSettingsStore = create<SettingsState>()(
           settings: {
             ...state.settings,
             customFolderOrders: {
-              ...state.settings.customFolderOrders,
+              ...(state.settings.customFolderOrders ?? {}),
               [parentPath]: order,
             },
           },
@@ -166,7 +166,7 @@ export const useSettingsStore = create<SettingsState>()(
       // Clear folder order for a specific parent path
       clearFolderOrder: (parentPath: string) => {
         set((state) => {
-          const newOrders = { ...state.settings.customFolderOrders };
+          const newOrders = { ...(state.settings.customFolderOrders ?? {}) };
           delete newOrders[parentPath];
           return {
             settings: {

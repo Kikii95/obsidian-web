@@ -32,6 +32,7 @@ export interface UserSettings {
   // Lock system
   lockTimeout: number; // Minutes before auto-lock (0 = never)
   requirePinOnDelete: boolean; // Require PIN to delete any file (when PIN configured)
+  requirePinOnPrivateFolder: boolean; // Require PIN to see children of _private folders
 
   // Graph
   showOrphanNotes: boolean;
@@ -88,6 +89,7 @@ const defaultSettings: UserSettings = {
   // Lock system
   lockTimeout: 5, // 5 minutes
   requirePinOnDelete: true,
+  requirePinOnPrivateFolder: true, // Hide _private folder children until unlocked
 
   // Graph
   showOrphanNotes: false,

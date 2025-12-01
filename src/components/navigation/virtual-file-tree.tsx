@@ -86,7 +86,7 @@ const VirtualTreeItem = memo(function VirtualTreeItem({
 }: {
   item: FlatTreeItem;
 }) {
-  const { file, depth, isExpanded } = item;
+  const { file, depth, isExpanded, isPrivateFolder } = item;
   const pathname = usePathname();
   const { toggleFolder } = useVaultStore();
   const { settings } = useSettingsStore();
@@ -125,6 +125,10 @@ const VirtualTreeItem = memo(function VirtualTreeItem({
   // Get icon based on file type
   const icon = (() => {
     if (isDirectory) {
+      // Private folder with hidden children shows lock icon
+      if (isPrivateFolder) {
+        return <Lock className="h-4 w-4 text-amber-500" />;
+      }
       return isExpanded ? (
         <FolderOpen className="h-4 w-4 text-primary/70" />
       ) : (
@@ -168,6 +172,26 @@ const VirtualTreeItem = memo(function VirtualTreeItem({
   if (isDirectory) {
     // Build folder explorer URL
     const folderHref = `/folder/${file.path.split("/").map(s => encodeURIComponent(s)).join("/")}`;
+
+    // Private folder with hidden children - link to folder page for unlock
+    if (isPrivateFolder) {
+      return (
+        <Link
+          href={folderHref}
+          className={cn(
+            "flex items-center gap-1 w-full h-full px-2 text-sm rounded-md transition-colors overflow-hidden",
+            "hover:bg-amber-500/10 text-amber-600 dark:text-amber-400"
+          )}
+          title="Déverrouiller pour voir le contenu"
+        >
+          {indentGuides}
+          <Lock className="h-3 w-3 shrink-0" />
+          <span className="shrink-0">{icon}</span>
+          <span className="truncate font-medium">{displayName}</span>
+          <span className="text-xs ml-auto opacity-70">🔒</span>
+        </Link>
+      );
+    }
 
     return (
       <div className="flex items-center w-full h-full group">

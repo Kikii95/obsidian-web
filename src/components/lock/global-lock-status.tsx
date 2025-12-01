@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Lock, Unlock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLockStore } from "@/lib/lock-store";
+import { useSettingsStore } from "@/lib/settings-store";
 import { PinDialog } from "./pin-dialog";
 import {
   Tooltip,
@@ -13,7 +14,10 @@ import {
 } from "@/components/ui/tooltip";
 
 export function GlobalLockStatus() {
-  const { hasPinConfigured, isUnlocked, unlockExpiry, lock, initializeLockState, checkUnlockExpiry } = useLockStore();
+  const { isUnlocked, unlockExpiry, lock, initializeLockState, checkUnlockExpiry } = useLockStore();
+  // Read pinHash directly from settings (reactive to cloud sync)
+  const pinHash = useSettingsStore((state) => state.settings?.pinHash);
+  const hasPinConfigured = !!pinHash;
   const [timeRemaining, setTimeRemaining] = useState<string>("");
   const [showPinDialog, setShowPinDialog] = useState(false);
 

@@ -5,10 +5,18 @@
  */
 
 import { create } from "zustand";
+import { useSettingsStore } from "./settings-store";
 
 const PIN_HASH_KEY = "obsidian-web-pin-hash";
 const UNLOCK_EXPIRY_KEY = "obsidian-web-unlock-expiry";
-const UNLOCK_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+
+// Get timeout from settings (in minutes, convert to ms)
+function getUnlockTimeout(): number {
+  const timeout = useSettingsStore.getState().settings.lockTimeout;
+  // 0 = never (use 24 hours as "never")
+  if (timeout === 0) return 24 * 60 * 60 * 1000;
+  return timeout * 60 * 1000;
+}
 
 interface LockState {
   // Is a PIN configured?
@@ -100,7 +108,7 @@ export const useLockStore = create<LockState>((set, get) => ({
 
   setupPin: async (pin: string) => {
     const hash = await hashPin(pin);
-    const expiry = Date.now() + UNLOCK_TIMEOUT;
+    const expiry = Date.now() + getUnlockTimeout();
     setStoredHash(hash);
     setStoredUnlockExpiry(expiry);
     set({ hasPinConfigured: true, isUnlocked: true, unlockExpiry: expiry });
@@ -116,7 +124,7 @@ export const useLockStore = create<LockState>((set, get) => ({
   unlock: async (pin: string) => {
     const isValid = await get().verifyPin(pin);
     if (isValid) {
-      const expiry = Date.now() + UNLOCK_TIMEOUT;
+      const expiry = Date.now() + getUnlockTimeout();
       setStoredUnlockExpiry(expiry);
       set({ isUnlocked: true, unlockExpiry: expiry });
       return true;

@@ -47,7 +47,16 @@ import { ThemeLogo } from "@/components/theme/theme-switcher";
 import { getCacheStats, clearNotesCache } from "@/lib/note-cache";
 import { useSettingsStore, type UserSettings, type ActivityPeriod, type DashboardLayout, type SidebarSortBy, type DateFormat } from "@/lib/settings-store";
 import { useVaultStore } from "@/lib/store";
+import { useLockStore } from "@/lib/lock-store";
+import { PinDialog } from "@/components/lock/pin-dialog";
 import type { VaultFile } from "@/types";
+
+// Security settings keys that require PIN verification to change
+const SECURITY_SETTINGS_KEYS: (keyof UserSettings)[] = [
+  "lockTimeout",
+  "requirePinOnDelete",
+  "requirePinOnPrivateFolder",
+];
 
 // Get top-level folder names from tree
 function getTopLevelFolders(files: VaultFile[]): string[] {
@@ -80,6 +89,7 @@ export default function SettingsPage() {
   const { theme, setTheme, mode, themesForCurrentMode } = useTheme();
   const { settings, updateSettings, resetSettings } = useSettingsStore();
   const { tree } = useVaultStore();
+  const { hasPinConfigured, isUnlocked } = useLockStore();
 
   const [cacheStats, setCacheStats] = useState<{
     count: number;
@@ -89,6 +99,7 @@ export default function SettingsPage() {
     oldestDate: null,
   });
   const [isClearing, setIsClearing] = useState(false);
+  const [showPinDialog, setShowPinDialog] = useState(false);
 
   // Local draft state (all settings)
   const [draft, setDraft] = useState<UserSettings>(() => ({ ...settings }));
@@ -103,13 +114,32 @@ export default function SettingsPage() {
     return !deepEqual(draft, settings);
   }, [draft, settings]);
 
+  // Check if security settings have changed
+  const hasSecurityChanges = useMemo(() => {
+    return SECURITY_SETTINGS_KEYS.some(
+      (key) => draft[key] !== settings[key]
+    );
+  }, [draft, settings]);
+
   // Update a single setting in draft
   const updateDraft = <K extends keyof UserSettings>(key: K, value: UserSettings[K]) => {
     setDraft((prev) => ({ ...prev, [key]: value }));
   };
 
-  // Save all changes to store
+  // Save all changes to store (with optional PIN verification for security settings)
   const handleSave = () => {
+    // If security settings changed and PIN is configured but not unlocked, require PIN
+    if (hasSecurityChanges && hasPinConfigured && !isUnlocked) {
+      setShowPinDialog(true);
+      return;
+    }
+    // No PIN needed or already unlocked, save directly
+    updateSettings(draft);
+  };
+
+  // Called after successful PIN verification
+  const handlePinSuccess = () => {
+    setShowPinDialog(false);
     updateSettings(draft);
   };
 
@@ -522,7 +552,14 @@ export default function SettingsPage() {
             <Lock className="h-5 w-5 text-primary" />
             Sécurité & Verrouillage
           </CardTitle>
-          <CardDescription>Paramètres des notes privées</CardDescription>
+          <CardDescription>
+            Paramètres des notes privées
+            {hasPinConfigured && (
+              <span className="block mt-1 text-amber-500 text-xs">
+                🔐 Modifier ces paramètres nécessitera votre code PIN
+              </span>
+            )}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Lock timeout */}
@@ -857,6 +894,14 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* PIN Dialog for security settings changes */}
+      <PinDialog
+        open={showPinDialog}
+        onOpenChange={setShowPinDialog}
+        onSuccess={handlePinSuccess}
+        mode="verify"
+      />
     </div>
   );
 }

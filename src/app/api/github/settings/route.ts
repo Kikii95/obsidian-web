@@ -7,8 +7,26 @@ import { createOctokit, getFileContent, saveFileContent } from "@/lib/github";
 const SETTINGS_PATH_DESKTOP = ".obsidian-web/settings-desktop.json";
 const SETTINGS_PATH_MOBILE = ".obsidian-web/settings-mobile.json";
 
+// Settings that are shared between desktop and mobile
+const SHARED_SETTINGS_KEYS = ["customFolderOrders", "pinHash", "dailyNotesFolder"] as const;
+
 function getSettingsPath(isMobile: boolean): string {
   return isMobile ? SETTINGS_PATH_MOBILE : SETTINGS_PATH_DESKTOP;
+}
+
+function getOtherSettingsPath(isMobile: boolean): string {
+  return isMobile ? SETTINGS_PATH_DESKTOP : SETTINGS_PATH_MOBILE;
+}
+
+// Extract shared settings from a settings object
+function extractSharedSettings(settings: Record<string, unknown>): Record<string, unknown> {
+  const shared: Record<string, unknown> = {};
+  for (const key of SHARED_SETTINGS_KEYS) {
+    if (key in settings) {
+      shared[key] = settings[key];
+    }
+  }
+  return shared;
 }
 
 /**
@@ -63,6 +81,7 @@ export async function GET(request: NextRequest) {
 /**
  * POST - Save settings to GitHub
  * Body: { settings, sha, mobile: boolean }
+ * Also syncs shared settings (customFolderOrders, pinHash, dailyNotesFolder) to the other device file
  */
 export async function POST(request: NextRequest) {
   try {
@@ -76,6 +95,7 @@ export async function POST(request: NextRequest) {
     const { settings, sha, mobile } = body;
     const isMobile = mobile === true;
     const settingsPath = getSettingsPath(isMobile);
+    const otherSettingsPath = getOtherSettingsPath(isMobile);
 
     if (!settings) {
       return NextResponse.json({ error: "Settings requis" }, { status: 400 });
@@ -86,6 +106,7 @@ export async function POST(request: NextRequest) {
     // Format JSON nicely for readability in GitHub
     const content = JSON.stringify(settings, null, 2);
 
+    // Save current device settings
     const result = await saveFileContent(
       octokit,
       settingsPath,
@@ -93,6 +114,48 @@ export async function POST(request: NextRequest) {
       sha || undefined,
       `Update Obsidian Web settings (${isMobile ? "mobile" : "desktop"})`
     );
+
+    // Sync shared settings to the other device file (if it exists)
+    try {
+      const sharedSettings = extractSharedSettings(settings);
+
+      // Try to read the other device's settings
+      try {
+        const { content: otherContent, sha: otherSha } = await getFileContent(octokit, otherSettingsPath);
+        const otherSettings = JSON.parse(otherContent);
+
+        // Merge shared settings into other device's settings
+        const updatedOtherSettings = { ...otherSettings, ...sharedSettings };
+        const updatedContent = JSON.stringify(updatedOtherSettings, null, 2);
+
+        // Only save if there are actual changes
+        if (otherContent !== updatedContent) {
+          await saveFileContent(
+            octokit,
+            otherSettingsPath,
+            updatedContent,
+            otherSha,
+            `Sync shared settings from ${isMobile ? "mobile" : "desktop"}`
+          );
+        }
+      } catch (error: unknown) {
+        // Other file doesn't exist - create it with just shared settings
+        if (error && typeof error === "object" && "status" in error && error.status === 404) {
+          const newContent = JSON.stringify(sharedSettings, null, 2);
+          await saveFileContent(
+            octokit,
+            otherSettingsPath,
+            newContent,
+            undefined,
+            `Create ${isMobile ? "desktop" : "mobile"} settings with shared values`
+          );
+        }
+        // Ignore other errors - syncing is best-effort
+      }
+    } catch {
+      // Sync failed - that's OK, main save succeeded
+      console.warn("Failed to sync shared settings to other device");
+    }
 
     return NextResponse.json({
       success: true,

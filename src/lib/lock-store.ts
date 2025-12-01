@@ -1,13 +1,12 @@
 /**
  * Lock system for private notes (Apple Notes style)
- * - PIN stored hashed in localStorage
+ * - PIN stored hashed in settings (synced to cloud)
  * - Session-based unlock (stays unlocked for X minutes)
  */
 
 import { create } from "zustand";
 import { useSettingsStore } from "./settings-store";
 
-const PIN_HASH_KEY = "obsidian-web-pin-hash";
 const UNLOCK_EXPIRY_KEY = "obsidian-web-unlock-expiry";
 
 // Get timeout from settings (in minutes, convert to ms)
@@ -51,22 +50,31 @@ async function hashPin(pin: string): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
-// Get stored hash from localStorage
+// Get stored hash from settings store (synced to cloud)
 function getStoredHash(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem(PIN_HASH_KEY);
+  try {
+    return useSettingsStore.getState().settings?.pinHash ?? null;
+  } catch {
+    return null;
+  }
 }
 
-// Store hash in localStorage
+// Store hash in settings store (will sync to cloud)
 function setStoredHash(hash: string): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(PIN_HASH_KEY, hash);
+  try {
+    useSettingsStore.getState().updateSettings({ pinHash: hash });
+  } catch {
+    // Ignore errors
+  }
 }
 
-// Remove hash from localStorage
+// Remove hash from settings store
 function removeStoredHash(): void {
-  if (typeof window === "undefined") return;
-  localStorage.removeItem(PIN_HASH_KEY);
+  try {
+    useSettingsStore.getState().updateSettings({ pinHash: null });
+  } catch {
+    // Ignore errors
+  }
 }
 
 // Get stored unlock expiry from sessionStorage

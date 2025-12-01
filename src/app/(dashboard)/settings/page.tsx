@@ -817,29 +817,6 @@ export default function SettingsPage() {
             </Select>
           </div>
 
-          {/* Auto-save delay */}
-          <div className="space-y-2">
-            <Label>Sauvegarde automatique</Label>
-            <Select
-              value={String(draft.autoSaveDelay ?? 0)}
-              onValueChange={(value) => updateDraft("autoSaveDelay", Number(value))}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="0">Désactivée</SelectItem>
-                <SelectItem value="5">5 secondes</SelectItem>
-                <SelectItem value="10">10 secondes</SelectItem>
-                <SelectItem value="30">30 secondes</SelectItem>
-                <SelectItem value="60">1 minute</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-sm text-muted-foreground">
-              Délai après la dernière frappe avant sauvegarde auto
-            </p>
-          </div>
-
           {/* Daily Notes Folder */}
           <div className="space-y-2">
             <Label>Dossier des Daily Notes</Label>

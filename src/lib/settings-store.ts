@@ -42,6 +42,7 @@ export interface UserSettings {
   lockTimeout: number; // Minutes before auto-lock (0 = never)
   requirePinOnDelete: boolean; // Require PIN to delete any file (when PIN configured)
   requirePinOnPrivateFolder: boolean; // Require PIN to see children of _private folders
+  pinHash: string | null; // SHA-256 hash of PIN (shared across devices)
 
   // Graph
   showOrphanNotes: boolean;
@@ -55,7 +56,6 @@ export interface UserSettings {
 
   // General
   dateFormat: DateFormat; // Date format (fr, en, iso)
-  autoSaveDelay: number; // Auto-save delay in seconds (0 = disabled)
 
   // Daily Notes
   dailyNotesFolder: string; // Folder path for daily notes (e.g. "Daily", "Journal/Daily")
@@ -110,6 +110,7 @@ const defaultSettings: UserSettings = {
   lockTimeout: 5, // 5 minutes
   requirePinOnDelete: true,
   requirePinOnPrivateFolder: true, // Hide _private folder children until unlocked
+  pinHash: null, // No PIN by default
 
   // Graph
   showOrphanNotes: false,
@@ -123,7 +124,6 @@ const defaultSettings: UserSettings = {
 
   // General
   dateFormat: "fr",
-  autoSaveDelay: 0, // Disabled by default
 
   // Daily Notes
   dailyNotesFolder: "Daily",

@@ -73,6 +73,11 @@ function MiniGraphComponent({
       .force("y", d3.forceY(height / 2).strength(gravityStrength))
       .force("collision", d3.forceCollide().radius(collisionRadius));
 
+    // Get computed colors from CSS variables (already in oklch format)
+    const computedStyle = getComputedStyle(document.documentElement);
+    const foregroundColor = computedStyle.getPropertyValue("--foreground").trim() || "#ffffff";
+    const primaryColor = computedStyle.getPropertyValue("--primary").trim() || "#8b5cf6";
+
     // Draw links - more visible
     const link = g
       .append("g")
@@ -81,11 +86,12 @@ function MiniGraphComponent({
       .data(linksCopy)
       .enter()
       .append("line")
-      .attr("stroke", "hsl(var(--primary) / 0.5)")
+      .attr("stroke", primaryColor)
+      .attr("stroke-opacity", 0.5)
       .attr("stroke-width", 1.5);
 
     // Draw nodes - larger and more visible
-    // Use --foreground for fill (white on dark, black on light) and --primary for stroke
+    // Use foreground for fill (white on dark, black on light) and primary for stroke
     const node = g
       .append("g")
       .attr("class", "nodes")
@@ -94,8 +100,8 @@ function MiniGraphComponent({
       .enter()
       .append("circle")
       .attr("r", 6)
-      .attr("fill", "hsl(var(--foreground))")
-      .attr("stroke", "hsl(var(--primary))")
+      .attr("fill", foregroundColor)
+      .attr("stroke", primaryColor)
       .attr("stroke-width", 2)
       .style("cursor", "pointer")
       .on("click", (_, d) => {

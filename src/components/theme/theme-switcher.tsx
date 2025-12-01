@@ -33,7 +33,7 @@ const themeColors: Record<Theme, { bg: string; fg: string }> = {
   "lavender": { bg: "#8b5cf6", fg: "#fff" },
   "magenta": { bg: "#d946ef", fg: "#fff" },
   "rose": { bg: "#ec4899", fg: "#fff" },
-  "mono": { bg: "#f5f5f5", fg: "#000" },
+  "mono": { bg: "#1a1a1a", fg: "#fff" },
   // Light themes
   "carmine-light": { bg: "#dc2626", fg: "#fff" },
   "crimson-light": { bg: "#e11d48", fg: "#fff" },
@@ -52,7 +52,7 @@ const themeColors: Record<Theme, { bg: string; fg: string }> = {
   "lavender-light": { bg: "#8b5cf6", fg: "#fff" },
   "magenta-light": { bg: "#d946ef", fg: "#fff" },
   "rose-light": { bg: "#ec4899", fg: "#fff" },
-  "mono-light": { bg: "#1a1a1a", fg: "#fff" },
+  "mono-light": { bg: "#f5f5f5", fg: "#000" },
 };
 
 // Mini palette icon colored by theme (exported for Settings page)

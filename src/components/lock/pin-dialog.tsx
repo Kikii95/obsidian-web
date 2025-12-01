@@ -18,11 +18,13 @@ interface PinDialogProps {
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
   mode?: "unlock" | "setup" | "change" | "verify";
+  /** Custom context message for verify mode (e.g., "Suppression d'un fichier verrouillé") */
+  contextMessage?: string;
 }
 
 const PIN_LENGTH = 6;
 
-export function PinDialog({ open, onOpenChange, onSuccess, mode = "unlock" }: PinDialogProps) {
+export function PinDialog({ open, onOpenChange, onSuccess, mode = "unlock", contextMessage }: PinDialogProps) {
   const { hasPinConfigured, setupPin, unlock, verifyPin } = useLockStore();
   const [pin, setPin] = useState<string[]>(Array(PIN_LENGTH).fill(""));
   const [confirmPin, setConfirmPin] = useState<string[]>(Array(PIN_LENGTH).fill(""));
@@ -151,7 +153,7 @@ export function PinDialog({ open, onOpenChange, onSuccess, mode = "unlock" }: Pi
         : "Entrez à nouveau votre code pour confirmer";
     }
     if (isVerifyMode) {
-      return "Entrez votre code pour confirmer cette action";
+      return contextMessage || "Entrez votre code pour confirmer cette action";
     }
     return "Entrez votre code pour accéder aux notes verrouillées";
   };

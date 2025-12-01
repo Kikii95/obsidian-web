@@ -103,6 +103,11 @@ export function DeleteNoteDialog({ path, sha, noteName, isLocked = false, trigge
         }}
         onSuccess={handlePinSuccess}
         mode="verify"
+        contextMessage={
+          isLockedOrPrivate
+            ? "Suppression d'un fichier protégé (verrouillé ou dans _private)"
+            : "Confirmation requise pour la suppression"
+        }
       />
     </>
   );

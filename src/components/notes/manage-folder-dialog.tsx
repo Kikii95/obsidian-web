@@ -445,6 +445,17 @@ export function ManageFolderDialog({ mode, open, onOpenChange }: ManageFolderDia
         }}
         onSuccess={handlePinSuccess}
         mode="verify"
+        contextMessage={
+          hasSensitiveContent
+            ? `Suppression d'un dossier contenant ${
+                hasPrivateFolder && hasLockedFiles
+                  ? "des fichiers verrouillés et un dossier _private"
+                  : hasPrivateFolder
+                    ? "un dossier _private"
+                    : "des fichiers verrouillés"
+              }`
+            : "Confirmation requise pour la suppression"
+        }
       />
     </Dialog>
   );

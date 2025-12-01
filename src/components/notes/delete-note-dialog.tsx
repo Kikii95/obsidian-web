@@ -6,7 +6,6 @@ import { Trash2, AlertTriangle } from "lucide-react";
 import { ConfirmDialog } from "@/components/dialogs";
 import { PinDialog } from "@/components/lock/pin-dialog";
 import { githubClient } from "@/services/github-client";
-import { useSettingsStore } from "@/lib/settings-store";
 import { useLockStore, isPathLocked } from "@/lib/lock-store";
 
 interface DeleteNoteDialogProps {
@@ -18,7 +17,6 @@ interface DeleteNoteDialogProps {
 }
 
 export function DeleteNoteDialog({ path, sha, noteName, isLocked = false, trigger }: DeleteNoteDialogProps) {
-  const { settings } = useSettingsStore();
   const { hasPinConfigured, isUnlocked } = useLockStore();
   const [showPinDialog, setShowPinDialog] = useState(false);
   const [pendingDelete, setPendingDelete] = useState(false);
@@ -28,13 +26,9 @@ export function DeleteNoteDialog({ path, sha, noteName, isLocked = false, trigge
   const isLockedOrPrivate = isLocked || isInPrivateFolder;
 
   // PIN verification logic:
-  // - If requirePinOnDelete is ON → always ask PIN (for any file)
-  // - If requirePinOnDelete is OFF:
-  //   - For locked/_private files → ask PIN only if not unlocked
-  //   - For normal files → never ask PIN
-  const needsPinVerification = hasPinConfigured && (
-    settings.requirePinOnDelete || (isLockedOrPrivate && !isUnlocked)
-  );
+  // - For normal files → NEVER ask PIN (regardless of settings)
+  // - For locked/_private files → ask PIN only if not already unlocked
+  const needsPinVerification = hasPinConfigured && isLockedOrPrivate && !isUnlocked;
 
   const handleDelete = async () => {
     if (needsPinVerification) {

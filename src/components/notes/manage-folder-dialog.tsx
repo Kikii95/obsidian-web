@@ -14,7 +14,6 @@ import { Label } from "@/components/ui/label";
 import { Loader2, FolderPen, FolderX, AlertTriangle, Lock } from "lucide-react";
 import { useVaultStore } from "@/lib/store";
 import { useLockStore } from "@/lib/lock-store";
-import { useSettingsStore } from "@/lib/settings-store";
 import { githubClient } from "@/services/github-client";
 import { FolderTreePicker } from "./folder-tree-picker";
 import { PinDialog } from "@/components/lock/pin-dialog";
@@ -79,7 +78,6 @@ function containsPrivateFolder(folder: VaultFile): boolean {
 export function ManageFolderDialog({ mode, open, onOpenChange }: ManageFolderDialogProps) {
   const { tree, triggerTreeRefresh } = useVaultStore();
   const { hasPinConfigured, isUnlocked } = useLockStore();
-  const { settings } = useSettingsStore();
   const [selectedFolder, setSelectedFolder] = useState<string>("");
   const [newName, setNewName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -124,14 +122,10 @@ export function ManageFolderDialog({ mode, open, onOpenChange }: ManageFolderDia
   // Folder contains sensitive content (locked files or _private)
   const hasSensitiveContent = hasLockedFiles || hasPrivateFolder;
 
-  // PIN verification logic (same as note deletion):
-  // - If requirePinOnDelete is ON → always ask PIN (for any folder)
-  // - If requirePinOnDelete is OFF:
-  //   - For folders with locked/_private content → ask PIN only if not unlocked
-  //   - For normal folders → never ask PIN
-  const needsPinVerification = hasPinConfigured && (
-    settings.requirePinOnDelete || (hasSensitiveContent && !isUnlocked)
-  );
+  // PIN verification logic:
+  // - For normal folders → NEVER ask PIN (regardless of settings)
+  // - For folders with locked/_private content → ask PIN only if not already unlocked
+  const needsPinVerification = hasPinConfigured && hasSensitiveContent && !isUnlocked;
 
   const folderName = getFolderName(selectedFolder);
   const isConfirmValid = confirmText.toLowerCase() === folderName.toLowerCase();

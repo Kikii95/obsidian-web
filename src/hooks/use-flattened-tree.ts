@@ -28,7 +28,7 @@ export function useFlattenedTree(
   tree: VaultFile[],
   expandedFolders: Set<string>
 ): FlatTreeItem[] {
-  const { settings } = useSettingsStore();
+  const { settings, getFolderOrder } = useSettingsStore();
   const { hasPinConfigured, isUnlocked } = useLockStore();
 
   // Should we hide children of _private folders?
@@ -36,6 +36,9 @@ export function useFlattenedTree(
     settings.requirePinOnPrivateFolder &&
     hasPinConfigured &&
     !isUnlocked;
+
+  // Get custom folder orders (defensive)
+  const customFolderOrders = settings.customFolderOrders || {};
 
   return useMemo(() => {
     const result: FlatTreeItem[] = [];
@@ -46,11 +49,37 @@ export function useFlattenedTree(
       parentPaths: string[],
       insidePrivate: boolean = false
     ) {
-      // Sort: directories first, then alphabetically
+      // Get parent path for custom ordering
+      const parentPath = parentPaths.length > 0
+        ? parentPaths[parentPaths.length - 1]
+        : "";
+
+      // Get custom order for this folder level (defensive)
+      let customOrder: string[] = [];
+      try {
+        const order = getFolderOrder(parentPath);
+        customOrder = Array.isArray(order) ? order : [];
+      } catch {
+        customOrder = [];
+      }
+
+      // Sort: directories first, then by custom order or alphabetically
       const sorted = [...files].sort((a, b) => {
+        // Folders first
         if (a.type !== b.type) {
           return a.type === "dir" ? -1 : 1;
         }
+
+        // Apply custom order for folders
+        if (a.type === "dir" && b.type === "dir" && customOrder.length > 0) {
+          const aIndex = customOrder.indexOf(a.name);
+          const bIndex = customOrder.indexOf(b.name);
+          if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+          if (aIndex !== -1) return -1;
+          if (bIndex !== -1) return 1;
+        }
+
+        // Fallback to alphabetical
         return a.name.localeCompare(b.name);
       });
 
@@ -97,5 +126,5 @@ export function useFlattenedTree(
 
     flatten(tree, 0, [], false);
     return result;
-  }, [tree, expandedFolders, hidePrivateChildren]);
+  }, [tree, expandedFolders, hidePrivateChildren, customFolderOrders, getFolderOrder]);
 }

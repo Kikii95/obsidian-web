@@ -6,7 +6,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, ChevronRight, RefreshCw, Image, FileText, Loader2 } from "lucide-react";
+import { AlertCircle, ChevronRight, RefreshCw, Image, FileText, Loader2, Home } from "lucide-react";
 import { ImageViewer } from "@/components/viewer/image-viewer";
 import { getFileType } from "@/lib/file-types";
 import { githubClient, type BinaryFileData } from "@/services/github-client";
@@ -134,10 +134,11 @@ export default function FilePage() {
       {/* Breadcrumb */}
       <div className="flex items-center gap-1 text-sm px-4 py-3 border-b border-border/50 shrink-0 overflow-x-auto">
         <Link
-          href="/"
+          href="/folder"
           className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
+          title="Vault"
         >
-          Vault
+          <Home className="h-3.5 w-3.5" />
         </Link>
         {breadcrumbs?.map((crumb, index) => {
           const folderPath = `/folder/${crumb.path.split("/").map(encodeURIComponent).join("/")}`;

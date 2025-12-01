@@ -12,6 +12,7 @@ import {
   RefreshCw,
   LayoutDashboard,
   Loader2,
+  Home,
 } from "lucide-react";
 import { githubClient } from "@/services/github-client";
 import type { ObsidianCanvasData } from "@/types/canvas";
@@ -147,10 +148,11 @@ export default function CanvasPage() {
       {/* Breadcrumb */}
       <div className="flex items-center gap-1 text-sm px-4 py-3 border-b border-border/50 shrink-0 overflow-x-auto">
         <Link
-          href="/"
+          href="/folder"
           className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
+          title="Vault"
         >
-          Vault
+          <Home className="h-3.5 w-3.5" />
         </Link>
         {breadcrumbs?.map((crumb, index) => {
           const folderPath = `/folder/${crumb.path.split("/").map(encodeURIComponent).join("/")}`;

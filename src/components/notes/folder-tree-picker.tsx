@@ -159,6 +159,14 @@ function FolderTreeItem({
 
   const hasChildren = childDirs.length > 0;
 
+  // Handle row click: expand/collapse if has children, otherwise select
+  const handleRowClick = () => {
+    if (isCurrent) return;
+    if (hasChildren) {
+      toggleFolder(folder.path);
+    }
+  };
+
   return (
     <div>
       <div
@@ -197,12 +205,11 @@ function FolderTreeItem({
           />
         </button>
 
-        {/* Folder button */}
-        <button
-          onClick={() => !isCurrent && onSelect(folder.path)}
-          disabled={isCurrent}
+        {/* Folder row - click to expand/collapse */}
+        <div
+          onClick={handleRowClick}
           className={cn(
-            "flex items-center gap-2 flex-1 py-1.5 pr-2 text-sm text-left",
+            "flex items-center gap-2 flex-1 py-1.5 text-sm cursor-pointer",
             isSelected && "text-primary font-medium",
             isCurrent && "cursor-not-allowed"
           )}
@@ -213,11 +220,26 @@ function FolderTreeItem({
             <Folder className="h-4 w-4 text-muted-foreground shrink-0" />
           )}
           <span className="truncate">{folder.name}</span>
-          {isSelected && <Check className="h-4 w-4 text-primary ml-auto shrink-0" />}
           {isCurrent && (
             <span className="text-xs text-muted-foreground ml-auto">(actuel)</span>
           )}
-        </button>
+        </div>
+
+        {/* Select button - explicit selection */}
+        {!isCurrent && (
+          <button
+            onClick={() => onSelect(folder.path)}
+            className={cn(
+              "p-1 rounded transition-colors shrink-0",
+              isSelected
+                ? "text-primary"
+                : "text-muted-foreground hover:text-primary hover:bg-primary/10"
+            )}
+            title="Sélectionner ce dossier"
+          >
+            <Check className={cn("h-4 w-4", !isSelected && "opacity-40")} />
+          </button>
+        )}
       </div>
 
       {/* Children */}

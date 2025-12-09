@@ -485,8 +485,8 @@ export function VaultSidebar() {
             </Button>
           </div>
       </div>
-      {/* Virtualized scrollable tree */}
-      <div className="flex-1 min-h-0 overflow-hidden p-2">
+      {/* Virtualized scrollable tree - overflow-x-auto for long filenames on mobile */}
+      <div className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden p-2">
         <VirtualFileTree files={filteredTree} />
       </div>
 

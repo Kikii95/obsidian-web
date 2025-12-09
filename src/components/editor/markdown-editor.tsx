@@ -1,10 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import CodeMirror from "@uiw/react-codemirror";
+import { useCallback, useEffect, useState, useRef } from "react";
+import CodeMirror, { ReactCodeMirrorRef } from "@uiw/react-codemirror";
 import { markdown } from "@codemirror/lang-markdown";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { EditorView } from "@codemirror/view";
+import { ChevronDown, ChevronUp, HelpCircle, TextSelect } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface MarkdownEditorProps {
@@ -70,22 +72,70 @@ const cheatsheetItems = [
   { syntax: "- [ ]", desc: "Checkbox" },
 ];
 
-function MarkdownCheatsheet() {
+interface MarkdownCheatsheetProps {
+  onSelectAll?: () => void;
+}
+
+function MarkdownCheatsheet({ onSelectAll }: MarkdownCheatsheetProps) {
+  // Default to collapsed on mobile, expanded on desktop
+  const [isOpen, setIsOpen] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.innerWidth >= 640; // sm breakpoint
+    }
+    return true;
+  });
+
   return (
-    <div className="bg-muted/30 border-b border-border/50 px-3 py-2 overflow-x-auto">
-      <div className="flex items-center gap-3 text-xs whitespace-nowrap">
-        <span className="text-muted-foreground font-medium shrink-0">Markdown:</span>
-        <div className="flex items-center gap-2 flex-wrap">
-          {cheatsheetItems.map((item) => (
-            <div
-              key={item.syntax}
-              className="flex items-center gap-1 bg-background/50 px-2 py-0.5 rounded border border-border/30"
-              title={item.desc}
-            >
-              <code className="text-primary font-mono text-[11px]">{item.syntax}</code>
-              <span className="text-muted-foreground/70 text-[10px]">{item.desc}</span>
-            </div>
-          ))}
+    <div className="bg-muted/30 border-b border-border/50">
+      {/* Toggle header */}
+      <div className="flex items-center justify-between px-3 py-2">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <HelpCircle className="h-3.5 w-3.5" />
+          <span className="font-medium">Aide Markdown</span>
+          {isOpen ? (
+            <ChevronUp className="h-3.5 w-3.5" />
+          ) : (
+            <ChevronDown className="h-3.5 w-3.5" />
+          )}
+        </button>
+
+        {/* Select all button - visible on mobile */}
+        {onSelectAll && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onSelectAll}
+            className="h-7 px-2 text-xs md:hidden"
+          >
+            <TextSelect className="h-3.5 w-3.5 mr-1" />
+            Tout sélectionner
+          </Button>
+        )}
+      </div>
+
+      {/* Collapsible content */}
+      <div
+        className={cn(
+          "overflow-hidden transition-all duration-200",
+          isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+        )}
+      >
+        <div className="px-3 pb-2 overflow-x-auto">
+          <div className="flex items-center gap-2 flex-wrap text-xs">
+            {cheatsheetItems.map((item) => (
+              <div
+                key={item.syntax}
+                className="flex items-center gap-1 bg-background/50 px-2 py-0.5 rounded border border-border/30"
+                title={item.desc}
+              >
+                <code className="text-primary font-mono text-[11px]">{item.syntax}</code>
+                <span className="text-muted-foreground/70 text-[10px] hidden sm:inline">{item.desc}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -99,6 +149,18 @@ export function MarkdownEditor({
   readOnly = false,
 }: MarkdownEditorProps) {
   const [mounted, setMounted] = useState(false);
+  const editorRef = useRef<ReactCodeMirrorRef>(null);
+
+  // Select all text in editor (for mobile convenience)
+  const handleSelectAll = useCallback(() => {
+    const view = editorRef.current?.view;
+    if (view) {
+      view.dispatch({
+        selection: { anchor: 0, head: view.state.doc.length },
+      });
+      view.focus();
+    }
+  }, []);
 
   useEffect(() => {
     setMounted(true);
@@ -132,14 +194,15 @@ export function MarkdownEditor({
       )}
     >
       {/* Markdown Cheatsheet */}
-      <MarkdownCheatsheet />
+      <MarkdownCheatsheet onSelectAll={handleSelectAll} />
 
       {/* Editor */}
       <div className="flex-1 min-h-0">
         <CodeMirror
+          ref={editorRef}
           value={content}
           onChange={handleChange}
-          extensions={[markdown(), editorTheme]}
+          extensions={[markdown(), editorTheme, EditorView.lineWrapping]}
           theme={oneDark}
           readOnly={readOnly}
           basicSetup={{

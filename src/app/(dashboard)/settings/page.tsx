@@ -214,31 +214,33 @@ export default function SettingsPage() {
         </Link>
       </Button>
 
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold">Paramètres</h1>
           {hasChanges && (
             <Badge variant="outline" className="gap-1 text-amber-500 border-amber-500">
               <AlertCircle className="h-3 w-3" />
-              Non sauvegardé
+              <span className="hidden sm:inline">Non sauvegardé</span>
+              <span className="sm:hidden">!</span>
             </Badge>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {hasChanges && (
             <>
               <Button variant="ghost" size="sm" onClick={handleDiscard}>
-                Annuler
+                <X className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Annuler</span>
               </Button>
               <Button size="sm" onClick={handleSave}>
-                <Save className="h-4 w-4 mr-2" />
-                Sauvegarder
+                <Save className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Sauvegarder</span>
               </Button>
             </>
           )}
           <Button variant="outline" size="sm" onClick={handleReset}>
-            <RotateCcw className="h-4 w-4 mr-2" />
-            Défaut
+            <RotateCcw className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Défaut</span>
           </Button>
         </div>
       </div>
@@ -390,8 +392,8 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Max content width */}
-          <div className="space-y-2">
+          {/* Max content width - hidden on mobile (no effect) */}
+          <div className="space-y-2 hidden md:block">
             <Label>Largeur max du contenu</Label>
             <div className="flex items-center gap-4">
               <Slider
@@ -422,8 +424,8 @@ export default function SettingsPage() {
             />
           </div>
 
-          {/* Keyboard shortcuts */}
-          <div className="flex items-center justify-between">
+          {/* Keyboard shortcuts - hidden on mobile (no keyboard) */}
+          <div className="hidden md:flex items-center justify-between">
             <div>
               <Label>Raccourcis clavier</Label>
               <p className="text-sm text-muted-foreground">
@@ -784,8 +786,8 @@ export default function SettingsPage() {
           <CardDescription>Paramètres généraux de l'application</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Show date/time in header */}
-          <div className="flex items-center justify-between">
+          {/* Show date/time in header - hidden on mobile (not enough space) */}
+          <div className="hidden md:flex items-center justify-between">
             <div>
               <Label>Afficher date et heure</Label>
               <p className="text-sm text-muted-foreground">

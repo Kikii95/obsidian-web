@@ -93,14 +93,23 @@ export function ImageViewer({ content, mimeType, fileName }: ImageViewerProps) {
         </div>
       </div>
 
-      {/* Image container */}
-      <div className="flex-1 overflow-auto flex items-center justify-center p-4 bg-muted/10">
+      {/* Image container - scrollable from top-left when zoomed */}
+      <div
+        className={`flex-1 overflow-auto p-4 bg-muted/10 ${
+          zoom <= 100 ? "flex items-center justify-center" : ""
+        }`}
+      >
         <img
           src={dataUrl}
           alt={fileName}
-          className="max-w-full max-h-full object-contain rounded-lg shadow-lg transition-transform duration-200"
+          className="object-contain rounded-lg shadow-lg transition-all duration-200"
           style={{
-            transform: `scale(${zoom / 100}) rotate(${rotation}deg)`,
+            transform: `rotate(${rotation}deg)`,
+            width: zoom > 100 ? `${zoom}%` : "auto",
+            height: zoom > 100 ? "auto" : "auto",
+            maxWidth: zoom <= 100 ? "100%" : "none",
+            maxHeight: zoom <= 100 ? "100%" : "none",
+            transformOrigin: "top left",
           }}
           draggable={false}
         />

@@ -1,8 +1,8 @@
 "use client";
 
 import { useSession, signOut } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -27,6 +27,7 @@ import { QuickSwitcher } from "@/components/navigation/quick-switcher";
 import { DailyNoteButton } from "@/components/navigation/daily-note-button";
 import { ScrollRestoration } from "@/components/navigation/scroll-restoration";
 import { RateLimitIndicator } from "@/components/ui/rate-limit-indicator";
+import { ScrollProgress } from "@/components/ui/scroll-progress";
 import { useSettingsSync } from "@/hooks/use-settings-sync";
 
 export default function DashboardLayout({
@@ -36,7 +37,9 @@ export default function DashboardLayout({
 }) {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const pathname = usePathname();
   const { sidebarOpen, toggleSidebar } = useVaultStore();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Sync settings with GitHub cloud
   useSettingsSync();
@@ -46,6 +49,11 @@ export default function DashboardLayout({
       router.push("/login");
     }
   }, [status, router]);
+
+  // Auto-close mobile menu on navigation
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
 
   if (status === "loading") {
     return (
@@ -75,7 +83,7 @@ export default function DashboardLayout({
           {/* Left side */}
           <div className="flex items-center gap-2">
             {/* Mobile menu */}
-            <Sheet>
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="md:hidden">
                   <Menu className="h-5 w-5" />
@@ -224,6 +232,9 @@ export default function DashboardLayout({
           </div>
         </div>
       </header>
+
+      {/* Scroll Progress Indicator */}
+      <ScrollProgress />
 
       {/* Main with Sidebar */}
       <div className="flex-1 flex overflow-hidden">

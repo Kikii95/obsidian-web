@@ -8,7 +8,14 @@ const SETTINGS_PATH_DESKTOP = ".obsidian-web/settings-desktop.json";
 const SETTINGS_PATH_MOBILE = ".obsidian-web/settings-mobile.json";
 
 // Settings that are shared between desktop and mobile
-const SHARED_SETTINGS_KEYS = ["customFolderOrders", "pinHash", "dailyNotesFolder"] as const;
+const SHARED_SETTINGS_KEYS = [
+  "customFolderOrders",
+  "pinHash",
+  "dailyNotesFolder",
+  "theme",
+  "vaultRootPath",
+  "hidePatterns",
+] as const;
 
 function getSettingsPath(isMobile: boolean): string {
   return isMobile ? SETTINGS_PATH_MOBILE : SETTINGS_PATH_DESKTOP;

@@ -50,12 +50,26 @@ function TextNode({ id, data, selected }: NodeProps) {
   const [text, setText] = useState(nodeData.label || "");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Auto-resize textarea to fit content
+  const autoResize = useCallback(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+    }
+  }, []);
+
   useEffect(() => {
     if (isEditing && textareaRef.current) {
       textareaRef.current.focus();
       textareaRef.current.select();
+      autoResize();
     }
-  }, [isEditing]);
+  }, [isEditing, autoResize]);
+
+  // Keep text in sync with external label changes
+  useEffect(() => {
+    setText(nodeData.label || "");
+  }, [nodeData.label]);
 
   const handleDoubleClick = () => {
     if (nodeData.onStartEdit) {
@@ -64,7 +78,7 @@ function TextNode({ id, data, selected }: NodeProps) {
     }
   };
 
-  const handleBlur = () => {
+  const handleSave = () => {
     setIsEditing(false);
     if (nodeData.onLabelChange && text !== nodeData.label) {
       nodeData.onLabelChange(id, text);
@@ -75,15 +89,22 @@ function TextNode({ id, data, selected }: NodeProps) {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Escape = cancel
     if (e.key === "Escape") {
       setText(nodeData.label || "");
       setIsEditing(false);
       if (nodeData.onEndEdit) nodeData.onEndEdit(id);
     }
-    if (e.key === "Enter" && !e.shiftKey) {
+    // Ctrl+Enter or Cmd+Enter = save (Enter alone = newline on mobile)
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
-      handleBlur();
+      handleSave();
     }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setText(e.target.value);
+    autoResize();
   };
 
   return (
@@ -98,15 +119,20 @@ function TextNode({ id, data, selected }: NodeProps) {
       onDoubleClick={handleDoubleClick}
     >
       {isEditing ? (
-        <textarea
-          ref={textareaRef}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onBlur={handleBlur}
-          onKeyDown={handleKeyDown}
-          className="w-full min-h-[40px] text-sm bg-transparent border-none outline-none resize-none"
-          rows={3}
-        />
+        <div className="space-y-2">
+          <textarea
+            ref={textareaRef}
+            value={text}
+            onChange={handleChange}
+            onBlur={handleSave}
+            onKeyDown={handleKeyDown}
+            className="w-full min-h-[60px] text-sm bg-muted/50 border border-border/50 rounded p-2 outline-none resize-none"
+            placeholder="Entrez du texte..."
+          />
+          <p className="text-[10px] text-muted-foreground">
+            Ctrl+Entrée pour sauver • Échap pour annuler
+          </p>
+        </div>
       ) : (
         <div className="text-sm whitespace-pre-wrap min-h-[20px]">
           {nodeData.label || "Double-cliquez pour éditer"}

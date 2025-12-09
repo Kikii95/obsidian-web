@@ -56,7 +56,8 @@ export function VirtualFileTree({ files }: VirtualFileTreeProps) {
       <div
         style={{
           height: `${virtualizer.getTotalSize()}px`,
-          width: "100%",
+          minWidth: "100%",
+          width: "max-content",
           position: "relative",
         }}
       >
@@ -69,7 +70,8 @@ export function VirtualFileTree({ files }: VirtualFileTreeProps) {
                 position: "absolute",
                 top: 0,
                 left: 0,
-                width: "100%",
+                minWidth: "100%",
+                width: "max-content",
                 height: `${virtualRow.size}px`,
                 transform: `translateY(${virtualRow.start}px)`,
               }}
@@ -219,12 +221,13 @@ const VirtualTreeItem = memo(function VirtualTreeItem({
             <Lock className="h-3.5 w-3.5 ml-1 shrink-0 text-amber-500" />
           )}
         </button>
-        {/* Folder explorer button */}
+        {/* Folder explorer button - visible on mobile, hover on desktop */}
         <Link
           href={folderHref}
           onClick={(e) => e.stopPropagation()}
           className={cn(
-            "p-1 mr-1 rounded opacity-0 group-hover:opacity-100 transition-opacity",
+            "p-1 mr-1 rounded transition-opacity",
+            "opacity-100 md:opacity-0 md:group-hover:opacity-100",
             "hover:bg-primary/20 text-muted-foreground hover:text-primary"
           )}
           title="Ouvrir l'explorateur"
@@ -273,7 +276,7 @@ const VirtualTreeItem = memo(function VirtualTreeItem({
           <Pin className="h-3 w-3 ml-1 shrink-0 text-primary" />
         )}
       </Link>
-      {/* Pin button on hover */}
+      {/* Pin button - visible on mobile, hover on desktop */}
       {canPin && (
         <button
           onClick={handleTogglePin}
@@ -281,7 +284,7 @@ const VirtualTreeItem = memo(function VirtualTreeItem({
             "p-1 mr-1 rounded transition-opacity",
             isPinned
               ? "opacity-100 hover:bg-primary/20 text-primary"
-              : "opacity-0 group-hover:opacity-100 hover:bg-primary/20 text-muted-foreground hover:text-primary"
+              : "opacity-100 md:opacity-0 md:group-hover:opacity-100 hover:bg-primary/20 text-muted-foreground hover:text-primary"
           )}
           title={isPinned ? "Désépingler" : "Épingler"}
         >

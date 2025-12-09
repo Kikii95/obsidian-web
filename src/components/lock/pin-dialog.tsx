@@ -280,27 +280,35 @@ export function PinDialog({ open, onOpenChange, onSuccess, mode = "unlock", cont
         </DialogHeader>
 
         <div className="space-y-6 pt-4">
-          {/* PIN Input */}
+          {/* PIN Input - shows dots instead of digits for immediate masking */}
           <div className="flex justify-center gap-2">
             {currentPin.map((digit, index) => (
-              <input
-                key={`${isChangeMode ? changeStep : step}-${index}`}
-                ref={(el) => { currentRefs.current[index] = el; }}
-                type="password"
-                inputMode="numeric"
-                maxLength={1}
-                value={digit}
-                onChange={(e) => handleDigitInput(index, e.target.value)}
-                onKeyDown={(e) => handleKeyDown(index, e)}
-                disabled={isLoading}
-                className={cn(
-                  "h-12 w-10 rounded-lg border-2 text-center text-xl font-bold",
-                  "bg-background transition-colors",
-                  "focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",
-                  error && "border-destructive",
-                  digit && "border-primary bg-primary/5"
+              <div key={`${isChangeMode ? changeStep : step}-${index}`} className="relative">
+                <input
+                  ref={(el) => { currentRefs.current[index] = el; }}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={1}
+                  value={digit}
+                  onChange={(e) => handleDigitInput(index, e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(index, e)}
+                  disabled={isLoading}
+                  className={cn(
+                    "h-12 w-10 rounded-lg border-2 text-center text-xl font-bold caret-transparent",
+                    "bg-background transition-colors text-transparent select-none",
+                    "focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",
+                    error && "border-destructive",
+                    digit && "border-primary bg-primary/5"
+                  )}
+                  autoComplete="off"
+                />
+                {/* Visual dot indicator */}
+                {digit && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <span className="text-2xl text-foreground">●</span>
+                  </div>
                 )}
-              />
+              </div>
             ))}
           </div>
 

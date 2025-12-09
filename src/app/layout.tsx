@@ -17,20 +17,21 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Obsidian Web",
   description: "Ton vault Obsidian, accessible partout",
-  manifest: "/manifest.json",
+  // Manifest is dynamically set by DynamicPwaMeta component based on theme
+  manifest: "/api/pwa/manifest?theme=magenta",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "Obsidian Web",
-    startupImage: "/icons/apple-touch-icon.png",
   },
   icons: {
+    // Default icons (will be overridden by DynamicPwaMeta when theme loads)
     icon: [
-      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+      { url: "/api/pwa/icon?theme=magenta&size=192", sizes: "192x192", type: "image/svg+xml" },
+      { url: "/api/pwa/icon?theme=magenta&size=512", sizes: "512x512", type: "image/svg+xml" },
     ],
     apple: [
-      { url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+      { url: "/api/pwa/icon?theme=magenta&size=192", sizes: "180x180", type: "image/svg+xml" },
     ],
   },
 };

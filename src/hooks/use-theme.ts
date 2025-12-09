@@ -121,6 +121,57 @@ export const themes: ThemeOption[] = [
 ];
 
 // ═══════════════════════════════════════════════
+// THEME COLORS (for PWA icon and theme_color)
+// ═══════════════════════════════════════════════
+
+// Map of theme base name to primary color (hex)
+// These are used for PWA icons and manifest theme_color
+export const themeColors: Record<string, { primary: string; background: string }> = {
+  // Reds / Oranges / Browns
+  carmine: { primary: "#e53935", background: "#1a1019" },
+  crimson: { primary: "#dc2626", background: "#1a1019" },
+  peach: { primary: "#fb923c", background: "#1a1019" },
+  brown: { primary: "#a16207", background: "#1a1019" },
+  sunset: { primary: "#f97316", background: "#1a1019" },
+  sand: { primary: "#ca8a04", background: "#1a1019" },
+  // Yellow
+  cyber: { primary: "#eab308", background: "#0f0f0a" },
+  // Greens
+  sage: { primary: "#65a30d", background: "#1a1019" },
+  forest: { primary: "#22c55e", background: "#1a1019" },
+  mint: { primary: "#14b8a6", background: "#1a1019" },
+  turquoise: { primary: "#06b6d4", background: "#0f1a1a" },
+  // Blues
+  cloud: { primary: "#3b82f6", background: "#1a1019" },
+  ocean: { primary: "#2563eb", background: "#1a1019" },
+  mist: { primary: "#64748b", background: "#1a1019" },
+  // Purples / Pinks
+  lavender: { primary: "#a855f7", background: "#1a1019" },
+  magenta: { primary: "#d946ef", background: "#1a1019" },
+  rose: { primary: "#f472b6", background: "#1a1019" },
+  // Achromatic
+  mono: { primary: "#a1a1aa", background: "#0a0a0a" },
+};
+
+// Get base theme name (without -light, -dark suffix)
+export function getThemeBaseName(themeId: Theme): string {
+  return themeId
+    .replace("-light", "")
+    .replace("-dark", "")
+    .replace("peach-dark", "peach")
+    .replace("sage-dark", "sage")
+    .replace("cloud-dark", "cloud")
+    .replace("mist-dark", "mist")
+    .replace("sand-dark", "sand");
+}
+
+// Get hex colors for a theme
+export function getThemeColors(themeId: Theme): { primary: string; background: string } {
+  const baseName = getThemeBaseName(themeId);
+  return themeColors[baseName] || themeColors.magenta;
+}
+
+// ═══════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════
 

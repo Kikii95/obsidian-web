@@ -77,13 +77,8 @@ interface MarkdownCheatsheetProps {
 }
 
 function MarkdownCheatsheet({ onSelectAll }: MarkdownCheatsheetProps) {
-  // Default to collapsed on mobile, expanded on desktop
-  const [isOpen, setIsOpen] = useState(() => {
-    if (typeof window !== "undefined") {
-      return window.innerWidth >= 640; // sm breakpoint
-    }
-    return true;
-  });
+  // Default to collapsed on all devices
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <div className="bg-muted/30 border-b border-border/50">

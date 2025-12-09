@@ -23,7 +23,7 @@ export interface UserSettings {
   dashboardLayout: DashboardLayout;
 
   // Editor
-  editorFontSize: number; // 14-20px
+  editorFontSize: number; // 10-32px
   editorLineHeight: number; // 1.4-2.0
   editorMaxWidth: number; // 600-1200px
   showFrontmatter: boolean; // Show/hide frontmatter badges

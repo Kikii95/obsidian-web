@@ -363,8 +363,8 @@ export default function SettingsPage() {
               <Slider
                 value={[draft.editorFontSize ?? 16]}
                 onValueChange={([value]) => updateDraft("editorFontSize", value)}
-                min={12}
-                max={24}
+                min={10}
+                max={32}
                 step={1}
                 className="flex-1"
               />

@@ -64,39 +64,26 @@ export function GlobalLockStatus() {
   return (
     <TooltipProvider>
       {isUnlocked ? (
-        <div className="flex items-center gap-1">
-          {/* Timer badge */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-md">
-                <Unlock className="h-3.5 w-3.5" />
-                <span>{timeRemaining || "Déverrouillé"}</span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Notes privées déverrouillées</p>
-              {timeRemaining && <p className="text-xs text-muted-foreground">Se verrouille dans {timeRemaining}</p>}
-            </TooltipContent>
-          </Tooltip>
-
-          {/* Re-lock button */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={lock}
-                className="h-8 w-8"
-              >
-                <Lock className="h-4 w-4 text-amber-500" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Reverrouiller maintenant</p>
-            </TooltipContent>
-          </Tooltip>
-        </div>
+        // Unlocked state: single clickable button with timer, click to re-lock
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={lock}
+              className="h-8 px-2 gap-1.5 text-emerald-500 hover:text-emerald-600 hover:bg-emerald-500/10"
+            >
+              <Unlock className="h-4 w-4" />
+              <span className="text-xs font-medium">{timeRemaining || "OK"}</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Cliquer pour reverrouiller</p>
+            {timeRemaining && <p className="text-xs text-muted-foreground">Auto-lock dans {timeRemaining}</p>}
+          </TooltipContent>
+        </Tooltip>
       ) : (
+        // Locked state: click to unlock
         <Tooltip>
           <TooltipTrigger asChild>
             <Button

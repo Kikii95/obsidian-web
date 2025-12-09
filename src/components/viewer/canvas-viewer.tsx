@@ -18,7 +18,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { Button } from "@/components/ui/button";
-import { Pencil, Eye, Save, Plus, Trash2, Download } from "lucide-react";
+import { Pencil, X, Save, Plus, Trash2, Download } from "lucide-react";
 import {
   ObsidianCanvasData,
   ObsidianCanvasNode,
@@ -391,20 +391,26 @@ function CanvasFlow({
                 )}
                 <Button
                   size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    // Reset to original data and exit edit mode
+                    const { nodes: originalNodes, edges: originalEdges } = convertToReactFlow(data);
+                    setNodes(originalNodes);
+                    setEdges(originalEdges);
+                    setIsEditing(false);
+                  }}
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  Annuler
+                </Button>
+                <Button
+                  size="sm"
                   variant="default"
                   onClick={handleSave}
                   disabled={isSaving}
                 >
                   <Save className="h-4 w-4 mr-1" />
                   {isSaving ? "..." : "Sauver"}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setIsEditing(false)}
-                >
-                  <Eye className="h-4 w-4 mr-1" />
-                  Voir
                 </Button>
               </>
             ) : (

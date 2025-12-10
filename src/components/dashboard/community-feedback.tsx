@@ -9,6 +9,7 @@ interface GitHubIssue {
   id: number;
   number: number;
   title: string;
+  body: string | null;
   state: "open" | "closed";
   labels: { name: string; color: string }[];
   created_at: string;
@@ -17,6 +18,22 @@ interface GitHubIssue {
     login: string;
     avatar_url: string;
   };
+}
+
+// Extract first line of description (without markdown headers/comments)
+function getExcerpt(body: string | null, maxLength = 80): string | null {
+  if (!body) return null;
+
+  // Remove markdown comments and headers
+  const cleaned = body
+    .split("\n")
+    .filter((line) => !line.startsWith("#") && !line.startsWith("<!--") && !line.includes("-->") && line.trim())
+    .join(" ")
+    .trim();
+
+  if (!cleaned) return null;
+  if (cleaned.length <= maxLength) return cleaned;
+  return cleaned.substring(0, maxLength).trim() + "…";
 }
 
 export type FeedbackType = "bug" | "idea" | "question" | "other";
@@ -80,10 +97,13 @@ function CommunityFeedbackComponent() {
     fetchIssues();
   }, []);
 
-  // Filter issues based on settings filters
+  // Filter issues based on settings filters (only open issues)
   const filteredIssues = useMemo(() => {
     return issues
       .filter((issue) => {
+        // Only show open issues
+        if (issue.state !== "open") return false;
+
         const type = getIssueType(issue.labels);
         // Include if type matches any of the filters, or if it's "other" and we have all filters
         if (type === "other") return feedbackFilters.length === 3;
@@ -211,38 +231,55 @@ function CommunityFeedbackComponent() {
           Aucun feedback pour le moment. Soyez le premier !
         </p>
       ) : (
-        <div className="space-y-2 mb-4">
+        <div className="space-y-3 mb-4">
           {filteredIssues.map((issue) => {
             const type = getIssueType(issue.labels);
+            const excerpt = getExcerpt(issue.body);
             return (
               <a
                 key={issue.id}
                 href={issue.html_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-start gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors group"
+                className="block p-3 rounded-lg border border-border/50 hover:border-primary/50 hover:bg-muted/30 transition-all group"
               >
-                {/* Icon */}
-                <span className="shrink-0 mt-0.5">
-                  {type === "bug" ? (
-                    <Bug className="h-4 w-4 text-red-500" />
-                  ) : type === "idea" ? (
-                    <Lightbulb className="h-4 w-4 text-amber-500" />
-                  ) : type === "question" ? (
-                    <HelpCircle className="h-4 w-4 text-blue-500" />
-                  ) : (
-                    <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </span>
-
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm truncate group-hover:text-primary transition-colors">
+                {/* Top row: Icon + Title + Time */}
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="shrink-0">
+                    {type === "bug" ? (
+                      <Bug className="h-4 w-4 text-red-500" />
+                    ) : type === "idea" ? (
+                      <Lightbulb className="h-4 w-4 text-amber-500" />
+                    ) : type === "question" ? (
+                      <HelpCircle className="h-4 w-4 text-blue-500" />
+                    ) : (
+                      <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </span>
+                  <span className="flex-1 text-sm font-medium truncate group-hover:text-primary transition-colors">
                     {issue.title.replace(/^\[(Bug|Idea|Feature|Question)\]\s*/i, "")}
+                  </span>
+                  <span className="text-xs text-muted-foreground shrink-0">
+                    {formatRelativeTime(issue.created_at)}
+                  </span>
+                </div>
+
+                {/* Excerpt */}
+                {excerpt && (
+                  <p className="text-xs text-muted-foreground line-clamp-2 ml-6">
+                    {excerpt}
                   </p>
-                  <p className="text-xs text-muted-foreground">
-                    #{issue.number} · {formatRelativeTime(issue.created_at)}
-                  </p>
+                )}
+
+                {/* Bottom row: Issue number + Author */}
+                <div className="flex items-center gap-2 mt-2 ml-6">
+                  <span className="text-xs text-muted-foreground">
+                    #{issue.number}
+                  </span>
+                  <span className="text-xs text-muted-foreground">·</span>
+                  <span className="text-xs text-muted-foreground">
+                    {issue.user.login}
+                  </span>
                 </div>
               </a>
             );

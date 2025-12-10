@@ -8,6 +8,7 @@ export interface GitHubIssue {
   id: number;
   number: number;
   title: string;
+  body: string | null;
   state: "open" | "closed";
   labels: { name: string; color: string }[];
   created_at: string;
@@ -77,6 +78,7 @@ export async function GET(request: Request) {
         id: issue.id,
         number: issue.number,
         title: issue.title,
+        body: issue.body,
         state: issue.state,
         labels: issue.labels.map((l) => ({ name: l.name, color: l.color })),
         created_at: issue.created_at,

@@ -16,11 +16,14 @@ import {
   ExternalLink,
   Pin,
   PinOff,
+  Square,
+  CheckSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useVaultStore } from "@/lib/store";
 import { useSettingsStore } from "@/lib/settings-store";
 import { usePinnedStore } from "@/lib/pinned-store";
+import { useSelectionStore } from "@/lib/selection-store";
 import { getFileType } from "@/lib/file-types";
 import { useFlattenedTree, type FlatTreeItem } from "@/hooks/use-flattened-tree";
 import type { VaultFile } from "@/types";
@@ -95,6 +98,7 @@ const VirtualTreeItem = memo(function VirtualTreeItem({
   const pathname = usePathname();
   const { toggleFolder } = useVaultStore();
   const { settings } = useSettingsStore();
+  const { isSelectionMode, isSelected, toggleItem } = useSelectionStore();
 
   const isDirectory = file.type === "dir";
   const fileType = getFileType(file.name);
@@ -174,6 +178,28 @@ const VirtualTreeItem = memo(function VirtualTreeItem({
     </div>
   );
 
+  // Selection checkbox component
+  const itemSelected = isSelected(file.path);
+  const SelectionCheckbox = isSelectionMode ? (
+    <button
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleItem({ path: file.path, name: file.name, type: isDirectory ? "dir" : "file" });
+      }}
+      className={cn(
+        "shrink-0 p-0.5 rounded transition-colors",
+        itemSelected ? "text-primary" : "text-muted-foreground hover:text-primary"
+      )}
+    >
+      {itemSelected ? (
+        <CheckSquare className="h-4 w-4" />
+      ) : (
+        <Square className="h-4 w-4" />
+      )}
+    </button>
+  ) : null;
+
   if (isDirectory) {
     // Build folder explorer URL
     const folderHref = `/folder/${file.path.split("/").map(s => encodeURIComponent(s)).join("/")}`;
@@ -181,40 +207,64 @@ const VirtualTreeItem = memo(function VirtualTreeItem({
     // Private folder with hidden children - link to folder page for unlock
     if (isPrivateFolder) {
       return (
-        <Link
-          href={folderHref}
-          className={cn(
-            "flex items-center gap-1 w-full h-full px-2 text-sm rounded-md transition-colors overflow-hidden",
-            "hover:bg-amber-500/10 text-amber-600 dark:text-amber-400"
+        <div className="flex items-center w-full h-full">
+          {isSelectionMode && (
+            <div className="pl-2 shrink-0">{SelectionCheckbox}</div>
           )}
-          title="Déverrouiller pour voir le contenu"
-        >
-          {indentGuides}
-          <div className="w-3 shrink-0" />
-          <span className="shrink-0">{icon}</span>
-          <span className="truncate font-medium">{displayName}</span>
-        </Link>
+          <Link
+            href={isSelectionMode ? "#" : folderHref}
+            onClick={(e) => {
+              if (isSelectionMode) {
+                e.preventDefault();
+                toggleItem({ path: file.path, name: file.name, type: "dir" });
+              }
+            }}
+            className={cn(
+              "flex items-center gap-1 flex-1 h-full px-2 text-sm rounded-md transition-colors overflow-hidden",
+              "hover:bg-amber-500/10 text-amber-600 dark:text-amber-400",
+              isSelectionMode && itemSelected && "bg-primary/10"
+            )}
+            title="Déverrouiller pour voir le contenu"
+          >
+            {indentGuides}
+            {!isSelectionMode && <div className="w-3 shrink-0" />}
+            <span className="shrink-0">{icon}</span>
+            <span className="truncate font-medium">{displayName}</span>
+          </Link>
+        </div>
       );
     }
 
     return (
       <div className="flex items-center w-full h-full group">
+        {isSelectionMode && (
+          <div className="pl-2 shrink-0">{SelectionCheckbox}</div>
+        )}
         <button
-          onClick={() => toggleFolder(file.path)}
+          onClick={() => {
+            if (isSelectionMode) {
+              toggleItem({ path: file.path, name: file.name, type: "dir" });
+            } else {
+              toggleFolder(file.path);
+            }
+          }}
           className={cn(
             "flex items-center gap-1 flex-1 h-full px-2 text-sm rounded-md transition-colors overflow-hidden",
             "hover:bg-muted/50 text-left",
             isExpanded && "text-foreground",
-            !isExpanded && "text-muted-foreground"
+            !isExpanded && "text-muted-foreground",
+            isSelectionMode && itemSelected && "bg-primary/10"
           )}
         >
           {indentGuides}
-          <ChevronRight
-            className={cn(
-              "h-3 w-3 shrink-0 transition-transform",
-              isExpanded && "rotate-90"
-            )}
-          />
+          {!isSelectionMode && (
+            <ChevronRight
+              className={cn(
+                "h-3 w-3 shrink-0 transition-transform",
+                isExpanded && "rotate-90"
+              )}
+            />
+          )}
           <span className="shrink-0">{icon}</span>
           <span className="truncate font-medium">{displayName}</span>
           {file.isLocked && (
@@ -222,18 +272,20 @@ const VirtualTreeItem = memo(function VirtualTreeItem({
           )}
         </button>
         {/* Folder explorer button - visible on mobile, hover on desktop */}
-        <Link
-          href={folderHref}
-          onClick={(e) => e.stopPropagation()}
-          className={cn(
-            "p-1 mr-1 rounded transition-opacity",
-            "opacity-100 md:opacity-0 md:group-hover:opacity-100",
-            "hover:bg-primary/20 text-muted-foreground hover:text-primary"
-          )}
-          title="Ouvrir l'explorateur"
-        >
-          <ExternalLink className="h-3 w-3" />
-        </Link>
+        {!isSelectionMode && (
+          <Link
+            href={folderHref}
+            onClick={(e) => e.stopPropagation()}
+            className={cn(
+              "p-1 mr-1 rounded transition-opacity",
+              "opacity-100 md:opacity-0 md:group-hover:opacity-100",
+              "hover:bg-primary/20 text-muted-foreground hover:text-primary"
+            )}
+            title="Ouvrir l'explorateur"
+          >
+            <ExternalLink className="h-3 w-3" />
+          </Link>
+        )}
       </div>
     );
   }
@@ -252,6 +304,32 @@ const VirtualTreeItem = memo(function VirtualTreeItem({
       pinNote(file.path, displayName);
     }
   };
+
+  // In selection mode, clicking selects instead of navigating
+  if (isSelectionMode) {
+    return (
+      <div className="flex items-center w-full h-full group">
+        <div className="pl-2 shrink-0">{SelectionCheckbox}</div>
+        <button
+          onClick={() => toggleItem({ path: file.path, name: file.name, type: "file" })}
+          className={cn(
+            "flex items-center gap-1 flex-1 h-full px-2 text-sm rounded-md transition-all overflow-hidden",
+            "hover:bg-muted/50 text-left",
+            itemSelected
+              ? "bg-primary/10 text-primary font-medium"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          {indentGuides}
+          <span className="shrink-0">{icon}</span>
+          <span className="truncate">{displayName}</span>
+          {file.isLocked && (
+            <Lock className="h-3.5 w-3.5 ml-1 shrink-0 text-amber-500" />
+          )}
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center w-full h-full group">

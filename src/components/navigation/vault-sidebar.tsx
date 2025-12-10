@@ -6,7 +6,7 @@ import { VirtualFileTree } from "./virtual-file-tree";
 import { useVaultStore } from "@/lib/store";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
-import { AlertCircle, FolderTree, RefreshCw, FilePlus, FolderPlus, ChevronsDownUp, ChevronsUpDown, MoreHorizontal, FolderPen, FolderX, Upload, Search, X, ArrowUpDown } from "lucide-react";
+import { AlertCircle, FolderTree, RefreshCw, FilePlus, FolderPlus, ChevronsDownUp, ChevronsUpDown, MoreHorizontal, FolderPen, FolderX, Upload, Search, X, ArrowUpDown, CheckSquare, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -21,8 +21,10 @@ import { ImportNoteDialog } from "@/components/notes/import-note-dialog";
 import { ReorderFoldersDialog } from "@/components/notes/reorder-folders-dialog";
 import { githubClient } from "@/services/github-client";
 import { useSettingsStore, type SidebarSortBy } from "@/lib/settings-store";
+import { useSelectionStore } from "@/lib/selection-store";
 import { getFileType } from "@/lib/file-types";
 import { cacheTree, getTreeCacheStatus } from "@/lib/tree-cache";
+import { SelectionActionBar } from "@/components/selection/selection-action-bar";
 import type { VaultFile } from "@/types";
 
 // Extract all folder paths from tree recursively
@@ -187,6 +189,7 @@ function getSubTree(files: VaultFile[], rootPath: string): VaultFile[] {
 export function VaultSidebar() {
   const { data: session } = useSession();
   const { settings } = useSettingsStore();
+  const { isSelectionMode, toggleSelectionMode, selectedCount } = useSelectionStore();
   const {
     tree,
     isLoadingTree,
@@ -380,6 +383,21 @@ export function VaultSidebar() {
           {searchQuery ? `${filteredTree.length} résultat(s)` : "Vault"}
         </span>
         <div className="flex items-center gap-0.5">
+            {/* Selection mode toggle */}
+            <Button
+              variant={isSelectionMode ? "secondary" : "ghost"}
+              size="icon"
+              className="h-6 w-6"
+              onClick={toggleSelectionMode}
+              title={isSelectionMode ? "Annuler la sélection" : "Sélectionner"}
+            >
+              {isSelectionMode ? (
+                <CheckSquare className="h-3 w-3" />
+              ) : (
+                <Square className="h-3 w-3" />
+              )}
+            </Button>
+
             {/* Folder management dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -506,6 +524,9 @@ export function VaultSidebar() {
         parentPath=""
         folders={tree}
       />
+
+      {/* Selection action bar (floating) */}
+      <SelectionActionBar />
     </div>
   );
 }

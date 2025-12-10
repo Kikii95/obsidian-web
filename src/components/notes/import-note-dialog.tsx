@@ -14,7 +14,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, FileText, Loader2, AlertCircle, Check, AlertTriangle, Image, Film, FileJson, FileIcon } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Upload, FileText, Loader2, AlertCircle, Check, AlertTriangle, Image, Film, FileJson, FileIcon, X, CheckCircle, XCircle, Folder } from "lucide-react";
 import { useVaultStore } from "@/lib/store";
 import { githubClient } from "@/services/github-client";
 import { FolderTreePicker } from "./folder-tree-picker";
@@ -58,6 +59,18 @@ function getFileIcon(category: ReturnType<typeof getFileCategory>) {
   }
 }
 
+interface FileWithPath {
+  file: File;
+  relativePath: string; // For folder uploads, keeps the relative path
+  displayName: string;
+}
+
+interface ImportResult {
+  path: string;
+  success: boolean;
+  error?: string;
+}
+
 interface ImportNoteDialogProps {
   trigger?: React.ReactNode;
 }
@@ -65,104 +78,162 @@ interface ImportNoteDialogProps {
 export function ImportNoteDialog({ trigger }: ImportNoteDialogProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const folderInputRef = useRef<HTMLInputElement>(null);
   const { tree, triggerTreeRefresh } = useVaultStore();
 
   const [open, setOpen] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
-  const [fileName, setFileName] = useState("");
-  const [fileExtension, setFileExtension] = useState("");
+  const [files, setFiles] = useState<FileWithPath[]>([]);
   const [targetFolder, setTargetFolder] = useState("");
   const [isImporting, setIsImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [results, setResults] = useState<ImportResult[]>([]);
   const [showLfsWarning, setShowLfsWarning] = useState(false);
 
-  const validateAndSetFile = useCallback((selectedFile: File) => {
-    const ext = "." + selectedFile.name.split(".").pop()?.toLowerCase();
+  const validateAndAddFiles = useCallback((fileList: FileList, basePath = "") => {
+    const newFiles: FileWithPath[] = [];
+    let hasLargeFile = false;
 
-    if (!ACCEPTED_EXTENSIONS.includes(ext)) {
-      setError(`Format non supporté. Formats acceptés : ${ACCEPTED_EXTENSIONS.join(", ")}`);
+    for (let i = 0; i < fileList.length; i++) {
+      const file = fileList[i];
+      const ext = "." + file.name.split(".").pop()?.toLowerCase();
+
+      if (!ACCEPTED_EXTENSIONS.includes(ext)) {
+        continue; // Skip unsupported files silently
+      }
+
+      // For folder uploads, webkitRelativePath contains the relative path
+      const relativePath = (file as File & { webkitRelativePath?: string }).webkitRelativePath || "";
+      const pathWithoutFile = relativePath ? relativePath.replace(/\/[^/]+$/, "") : basePath;
+
+      if (file.size > LFS_WARNING_SIZE) {
+        hasLargeFile = true;
+      }
+
+      newFiles.push({
+        file,
+        relativePath: pathWithoutFile,
+        displayName: file.name,
+      });
+    }
+
+    if (newFiles.length === 0) {
+      setError("Aucun fichier supporté trouvé");
       return;
     }
 
-    // Check file size for LFS warning
-    if (selectedFile.size > LFS_WARNING_SIZE) {
-      setShowLfsWarning(true);
-    } else {
-      setShowLfsWarning(false);
-    }
-
-    setFile(selectedFile);
-    // Remove extension from filename for display
-    const nameWithoutExt = selectedFile.name.replace(/\.[^/.]+$/, "");
-    setFileName(nameWithoutExt);
-    setFileExtension(ext);
+    setShowLfsWarning(hasLargeFile);
+    setFiles((prev) => [...prev, ...newFiles]);
     setError(null);
   }, []);
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      validateAndSetFile(selectedFile);
+    const fileList = e.target.files;
+    if (fileList && fileList.length > 0) {
+      validateAndAddFiles(fileList);
     }
-  }, [validateAndSetFile]);
+    // Reset input
+    e.target.value = "";
+  }, [validateAndAddFiles]);
+
+  const handleFolderSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const fileList = e.target.files;
+    if (fileList && fileList.length > 0) {
+      validateAndAddFiles(fileList);
+    }
+    // Reset input
+    e.target.value = "";
+  }, [validateAndAddFiles]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
-    const droppedFile = e.dataTransfer.files[0];
-    if (droppedFile) {
-      validateAndSetFile(droppedFile);
+    const fileList = e.dataTransfer.files;
+    if (fileList && fileList.length > 0) {
+      validateAndAddFiles(fileList);
     }
-  }, [validateAndSetFile]);
+  }, [validateAndAddFiles]);
+
+  const removeFile = useCallback((index: number) => {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+  }, []);
 
   const handleImport = async () => {
-    if (!file || !fileName.trim()) return;
+    if (files.length === 0) return;
 
     setIsImporting(true);
     setError(null);
+    setProgress(0);
+    setResults([]);
 
-    try {
-      const fullFileName = `${fileName}${fileExtension}`;
-      const path = targetFolder
-        ? `${targetFolder}/${fullFileName}`
-        : fullFileName;
+    const importResults: ImportResult[] = [];
+    const total = files.length;
 
-      const category = getFileCategory(file.name);
+    for (let i = 0; i < files.length; i++) {
+      const { file, relativePath } = files[i];
 
-      // For text-based files (md, canvas), read as text
-      // For binary files (images, videos, pdf), read as base64
-      if (category === "markdown" || category === "canvas") {
-        const content = await file.text();
-        await githubClient.createNote(path, content);
-      } else {
-        // Binary file - read as ArrayBuffer and convert to base64
-        const arrayBuffer = await file.arrayBuffer();
-        const base64 = btoa(
-          new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), "")
-        );
-        await githubClient.createBinaryFile(path, base64);
+      // Build full path
+      let fullPath = file.name;
+      if (relativePath) {
+        fullPath = `${relativePath}/${file.name}`;
+      }
+      if (targetFolder) {
+        fullPath = `${targetFolder}/${fullPath}`;
       }
 
-      setSuccess(true);
-      triggerTreeRefresh();
+      try {
+        const category = getFileCategory(file.name);
 
-      // Navigate based on file type after a short delay
+        // For text-based files (md, canvas), read as text
+        // For binary files (images, videos, pdf), read as base64
+        if (category === "markdown" || category === "canvas") {
+          const content = await file.text();
+          await githubClient.createNote(fullPath, content);
+        } else {
+          // Binary file - read as ArrayBuffer and convert to base64
+          const arrayBuffer = await file.arrayBuffer();
+          const base64 = btoa(
+            new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), "")
+          );
+          await githubClient.createBinaryFile(fullPath, base64);
+        }
+
+        importResults.push({ path: fullPath, success: true });
+      } catch (err) {
+        importResults.push({
+          path: fullPath,
+          success: false,
+          error: err instanceof Error ? err.message : "Erreur",
+        });
+      }
+
+      setProgress(((i + 1) / total) * 100);
+      setResults([...importResults]);
+    }
+
+    setIsImporting(false);
+    triggerTreeRefresh();
+
+    // If single file and success, navigate to it
+    const successCount = importResults.filter((r) => r.success).length;
+    if (files.length === 1 && successCount === 1) {
+      const file = files[0];
+      const category = getFileCategory(file.file.name);
+      let fullPath = file.file.name;
+      if (file.relativePath) fullPath = `${file.relativePath}/${file.file.name}`;
+      if (targetFolder) fullPath = `${targetFolder}/${fullPath}`;
+
       setTimeout(() => {
         setOpen(false);
         if (category === "markdown") {
-          const notePath = path.replace(/\.md$/, "");
+          const notePath = fullPath.replace(/\.md$/, "");
           router.push(`/note/${encodeURIComponent(notePath)}`);
         } else if (category === "canvas") {
-          const canvasPath = path.replace(/\.canvas$/, "");
+          const canvasPath = fullPath.replace(/\.canvas$/, "");
           router.push(`/canvas/${encodeURIComponent(canvasPath)}`);
         } else {
-          router.push(`/file/${encodeURIComponent(path)}`);
+          router.push(`/file/${encodeURIComponent(fullPath)}`);
         }
       }, 1000);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur lors de l'import");
-    } finally {
-      setIsImporting(false);
     }
   };
 
@@ -170,15 +241,19 @@ export function ImportNoteDialog({ trigger }: ImportNoteDialogProps) {
     setOpen(newOpen);
     if (!newOpen) {
       // Reset state when closing
-      setFile(null);
-      setFileName("");
-      setFileExtension("");
+      setFiles([]);
       setTargetFolder("");
       setError(null);
-      setSuccess(false);
+      setProgress(0);
+      setResults([]);
       setShowLfsWarning(false);
     }
   };
+
+  const successCount = results.filter((r) => r.success).length;
+  const failCount = results.filter((r) => !r.success).length;
+  const isDone = results.length === files.length && results.length > 0 && !isImporting;
+  const totalSize = files.reduce((acc, f) => acc + f.file.size, 0);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -190,9 +265,9 @@ export function ImportNoteDialog({ trigger }: ImportNoteDialogProps) {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col">
         <DialogHeader className="flex-shrink-0">
-          <DialogTitle>Importer un fichier</DialogTitle>
+          <DialogTitle>Importer des fichiers</DialogTitle>
           <DialogDescription>
             Importez des fichiers dans votre vault (notes, images, vidéos, PDF, canvas)
           </DialogDescription>
@@ -200,54 +275,112 @@ export function ImportNoteDialog({ trigger }: ImportNoteDialogProps) {
 
         <div className="space-y-4 py-4 overflow-y-auto flex-1 min-h-0">
           {/* Drop zone */}
-          <div
-            onClick={() => fileInputRef.current?.click()}
-            onDrop={handleDrop}
-            onDragOver={(e) => e.preventDefault()}
-            className={`
-              border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
-              transition-colors duration-200
-              ${file
-                ? "border-primary bg-primary/5"
-                : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50"
-              }
-            `}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept={ACCEPT_STRING}
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-            {file ? (
-              <div className="flex items-center justify-center gap-2 text-primary">
-                {(() => {
-                  const IconComponent = getFileIcon(getFileCategory(file.name));
-                  return <IconComponent className="h-8 w-8" />;
-                })()}
-                <div className="text-left">
-                  <span className="font-medium block">{file.name}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {(file.size / 1024 / 1024).toFixed(2)} MB
-                  </span>
-                </div>
-              </div>
-            ) : (
+          {files.length === 0 && (
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              onDrop={handleDrop}
+              onDragOver={(e) => e.preventDefault()}
+              className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
+                transition-colors duration-200 border-muted-foreground/25
+                hover:border-primary/50 hover:bg-muted/50"
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept={ACCEPT_STRING}
+                onChange={handleFileSelect}
+                className="hidden"
+                multiple
+              />
               <div className="space-y-2">
                 <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
                 <p className="text-sm text-muted-foreground">
-                  Glissez un fichier ici ou cliquez pour sélectionner
+                  Glissez des fichiers ici ou cliquez pour sélectionner
                 </p>
                 <p className="text-xs text-muted-foreground/70">
                   .md, .canvas, .pdf, images, vidéos
                 </p>
               </div>
-            )}
-          </div>
+            </div>
+          )}
+
+          {/* File list */}
+          {files.length > 0 && !isDone && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>{files.length} fichier{files.length > 1 ? "s" : ""} ({(totalSize / 1024 / 1024).toFixed(2)} MB)</Label>
+                <div className="flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isImporting}
+                  >
+                    <Upload className="h-3 w-3 mr-1" />
+                    Ajouter
+                  </Button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept={ACCEPT_STRING}
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    multiple
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => folderInputRef.current?.click()}
+                    disabled={isImporting}
+                  >
+                    <Folder className="h-3 w-3 mr-1" />
+                    Dossier
+                  </Button>
+                  <input
+                    ref={folderInputRef}
+                    type="file"
+                    onChange={handleFolderSelect}
+                    className="hidden"
+                    /* @ts-expect-error webkitdirectory is non-standard */
+                    webkitdirectory=""
+                    multiple
+                  />
+                </div>
+              </div>
+              <div className="max-h-40 overflow-y-auto border rounded-md divide-y divide-border">
+                {files.map((f, index) => {
+                  const IconComponent = getFileIcon(getFileCategory(f.file.name));
+                  return (
+                    <div key={index} className="flex items-center gap-2 p-2 text-sm">
+                      <IconComponent className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="truncate font-medium">{f.displayName}</p>
+                        {f.relativePath && (
+                          <p className="text-xs text-muted-foreground truncate">{f.relativePath}/</p>
+                        )}
+                      </div>
+                      <span className="text-xs text-muted-foreground shrink-0">
+                        {(f.file.size / 1024).toFixed(0)} KB
+                      </span>
+                      {!isImporting && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 shrink-0"
+                          onClick={() => removeFile(index)}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* LFS Warning */}
-          {showLfsWarning && (
+          {showLfsWarning && !isDone && (
             <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400">
               <AlertTriangle className="h-5 w-5 flex-shrink-0 mt-0.5" />
               <div className="text-sm">
@@ -268,21 +401,8 @@ export function ImportNoteDialog({ trigger }: ImportNoteDialogProps) {
             </div>
           )}
 
-          {/* File name */}
-          {file && (
-            <div className="space-y-2">
-              <Label htmlFor="fileName">Nom de la note</Label>
-              <Input
-                id="fileName"
-                value={fileName}
-                onChange={(e) => setFileName(e.target.value)}
-                placeholder="Nom de la note"
-              />
-            </div>
-          )}
-
           {/* Target folder */}
-          {file && tree.length > 0 && (
+          {files.length > 0 && tree.length > 0 && !isDone && (
             <div className="space-y-2">
               <Label>Dossier de destination</Label>
               <FolderTreePicker
@@ -294,6 +414,40 @@ export function ImportNoteDialog({ trigger }: ImportNoteDialogProps) {
             </div>
           )}
 
+          {/* Progress */}
+          {(isImporting || isDone) && (
+            <div className="space-y-2">
+              <Progress value={progress} className="h-2" />
+              <p className="text-xs text-muted-foreground text-center">
+                {isImporting ? `Import en cours... ${Math.round(progress)}%` : `${successCount} importé${successCount > 1 ? "s" : ""}${failCount > 0 ? `, ${failCount} erreur${failCount > 1 ? "s" : ""}` : ""}`}
+              </p>
+            </div>
+          )}
+
+          {/* Results */}
+          {isDone && (
+            <div className="max-h-40 overflow-y-auto space-y-1">
+              {results.map((result, index) => (
+                <div
+                  key={index}
+                  className={`flex items-center gap-2 text-xs p-2 rounded ${
+                    result.success ? "bg-green-500/10" : "bg-destructive/10"
+                  }`}
+                >
+                  {result.success ? (
+                    <CheckCircle className="h-3.5 w-3.5 text-green-500 shrink-0" />
+                  ) : (
+                    <XCircle className="h-3.5 w-3.5 text-destructive shrink-0" />
+                  )}
+                  <span className="truncate flex-1">{result.path}</span>
+                  {!result.success && result.error && (
+                    <span className="text-destructive shrink-0">{result.error}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Error message */}
           {error && (
             <div className="flex items-center gap-2 text-destructive text-sm">
@@ -301,45 +455,40 @@ export function ImportNoteDialog({ trigger }: ImportNoteDialogProps) {
               {error}
             </div>
           )}
-
-          {/* Success message */}
-          {success && (
-            <div className="flex items-center gap-2 text-green-500 text-sm">
-              <Check className="h-4 w-4" />
-              Note importée avec succès !
-            </div>
-          )}
         </div>
 
         <DialogFooter className="flex-shrink-0">
-          <Button
-            variant="outline"
-            onClick={() => setOpen(false)}
-            disabled={isImporting}
-          >
-            Annuler
-          </Button>
-          <Button
-            onClick={handleImport}
-            disabled={!file || !fileName.trim() || isImporting || success}
-          >
-            {isImporting ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Import en cours...
-              </>
-            ) : success ? (
-              <>
-                <Check className="h-4 w-4 mr-2" />
-                Importé !
-              </>
-            ) : (
-              <>
-                <Upload className="h-4 w-4 mr-2" />
-                Importer
-              </>
-            )}
-          </Button>
+          {isDone ? (
+            <Button onClick={() => handleOpenChange(false)}>
+              Fermer
+            </Button>
+          ) : (
+            <>
+              <Button
+                variant="outline"
+                onClick={() => handleOpenChange(false)}
+                disabled={isImporting}
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={handleImport}
+                disabled={files.length === 0 || isImporting}
+              >
+                {isImporting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Import...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-4 w-4 mr-2" />
+                    Importer {files.length > 1 ? `(${files.length})` : ""}
+                  </>
+                )}
+              </Button>
+            </>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

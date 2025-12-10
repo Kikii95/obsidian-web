@@ -190,15 +190,15 @@ export function ImportNoteDialog({ trigger }: ImportNoteDialogProps) {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Importer un fichier</DialogTitle>
           <DialogDescription>
             Importez des fichiers dans votre vault (notes, images, vidéos, PDF, canvas)
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="space-y-4 py-4 overflow-y-auto flex-1 min-h-0">
           {/* Drop zone */}
           <div
             onClick={() => fileInputRef.current?.click()}
@@ -311,7 +311,7 @@ export function ImportNoteDialog({ trigger }: ImportNoteDialogProps) {
           )}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex-shrink-0">
           <Button
             variant="outline"
             onClick={() => setOpen(false)}

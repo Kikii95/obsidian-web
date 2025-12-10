@@ -20,20 +20,46 @@ interface GitHubIssue {
   };
 }
 
-// Extract first line of description (without markdown headers/comments)
-function getExcerpt(body: string | null, maxLength = 80): string | null {
+// Extract only the "Description" section content
+function getExcerpt(body: string | null, maxLength = 100): string | null {
   if (!body) return null;
 
-  // Remove markdown comments and headers
-  const cleaned = body
+  // Find the description section (various formats)
+  const descriptionPatterns = [
+    /##\s*(?:💡\s*)?Description(?:\s+de\s+l['']idée)?/i,
+    /##\s*Description\s+du\s+problème/i,
+    /##\s*❓\s*Ma\s+question/i,
+    /##\s*Description/i,
+  ];
+
+  // Find where description section starts
+  let startIndex = -1;
+  for (const pattern of descriptionPatterns) {
+    const match = body.match(pattern);
+    if (match && match.index !== undefined) {
+      startIndex = match.index + match[0].length;
+      break;
+    }
+  }
+
+  if (startIndex === -1) return null;
+
+  // Find where next section starts (## Something)
+  const afterDescription = body.substring(startIndex);
+  const nextSectionMatch = afterDescription.match(/\n##\s+/);
+  const endIndex = nextSectionMatch?.index ?? afterDescription.length;
+
+  // Extract content between description header and next section
+  const content = afterDescription
+    .substring(0, endIndex)
     .split("\n")
-    .filter((line) => !line.startsWith("#") && !line.startsWith("<!--") && !line.includes("-->") && line.trim())
+    .filter((line) => !line.startsWith("<!--") && !line.includes("-->") && line.trim())
     .join(" ")
     .trim();
 
-  if (!cleaned) return null;
-  if (cleaned.length <= maxLength) return cleaned;
-  return cleaned.substring(0, maxLength).trim() + "…";
+  if (!content) return null;
+  if (content.length <= maxLength) return content;
+  return content.substring(0, maxLength).trim() + "…";
 }
 
 export type FeedbackType = "bug" | "idea" | "question" | "other";

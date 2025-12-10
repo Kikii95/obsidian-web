@@ -13,8 +13,10 @@ import {
   LayoutDashboard,
   Loader2,
   Home,
+  Trash2,
 } from "lucide-react";
 import { githubClient } from "@/services/github-client";
+import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
 import type { ObsidianCanvasData } from "@/types/canvas";
 import { useSettingsStore } from "@/lib/settings-store";
 
@@ -153,36 +155,58 @@ export default function CanvasPage() {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-1 text-sm px-4 py-3 border-b border-border/50 shrink-0 overflow-x-auto">
-        <Link
-          href={homeHref}
-          className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
-          title="Vault Root"
-        >
-          <Home className="h-3.5 w-3.5" />
-        </Link>
-        {breadcrumbs?.map((crumb, index) => {
-          const folderPath = `/folder/${crumb.path.split("/").map(encodeURIComponent).join("/")}`;
-          return (
-            <div key={index} className="flex items-center gap-1 shrink-0">
-              <ChevronRight className="h-3 w-3 text-muted-foreground" />
-              {crumb.isLast ? (
-                <span className="font-medium flex items-center gap-1.5">
-                  <LayoutDashboard className="h-4 w-4 text-purple-500" />
-                  {crumb.name}
-                </span>
-              ) : (
-                <Link
-                  href={folderPath}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {crumb.name}
-                </Link>
-              )}
-            </div>
-          );
-        })}
+      {/* Header with breadcrumb and actions */}
+      <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border/50 shrink-0">
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-1 text-sm overflow-x-auto">
+          <Link
+            href={homeHref}
+            className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
+            title="Vault Root"
+          >
+            <Home className="h-3.5 w-3.5" />
+          </Link>
+          {breadcrumbs?.map((crumb, index) => {
+            const folderPath = `/folder/${crumb.path.split("/").map(encodeURIComponent).join("/")}`;
+            return (
+              <div key={index} className="flex items-center gap-1 shrink-0">
+                <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                {crumb.isLast ? (
+                  <span className="font-medium flex items-center gap-1.5">
+                    <LayoutDashboard className="h-4 w-4 text-purple-500" />
+                    {crumb.name}
+                  </span>
+                ) : (
+                  <Link
+                    href={folderPath}
+                    className="text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {crumb.name}
+                  </Link>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-1 shrink-0">
+          <DeleteNoteDialog
+            path={canvas.path}
+            sha={canvas.sha}
+            noteName={fileName}
+            trigger={
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                title="Supprimer"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            }
+          />
+        </div>
       </div>
 
       {/* Canvas Viewer */}

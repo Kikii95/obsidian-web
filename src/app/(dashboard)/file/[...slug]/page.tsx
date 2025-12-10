@@ -6,7 +6,8 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, ChevronRight, RefreshCw, Image, FileText, Loader2, Home, Film } from "lucide-react";
+import { AlertCircle, ChevronRight, RefreshCw, Image, FileText, Loader2, Home, Film, Trash2, Download } from "lucide-react";
+import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
 import { ImageViewer } from "@/components/viewer/image-viewer";
 import { VideoViewer } from "@/components/viewer/video-viewer";
 import { getFileType } from "@/lib/file-types";
@@ -144,38 +145,79 @@ export default function FilePage() {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-1 text-sm px-4 py-3 border-b border-border/50 shrink-0 overflow-x-auto">
-        <Link
-          href={homeHref}
-          className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
-          title="Vault Root"
-        >
-          <Home className="h-3.5 w-3.5" />
-        </Link>
-        {breadcrumbs?.map((crumb, index) => {
-          const folderPath = `/folder/${crumb.path.split("/").map(encodeURIComponent).join("/")}`;
-          return (
-            <div key={index} className="flex items-center gap-1 shrink-0">
-              <ChevronRight className="h-3 w-3 text-muted-foreground" />
-              {crumb.isLast ? (
-                <span className="font-medium flex items-center gap-1.5">
-                  {fileType === "image" && <Image className="h-4 w-4 text-emerald-500" />}
-                  {fileType === "pdf" && <FileText className="h-4 w-4 text-red-500" />}
-                  {fileType === "video" && <Film className="h-4 w-4 text-purple-500" />}
-                  {crumb.name}
-                </span>
-              ) : (
-                <Link
-                  href={folderPath}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+      {/* Header with breadcrumb and actions */}
+      <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border/50 shrink-0">
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-1 text-sm overflow-x-auto">
+          <Link
+            href={homeHref}
+            className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
+            title="Vault Root"
+          >
+            <Home className="h-3.5 w-3.5" />
+          </Link>
+          {breadcrumbs?.map((crumb, index) => {
+            const folderPath = `/folder/${crumb.path.split("/").map(encodeURIComponent).join("/")}`;
+            return (
+              <div key={index} className="flex items-center gap-1 shrink-0">
+                <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                {crumb.isLast ? (
+                  <span className="font-medium flex items-center gap-1.5">
+                    {fileType === "image" && <Image className="h-4 w-4 text-emerald-500" />}
+                    {fileType === "pdf" && <FileText className="h-4 w-4 text-red-500" />}
+                    {fileType === "video" && <Film className="h-4 w-4 text-purple-500" />}
+                    {crumb.name}
+                  </span>
+                ) : (
+                  <Link
+                    href={folderPath}
+                    className="text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {crumb.name}
+                  </Link>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-1 shrink-0">
+          {/* Download button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              if (!file) return;
+              const link = document.createElement("a");
+              link.href = `data:${file.mimeType};base64,${file.content}`;
+              link.download = fileName;
+              link.click();
+            }}
+            title="Télécharger"
+          >
+            <Download className="h-4 w-4" />
+          </Button>
+
+          {/* Delete button */}
+          {file && (
+            <DeleteNoteDialog
+              path={file.path}
+              sha={file.sha}
+              noteName={fileName}
+              trigger={
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  title="Supprimer"
                 >
-                  {crumb.name}
-                </Link>
-              )}
-            </div>
-          );
-        })}
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              }
+            />
+          )}
+        </div>
       </div>
 
       {/* Viewer */}

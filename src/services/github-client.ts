@@ -91,10 +91,38 @@ async function apiFetch<T>(
     },
   });
 
-  const data = await response.json();
+  // Try to parse JSON, handle non-JSON responses gracefully
+  let data: Record<string, unknown>;
+  const contentType = response.headers.get("content-type");
+
+  if (contentType?.includes("application/json")) {
+    try {
+      data = await response.json();
+    } catch {
+      // JSON parse failed even with JSON content-type
+      const text = await response.text().catch(() => "Unknown error");
+      const error: ApiError = new Error(`Invalid JSON response: ${text.slice(0, 100)}`);
+      error.status = response.status;
+      throw error;
+    }
+  } else {
+    // Non-JSON response (rate limit, HTML error page, etc.)
+    const text = await response.text().catch(() => "Unknown error");
+    if (!response.ok) {
+      const error: ApiError = new Error(
+        response.status === 429
+          ? "Rate limit exceeded. Please wait a moment."
+          : `Request failed: ${text.slice(0, 100)}`
+      );
+      error.status = response.status;
+      throw error;
+    }
+    // If response is OK but not JSON, treat as empty object
+    data = {};
+  }
 
   if (!response.ok) {
-    const error: ApiError = new Error(data.error || "API request failed");
+    const error: ApiError = new Error(data.error as string || "API request failed");
     error.status = response.status;
     throw error;
   }

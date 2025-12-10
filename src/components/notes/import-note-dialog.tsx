@@ -226,17 +226,97 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
     e.target.value = "";
   }, [validateAndAddFiles]);
 
+  // Helper to read all files from a directory entry recursively
+  const readDirectoryEntries = useCallback(async (
+    dirEntry: FileSystemDirectoryEntry,
+    basePath: string
+  ): Promise<File[]> => {
+    const files: File[] = [];
+    const reader = dirEntry.createReader();
+
+    // Read entries in batches (readEntries may not return all at once)
+    const readBatch = (): Promise<FileSystemEntry[]> => {
+      return new Promise((resolve, reject) => {
+        reader.readEntries(resolve, reject);
+      });
+    };
+
+    let entries: FileSystemEntry[] = [];
+    let batch: FileSystemEntry[];
+    do {
+      batch = await readBatch();
+      entries = entries.concat(batch);
+    } while (batch.length > 0);
+
+    for (const entry of entries) {
+      if (entry.isFile) {
+        const fileEntry = entry as FileSystemFileEntry;
+        const file = await new Promise<File>((resolve, reject) => {
+          fileEntry.file(resolve, reject);
+        });
+        // Create a new File with the relative path embedded in a custom property
+        const fileWithPath = new File([file], file.name, { type: file.type });
+        Object.defineProperty(fileWithPath, 'webkitRelativePath', {
+          value: basePath ? `${basePath}/${file.name}` : file.name,
+          writable: false
+        });
+        files.push(fileWithPath);
+      } else if (entry.isDirectory) {
+        const subDirEntry = entry as FileSystemDirectoryEntry;
+        const subPath = basePath ? `${basePath}/${entry.name}` : entry.name;
+        const subFiles = await readDirectoryEntries(subDirEntry, subPath);
+        files.push(...subFiles);
+      }
+    }
+
+    return files;
+  }, []);
+
   const handleDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault();
-    const fileList = e.dataTransfer.files;
-    if (fileList && fileList.length > 0) {
-      // Check if any file has webkitRelativePath (folder drop)
-      const isFromFolder = Array.from(fileList).some(
-        (f) => (f as File & { webkitRelativePath?: string }).webkitRelativePath
-      );
-      await validateAndAddFiles(fileList, isFromFolder);
+
+    const items = e.dataTransfer.items;
+    const allFiles: File[] = [];
+    let isFromFolder = false;
+
+    if (items && items.length > 0) {
+      // Use webkitGetAsEntry to properly handle folders
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        const entry = item.webkitGetAsEntry?.();
+
+        if (entry) {
+          if (entry.isDirectory) {
+            isFromFolder = true;
+            const dirEntry = entry as FileSystemDirectoryEntry;
+            // Read all files from the directory with the folder name as base path
+            const dirFiles = await readDirectoryEntries(dirEntry, entry.name);
+            allFiles.push(...dirFiles);
+          } else if (entry.isFile) {
+            const fileEntry = entry as FileSystemFileEntry;
+            const file = await new Promise<File>((resolve, reject) => {
+              fileEntry.file(resolve, reject);
+            });
+            allFiles.push(file);
+          }
+        }
+      }
     }
-  }, [validateAndAddFiles]);
+
+    // Fallback to regular files if webkitGetAsEntry not available
+    if (allFiles.length === 0 && e.dataTransfer.files.length > 0) {
+      const fileList = e.dataTransfer.files;
+      await validateAndAddFiles(fileList, false);
+      return;
+    }
+
+    if (allFiles.length > 0) {
+      // Create a fake FileList-like object
+      const dataTransfer = new DataTransfer();
+      allFiles.forEach(f => dataTransfer.items.add(f));
+      await validateAndAddFiles(dataTransfer.files, isFromFolder);
+    }
+  }, [validateAndAddFiles, readDirectoryEntries]);
 
   const removeFile = useCallback((index: number) => {
     setFiles((prev) => prev.filter((_, i) => i !== index));
@@ -558,7 +638,7 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
                           )}
                           {f.isZip && (
                             <p className="text-xs text-muted-foreground">
-                              {supportedInZip}/{totalInZip} fichier{totalInZip > 1 ? "s" : ""} supporté{supportedInZip > 1 ? "s" : ""}
+                              {supportedInZip}/{totalInZip} fichier{totalInZip > 1 ? "s" : ""} supporté{supportedInZip > 1 ? "s" : ""} • sera décompressé
                             </p>
                           )}
                         </div>

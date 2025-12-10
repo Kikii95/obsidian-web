@@ -16,6 +16,7 @@ export interface VaultConfig {
   owner: string;      // GitHub username (repo owner)
   repo: string;       // Repository name
   branch: string;     // Branch name (default: main)
+  rootPath?: string;  // Optional: subdirectory path (e.g., "vault")
   configured: boolean; // Whether vault is configured
 }
 
@@ -39,6 +40,7 @@ const defaultConfig: VaultConfig = {
   owner: "",
   repo: "",
   branch: "main",
+  rootPath: "",
   configured: false,
 };
 

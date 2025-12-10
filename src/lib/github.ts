@@ -9,6 +9,7 @@ export interface VaultConfig {
   owner: string;
   repo: string;
   branch: string;
+  rootPath?: string; // Optional: if vault is in a subdirectory (e.g., "vault")
 }
 
 // Default config from env vars (fallback for existing users)
@@ -16,6 +17,7 @@ const DEFAULT_CONFIG: VaultConfig = {
   owner: process.env.GITHUB_REPO_OWNER || "",
   repo: process.env.GITHUB_REPO_NAME || "",
   branch: process.env.GITHUB_BRANCH || "main",
+  rootPath: process.env.GITHUB_ROOT_PATH || "",
 };
 
 /**
@@ -28,7 +30,31 @@ export function getVaultConfig(config?: Partial<VaultConfig>): VaultConfig {
     owner: config?.owner || DEFAULT_CONFIG.owner,
     repo: config?.repo || DEFAULT_CONFIG.repo,
     branch: config?.branch || DEFAULT_CONFIG.branch,
+    rootPath: config?.rootPath ?? DEFAULT_CONFIG.rootPath,
   };
+}
+
+/**
+ * Helper to prepend rootPath to a file path
+ */
+export function withRootPath(path: string, config?: Partial<VaultConfig>): string {
+  const { rootPath } = getVaultConfig(config);
+  if (!rootPath) return path;
+  // Don't prepend if path already starts with rootPath
+  if (path.startsWith(rootPath + "/") || path === rootPath) return path;
+  return `${rootPath}/${path}`;
+}
+
+/**
+ * Helper to remove rootPath from a file path (for display)
+ */
+export function withoutRootPath(path: string, config?: Partial<VaultConfig>): string {
+  const { rootPath } = getVaultConfig(config);
+  if (!rootPath) return path;
+  if (path.startsWith(rootPath + "/")) {
+    return path.slice(rootPath.length + 1);
+  }
+  return path;
 }
 
 // Rate limit info type
@@ -116,12 +142,13 @@ export async function getFileContent(
   path: string,
   config?: Partial<VaultConfig>
 ): Promise<{ content: string; sha: string }> {
-  const { owner, repo, branch } = getVaultConfig(config);
+  const { owner, repo, branch, rootPath } = getVaultConfig(config);
+  const fullPath = rootPath ? withRootPath(path, config) : path;
   try {
     const { data } = await octokit.repos.getContent({
       owner,
       repo,
-      path,
+      path: fullPath,
       ref: branch,
     });
 
@@ -148,12 +175,13 @@ export async function saveFileContent(
   message?: string,
   config?: Partial<VaultConfig>
 ): Promise<{ sha: string }> {
-  const { owner, repo, branch } = getVaultConfig(config);
+  const { owner, repo, branch, rootPath } = getVaultConfig(config);
+  const fullPath = rootPath ? withRootPath(path, config) : path;
   try {
     const { data } = await octokit.repos.createOrUpdateFileContents({
       owner,
       repo,
-      path,
+      path: fullPath,
       message: message || `Update ${path}`,
       content: Buffer.from(content).toString("base64"),
       sha,
@@ -177,12 +205,13 @@ export async function deleteFile(
   message?: string,
   config?: Partial<VaultConfig>
 ): Promise<void> {
-  const { owner, repo, branch } = getVaultConfig(config);
+  const { owner, repo, branch, rootPath } = getVaultConfig(config);
+  const fullPath = rootPath ? withRootPath(path, config) : path;
   try {
     await octokit.repos.deleteFile({
       owner,
       repo,
-      path,
+      path: fullPath,
       message: message || `Delete ${path}`,
       sha,
       branch,
@@ -240,7 +269,7 @@ export async function getFullVaultTree(
   includeHidden: boolean = false,
   config?: Partial<VaultConfig>
 ): Promise<VaultFile[]> {
-  const { owner, repo, branch } = getVaultConfig(config);
+  const { owner, repo, branch, rootPath } = getVaultConfig(config);
   try {
     const { data: ref } = await octokit.git.getRef({
       owner,
@@ -259,6 +288,14 @@ export async function getFullVaultTree(
       .filter((item) => {
         if (!item.path) return false;
         if (item.path.includes("node_modules")) return false;
+
+        // If rootPath is set, only include files within that directory
+        if (rootPath) {
+          if (!item.path.startsWith(rootPath + "/") && item.path !== rootPath) {
+            return false;
+          }
+        }
+
         // Filter hidden files unless includeHidden is true
         // But always include .gitkeep for folder operations
         if (!includeHidden) {
@@ -271,12 +308,21 @@ export async function getFullVaultTree(
         }
         return true;
       })
-      .map((item) => ({
-        name: item.path?.split("/").pop() || "",
-        path: item.path || "",
-        type: item.type === "tree" ? "dir" : "file",
-        sha: item.sha,
-      }));
+      .map((item) => {
+        // Remove rootPath prefix from path for display
+        let displayPath = item.path || "";
+        if (rootPath && displayPath.startsWith(rootPath + "/")) {
+          displayPath = displayPath.slice(rootPath.length + 1);
+        }
+        return {
+          name: item.path?.split("/").pop() || "",
+          path: displayPath,
+          type: (item.type === "tree" ? "dir" : "file") as "file" | "dir",
+          sha: item.sha,
+        };
+      })
+      // Filter out the root directory itself if it was included
+      .filter(item => item.path !== "");
 
     return files;
   } catch (error) {

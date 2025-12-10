@@ -43,6 +43,7 @@ export function useVaultConfig() {
             owner: data.config.owner,
             repo: data.config.repo,
             branch: data.config.branch || "main",
+            rootPath: data.config.rootPath || "",
             configured: true,
           });
         } else {
@@ -61,6 +62,7 @@ export function useVaultConfig() {
             owner: envOwner,
             repo: envRepo,
             branch: process.env.NEXT_PUBLIC_GITHUB_BRANCH || "main",
+            rootPath: process.env.NEXT_PUBLIC_GITHUB_ROOT_PATH || "",
             configured: true,
           });
         } else {
@@ -86,11 +88,12 @@ export function useVaultConfig() {
 /**
  * Get vault config for API calls (server-side compatible)
  */
-export function getVaultConfigForAPI(localConfig?: { owner?: string; repo?: string; branch?: string }) {
+export function getVaultConfigForAPI(localConfig?: { owner?: string; repo?: string; branch?: string; rootPath?: string }) {
   // Priority: local config > env vars
   return {
     owner: localConfig?.owner || process.env.NEXT_PUBLIC_GITHUB_REPO_OWNER || "",
     repo: localConfig?.repo || process.env.NEXT_PUBLIC_GITHUB_REPO_NAME || "",
     branch: localConfig?.branch || process.env.NEXT_PUBLIC_GITHUB_BRANCH || "main",
+    rootPath: localConfig?.rootPath || process.env.NEXT_PUBLIC_GITHUB_ROOT_PATH || "",
   };
 }

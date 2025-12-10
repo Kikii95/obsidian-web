@@ -10,6 +10,7 @@ interface VaultConfigData {
   owner: string;
   repo: string;
   branch: string;
+  rootPath?: string;
 }
 
 /**
@@ -45,6 +46,7 @@ export async function getServerVaultConfig(): Promise<VaultConfig | null> {
         owner: config.owner,
         repo: config.repo,
         branch: config.branch || "main",
+        rootPath: config.rootPath || "",
       };
     }
   } catch {
@@ -55,9 +57,10 @@ export async function getServerVaultConfig(): Promise<VaultConfig | null> {
   const owner = process.env.GITHUB_REPO_OWNER;
   const repo = process.env.GITHUB_REPO_NAME;
   const branch = process.env.GITHUB_BRANCH || "main";
+  const rootPath = process.env.GITHUB_ROOT_PATH || "";
 
   if (owner && repo) {
-    return { owner, repo, branch };
+    return { owner, repo, branch, rootPath };
   }
 
   return null;

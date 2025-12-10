@@ -12,6 +12,7 @@ interface VaultConfigData {
   owner: string;
   repo: string;
   branch: string;
+  rootPath?: string;
   configuredAt: string;
 }
 
@@ -79,7 +80,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { owner, repo, branch = "main" } = body;
+    const { owner, repo, branch = "main", rootPath = "" } = body;
 
     if (!owner || !repo) {
       return NextResponse.json(
@@ -118,6 +119,7 @@ export async function POST(request: NextRequest) {
       owner,
       repo,
       branch,
+      rootPath,
       configuredAt: new Date().toISOString(),
     };
 

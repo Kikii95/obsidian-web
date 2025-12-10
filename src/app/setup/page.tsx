@@ -21,6 +21,7 @@ import {
   Github,
   FolderGit2,
   GitBranch,
+  FolderRoot,
   ArrowRight,
   AlertCircle,
   CheckCircle2,
@@ -49,6 +50,7 @@ export default function SetupPage() {
   const [owner, setOwner] = useState("");
   const [repo, setRepo] = useState("");
   const [branch, setBranch] = useState("main");
+  const [rootPath, setRootPath] = useState("");
   const [isValidating, setIsValidating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
@@ -105,7 +107,7 @@ export default function SetupPage() {
       const response = await fetch("/api/vault-config/validate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ owner, repo, branch }),
+        body: JSON.stringify({ owner, repo, branch, rootPath }),
       });
 
       const result = await response.json();
@@ -133,7 +135,7 @@ export default function SetupPage() {
       const response = await fetch("/api/vault-config", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ owner, repo, branch }),
+        body: JSON.stringify({ owner, repo, branch, rootPath }),
       });
 
       if (!response.ok) {
@@ -148,6 +150,7 @@ export default function SetupPage() {
         owner,
         repo,
         branch,
+        rootPath,
         configured: true,
       });
 
@@ -280,6 +283,22 @@ export default function SetupPage() {
                     La branche à utiliser (généralement main ou master)
                   </p>
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="rootPath" className="flex items-center gap-2">
+                    <FolderRoot className="h-4 w-4" />
+                    Chemin racine <span className="text-muted-foreground">(optionnel)</span>
+                  </Label>
+                  <Input
+                    id="rootPath"
+                    value={rootPath}
+                    onChange={(e) => setRootPath(e.target.value)}
+                    placeholder="vault"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Si votre vault est dans un sous-dossier (ex: vault, notes)
+                  </p>
+                </div>
               </div>
 
               <div className="flex gap-3">
@@ -343,6 +362,12 @@ export default function SetupPage() {
                   <span className="text-sm text-muted-foreground">Branche</span>
                   <span className="text-sm font-medium">{branch}</span>
                 </div>
+                {rootPath && (
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Chemin racine</span>
+                    <span className="text-sm font-medium font-mono">{rootPath}/</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Visibilité</span>
                   <span className="text-sm font-medium">

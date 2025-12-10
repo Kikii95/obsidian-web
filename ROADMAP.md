@@ -17,6 +17,7 @@ This document tracks planned features, known issues, and community ideas for Obs
 
 | Feature | Status | Description |
 |---------|--------|-------------|
+| **Batch file operations** | 🔴 | Multi-select, batch delete/move/export (see detailed spec below) |
 | Audio file support | 🔴 | Play .mp3, .wav, .ogg files in vault |
 | Excalidraw viewer | 🔴 | Render .excalidraw files |
 | Search in file content | 🔴 | Full-text search across all notes |
@@ -116,6 +117,103 @@ interface ObsidianWebPlugin {
 - Manual review before listing
 
 **Timeline**: TBD — This is a major feature requiring careful design.
+
+---
+
+### 📦 Batch File Operations (Big Feature)
+
+**Goal**: Enable multi-select and batch operations on files/folders in the explorer.
+
+**Proposed Features**:
+
+#### 1. Multi-Select in Explorer
+
+| Feature | Complexity | Description |
+|---------|------------|-------------|
+| Checkbox mode toggle | 🟢 Low | Button to enter/exit selection mode |
+| Click to select | 🟢 Low | Single click selects file in selection mode |
+| Ctrl+Click | 🟢 Low | Add/remove file from selection |
+| Shift+Click | 🟡 Medium | Select range of files |
+| Select all in folder | 🟢 Low | "Select all" option per folder |
+| Selection counter | 🟢 Low | "X items selected" indicator |
+
+**UX Flow**:
+```
+Normal mode → Click "Select" button → Selection mode enabled
+→ Checkboxes appear on all files/folders
+→ Click items to select/deselect
+→ Floating action bar appears at bottom with actions
+→ Click "Cancel" or perform action to exit selection mode
+```
+
+#### 2. Batch Actions (Floating Action Bar)
+
+| Action | Complexity | Description |
+|--------|------------|-------------|
+| Delete selected | 🟡 Medium | Delete multiple files at once (with confirmation) |
+| Move selected | 🟡 Medium | Move files to another folder |
+| Export selected | 🟡 Medium | Download as .zip |
+| Pin/Unpin selected | 🟢 Low | Batch pin operation |
+
+**Error handling**:
+- Show progress indicator (X/Y files processed)
+- If some fail, show partial success message
+- List failed items with error reasons
+- Option to retry failed items
+
+#### 3. Multi-File Import
+
+| Feature | Complexity | Description |
+|---------|------------|-------------|
+| Multiple file picker | 🟢 Low | `<input multiple>` support |
+| Drag & drop multiple | 🟢 Low | Drop multiple files at once |
+| Folder upload | 🟡 Medium | Upload entire folder structure |
+| Import progress | 🟡 Medium | Progress bar for batch import |
+| Conflict resolution | 🟡 Medium | Skip/rename/overwrite for existing files |
+
+**Folder upload considerations**:
+- Use `webkitdirectory` attribute for folder selection
+- Preserve folder structure during upload
+- Show tree preview before confirming import
+- Handle nested folders recursively
+
+#### 4. Implementation Plan
+
+**Phase 1: Selection System**
+- [ ] Add selection store (Zustand)
+- [ ] Add checkbox UI to `VirtualFileTree`
+- [ ] Implement Ctrl+Click and Shift+Click
+- [ ] Add floating action bar component
+
+**Phase 2: Batch Delete**
+- [ ] Create batch delete API endpoint
+- [ ] Add confirmation dialog for multi-delete
+- [ ] Implement progress tracking
+- [ ] Handle partial failures
+
+**Phase 3: Batch Move**
+- [ ] Create batch move API endpoint
+- [ ] Add folder picker for destination
+- [ ] Implement move with progress
+
+**Phase 4: Multi-Import**
+- [ ] Update import dialog for multiple files
+- [ ] Add folder upload support
+- [ ] Implement conflict resolution UI
+- [ ] Add import progress tracking
+
+**Phase 5: Export**
+- [ ] Create zip generation (client-side or server-side)
+- [ ] Add export selected action
+- [ ] Support folder export
+
+**Technical Notes**:
+- GitHub API allows max 100 files per commit for tree operations
+- For large batches, split into multiple commits
+- Consider rate limiting implications
+- Zip generation: use `JSZip` library client-side
+
+**Timeline**: TBD — Phased implementation recommended.
 
 ---
 

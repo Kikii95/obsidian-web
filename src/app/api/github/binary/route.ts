@@ -33,9 +33,12 @@ export async function GET(request: NextRequest) {
 
     const mimeType = getMimeType(path);
 
+    // GitHub returns base64 with newlines, we need to clean them
+    const cleanContent = data.content?.replace(/\n/g, "") || "";
+
     return NextResponse.json({
       path,
-      content: data.content, // base64 encoded
+      content: cleanContent, // base64 encoded (cleaned)
       sha: data.sha,
       size: data.size,
       mimeType,

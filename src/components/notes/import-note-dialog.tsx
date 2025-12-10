@@ -322,27 +322,32 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
     const allFiles: File[] = [];
     let isFromFolder = false;
 
+    // IMPORTANT: Collect all entries FIRST before any async operations
+    // DataTransferItemList is "live" and gets cleared after the event
+    const entries: FileSystemEntry[] = [];
     if (items && items.length > 0) {
-      // Use webkitGetAsEntry to properly handle folders
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
         const entry = item.webkitGetAsEntry?.();
-
         if (entry) {
-          if (entry.isDirectory) {
-            isFromFolder = true;
-            const dirEntry = entry as FileSystemDirectoryEntry;
-            // Read all files from the directory with the folder name as base path
-            const dirFiles = await readDirectoryEntries(dirEntry, entry.name);
-            allFiles.push(...dirFiles);
-          } else if (entry.isFile) {
-            const fileEntry = entry as FileSystemFileEntry;
-            const file = await new Promise<File>((resolve, reject) => {
-              fileEntry.file(resolve, reject);
-            });
-            allFiles.push(file);
-          }
+          entries.push(entry);
         }
+      }
+    }
+
+    // Now process entries asynchronously
+    for (const entry of entries) {
+      if (entry.isDirectory) {
+        isFromFolder = true;
+        const dirEntry = entry as FileSystemDirectoryEntry;
+        const dirFiles = await readDirectoryEntries(dirEntry, entry.name);
+        allFiles.push(...dirFiles);
+      } else if (entry.isFile) {
+        const fileEntry = entry as FileSystemFileEntry;
+        const file = await new Promise<File>((resolve, reject) => {
+          fileEntry.file(resolve, reject);
+        });
+        allFiles.push(file);
       }
     }
 

@@ -373,10 +373,12 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
     );
   }, []);
 
+  const [isCancelled, setIsCancelled] = useState(false);
+
   const handleCancel = useCallback(() => {
     cancelledRef.current = true;
     setIsImporting(false);
-    setError("Import annulé");
+    setIsCancelled(true);
   }, []);
 
   const handleImport = async () => {
@@ -384,6 +386,7 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
 
     cancelledRef.current = false;
     setIsImporting(true);
+    setIsCancelled(false);
     setError(null);
     setProgress(0);
     setResults([]);
@@ -594,6 +597,7 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
       setProgress(0);
       setResults([]);
       setShowLfsWarning(false);
+      setIsCancelled(false);
     }
   };
 
@@ -614,15 +618,33 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col">
         <DialogHeader className="flex-shrink-0">
-          <DialogTitle>Importer des fichiers</DialogTitle>
+          <DialogTitle>
+            {isCancelled ? "Import annulé" : "Importer des fichiers"}
+          </DialogTitle>
           <DialogDescription>
-            Importez des fichiers dans votre vault (notes, images, vidéos, PDF, canvas)
+            {isCancelled
+              ? "L'import a été interrompu."
+              : "Importez des fichiers dans votre vault (notes, images, vidéos, PDF, canvas)"
+            }
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4 overflow-y-auto flex-1 min-h-0">
+          {/* Cancelled state */}
+          {isCancelled && (
+            <div className="text-center py-8">
+              <XCircle className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+              <p className="text-muted-foreground">
+                {results.length > 0
+                  ? `${successCount} fichier${successCount > 1 ? "s" : ""} importé${successCount > 1 ? "s" : ""} avant l'annulation`
+                  : "Aucun fichier n'a été importé"
+                }
+              </p>
+            </div>
+          )}
+
           {/* Drop zone */}
-          {files.length === 0 && (
+          {files.length === 0 && !isCancelled && (
             <div
               onClick={() => fileInputRef.current?.click()}
               onDrop={handleDrop}
@@ -652,7 +674,7 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
           )}
 
           {/* File list */}
-          {files.length > 0 && !isDone && (
+          {files.length > 0 && !isDone && !isCancelled && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>{files.length} fichier{files.length > 1 ? "s" : ""} ({(totalSize / 1024 / 1024).toFixed(2)} MB)</Label>
@@ -787,7 +809,7 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
           )}
 
           {/* LFS Warning */}
-          {showLfsWarning && !isDone && (
+          {showLfsWarning && !isDone && !isCancelled && (
             <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400">
               <AlertTriangle className="h-5 w-5 flex-shrink-0 mt-0.5" />
               <div className="text-sm">
@@ -809,7 +831,7 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
           )}
 
           {/* Target folder */}
-          {files.length > 0 && tree.length > 0 && !isDone && (
+          {files.length > 0 && tree.length > 0 && !isDone && !isCancelled && (
             <div className="space-y-2">
               <Label>Dossier de destination</Label>
               <FolderTreePicker
@@ -865,7 +887,7 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
         </div>
 
         <DialogFooter className="flex-shrink-0">
-          {isDone ? (
+          {isDone || isCancelled ? (
             <Button onClick={() => handleOpenChange(false)}>
               Fermer
             </Button>

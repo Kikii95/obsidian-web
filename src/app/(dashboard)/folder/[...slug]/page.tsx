@@ -15,6 +15,7 @@ import {
   ArrowUpDown,
   Lock,
   Upload,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useVaultStore } from "@/lib/store";
@@ -25,6 +26,7 @@ import { getFileType, isViewableFile } from "@/lib/file-types";
 import { cn } from "@/lib/utils";
 import { ReorderFoldersDialog } from "@/components/notes/reorder-folders-dialog";
 import { ImportNoteDialog } from "@/components/notes/import-note-dialog";
+import { DeleteFolderDialog } from "@/components/notes/delete-folder-dialog";
 import type { VaultFile } from "@/types";
 
 // Check if folder name indicates a private folder
@@ -211,6 +213,22 @@ export default function FolderPage() {
                   Ordre
                 </Button>
               )}
+              {/* Delete folder button */}
+              <DeleteFolderDialog
+                path={folderPath}
+                folderName={folderName}
+                itemCount={stats.total}
+                trigger={
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10 hover:border-destructive/50"
+                    title="Supprimer ce dossier"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                }
+              />
             </div>
           )}
         </div>

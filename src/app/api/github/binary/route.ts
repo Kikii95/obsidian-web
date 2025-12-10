@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getLastRateLimit, createOctokit } from "@/lib/github";
+import { getLastRateLimit } from "@/lib/github";
 import { getAuthenticatedContext } from "@/lib/server-vault-config";
 import { getMimeType } from "@/lib/file-types";
 
@@ -32,17 +32,31 @@ export async function GET(request: NextRequest) {
     }
 
     const mimeType = getMimeType(path);
+    let content: string;
 
-    // GitHub returns base64 with newlines, we need to clean them
-    const cleanContent = data.content?.replace(/\n/g, "") || "";
+    // GitHub returns base64 content for small files, but for files > 1MB
+    // it only provides download_url and we need to fetch separately
+    if (data.content) {
+      // Clean newlines from base64 content
+      content = data.content.replace(/\n/g, "");
+    } else if (data.download_url) {
+      // Fetch content from download_url for large files
+      const response = await fetch(data.download_url);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch file: ${response.status}`);
+      }
+      const arrayBuffer = await response.arrayBuffer();
+      content = Buffer.from(arrayBuffer).toString("base64");
+    } else {
+      return NextResponse.json({ error: "No content available" }, { status: 400 });
+    }
 
     return NextResponse.json({
       path,
-      content: cleanContent, // base64 encoded (cleaned)
+      content, // base64 encoded
       sha: data.sha,
       size: data.size,
       mimeType,
-      encoding: data.encoding,
       rateLimit: getLastRateLimit(),
     });
   } catch (error) {

@@ -637,14 +637,30 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
         <div className="space-y-4 py-4 overflow-y-auto flex-1 min-h-0">
           {/* Cancelled state */}
           {isCancelled && (
-            <div className="text-center py-8">
-              <XCircle className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-              <p className="text-muted-foreground">
-                {results.length > 0
-                  ? `${successCount} fichier${successCount > 1 ? "s" : ""} importé${successCount > 1 ? "s" : ""} avant l'annulation`
-                  : "Aucun fichier n'a été importé"
-                }
-              </p>
+            <div className="py-4">
+              <div className="text-center mb-4">
+                <XCircle className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+                <p className="text-muted-foreground">
+                  {successCount > 0
+                    ? `${successCount} fichier${successCount > 1 ? "s" : ""} importé${successCount > 1 ? "s" : ""} avant l'annulation`
+                    : "Aucun fichier n'a été importé"
+                  }
+                </p>
+              </div>
+              {/* List imported files */}
+              {successCount > 0 && (
+                <div className="space-y-1 max-h-40 overflow-y-auto">
+                  {results.filter(r => r.success).map((result, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-2 p-2 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-sm"
+                    >
+                      <CheckCircle className="h-4 w-4 shrink-0" />
+                      <span className="truncate">{result.path}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { createOctokit, getFullVaultTree, getFileContent } from "@/lib/github";
+import { getFullVaultTree, getFileContent } from "@/lib/github";
+import { getAuthenticatedContext } from "@/lib/server-vault-config";
 import { filterPrivatePaths, isPrivateContent } from "@/lib/privacy";
 
 interface Backlink {
@@ -22,13 +21,13 @@ export async function GET(request: Request) {
       );
     }
 
-    const session = await getServerSession(authOptions);
+    const context = await getAuthenticatedContext();
 
-    if (!session?.accessToken) {
+    if (!context) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    const octokit = createOctokit(session.accessToken);
+    const { octokit, vaultConfig } = context;
 
     // Normalize target path - ensure .md extension
     const normalizedPath = targetPath.endsWith(".md")
@@ -49,7 +48,7 @@ export async function GET(request: Request) {
     const targetIdLower = targetId.toLowerCase();
 
     // Get all markdown files
-    const allFiles = await getFullVaultTree(octokit);
+    const allFiles = await getFullVaultTree(octokit, false, vaultConfig);
     const publicFiles = filterPrivatePaths(allFiles);
     const mdFiles = publicFiles.filter(
       (f) => f.type === "file" && f.path.endsWith(".md") && f.path !== normalizedPath
@@ -65,7 +64,7 @@ export async function GET(request: Request) {
 
     for (const file of filesToScan) {
       try {
-        const { content } = await getFileContent(octokit, file.path);
+        const { content } = await getFileContent(octokit, file.path, vaultConfig);
 
         // Check if content marks this file as private
         const privacyCheck = isPrivateContent(content);

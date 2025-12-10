@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { createOctokit, getFileContent, saveFileContent, getLastRateLimit } from "@/lib/github";
+import { getFileContent, saveFileContent, getLastRateLimit } from "@/lib/github";
+import { getAuthenticatedContext } from "@/lib/server-vault-config";
 import type { ObsidianCanvasData } from "@/types/canvas";
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const context = await getAuthenticatedContext();
 
-    if (!session?.accessToken) {
+    if (!context) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
@@ -19,8 +18,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Path requis" }, { status: 400 });
     }
 
-    const octokit = createOctokit(session.accessToken);
-    const { content, sha } = await getFileContent(octokit, path);
+    const { octokit, vaultConfig } = context;
+    const { content, sha } = await getFileContent(octokit, path, vaultConfig);
 
     // Parse canvas JSON
     let canvasData: ObsidianCanvasData;
@@ -50,9 +49,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const context = await getAuthenticatedContext();
 
-    if (!session?.accessToken) {
+    if (!context) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
@@ -66,7 +65,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const octokit = createOctokit(session.accessToken);
+    const { octokit, vaultConfig } = context;
 
     // Convert canvas data to JSON string
     const content = JSON.stringify(data, null, "\t");
@@ -76,7 +75,8 @@ export async function POST(request: NextRequest) {
       path,
       content,
       sha,
-      `Update canvas ${path}`
+      `Update canvas ${path}`,
+      vaultConfig
     );
 
     return NextResponse.json({

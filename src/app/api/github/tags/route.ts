@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { createOctokit, getFullVaultTree, getFileContent } from "@/lib/github";
+import { getFullVaultTree, getFileContent } from "@/lib/github";
+import { getAuthenticatedContext } from "@/lib/server-vault-config";
 import { filterPrivatePaths, isPrivateContent } from "@/lib/privacy";
 import matter from "gray-matter";
 
@@ -44,16 +43,16 @@ function parseInlineTags(content: string): string[] {
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
+    const context = await getAuthenticatedContext();
 
-    if (!session?.accessToken) {
+    if (!context) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    const octokit = createOctokit(session.accessToken);
+    const { octokit, vaultConfig } = context;
 
     // Get all markdown files
-    const allFiles = await getFullVaultTree(octokit);
+    const allFiles = await getFullVaultTree(octokit, false, vaultConfig);
     const publicFiles = filterPrivatePaths(allFiles);
     const mdFiles = publicFiles.filter(
       (f) => f.type === "file" && f.path.endsWith(".md")
@@ -67,7 +66,7 @@ export async function GET() {
 
     for (const file of filesToScan) {
       try {
-        const { content } = await getFileContent(octokit, file.path);
+        const { content } = await getFileContent(octokit, file.path, vaultConfig);
 
         // Check if content is private
         const privacyCheck = isPrivateContent(content);

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { createOctokit, getFileContent, saveFileContent } from "@/lib/github";
+import { getFileContent, saveFileContent } from "@/lib/github";
+import { getAuthenticatedContext } from "@/lib/server-vault-config";
 
 // Separate settings files for desktop and mobile
 const SETTINGS_PATH_DESKTOP = ".obsidian-web/settings-desktop.json";
@@ -42,9 +41,9 @@ function extractSharedSettings(settings: Record<string, unknown>): Record<string
  */
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const context = await getAuthenticatedContext();
 
-    if (!session?.accessToken) {
+    if (!context) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
@@ -52,10 +51,10 @@ export async function GET(request: NextRequest) {
     const isMobile = searchParams.get("mobile") === "true";
     const settingsPath = getSettingsPath(isMobile);
 
-    const octokit = createOctokit(session.accessToken);
+    const { octokit, vaultConfig } = context;
 
     try {
-      const { content, sha } = await getFileContent(octokit, settingsPath);
+      const { content, sha } = await getFileContent(octokit, settingsPath, vaultConfig);
       const settings = JSON.parse(content);
 
       return NextResponse.json({
@@ -92,9 +91,9 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const context = await getAuthenticatedContext();
 
-    if (!session?.accessToken) {
+    if (!context) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
@@ -108,7 +107,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Settings requis" }, { status: 400 });
     }
 
-    const octokit = createOctokit(session.accessToken);
+    const { octokit, vaultConfig } = context;
 
     // Format JSON nicely for readability in GitHub
     const content = JSON.stringify(settings, null, 2);
@@ -119,7 +118,8 @@ export async function POST(request: NextRequest) {
       settingsPath,
       content,
       sha || undefined,
-      `Update Obsidian Web settings (${isMobile ? "mobile" : "desktop"})`
+      `Update Obsidian Web settings (${isMobile ? "mobile" : "desktop"})`,
+      vaultConfig
     );
 
     // Sync shared settings to the other device file (if it exists)
@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
 
       // Try to read the other device's settings
       try {
-        const { content: otherContent, sha: otherSha } = await getFileContent(octokit, otherSettingsPath);
+        const { content: otherContent, sha: otherSha } = await getFileContent(octokit, otherSettingsPath, vaultConfig);
         const otherSettings = JSON.parse(otherContent);
 
         // Merge shared settings into other device's settings
@@ -142,7 +142,8 @@ export async function POST(request: NextRequest) {
             otherSettingsPath,
             updatedContent,
             otherSha,
-            `Sync shared settings from ${isMobile ? "mobile" : "desktop"}`
+            `Sync shared settings from ${isMobile ? "mobile" : "desktop"}`,
+            vaultConfig
           );
         }
       } catch (error: unknown) {
@@ -154,7 +155,8 @@ export async function POST(request: NextRequest) {
             otherSettingsPath,
             newContent,
             undefined,
-            `Create ${isMobile ? "desktop" : "mobile"} settings with shared values`
+            `Create ${isMobile ? "desktop" : "mobile"} settings with shared values`,
+            vaultConfig
           );
         }
         // Ignore other errors - syncing is best-effort

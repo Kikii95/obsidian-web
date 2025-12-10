@@ -42,21 +42,23 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
     async jwt({ token, account, profile }) {
-      // Save access token and username to JWT
+      // Save access token, username and userId to JWT
       if (account) {
         token.accessToken = account.access_token;
         token.username = (profile as { login?: string })?.login;
+        token.userId = (profile as { id?: number })?.id?.toString();
       }
       return token;
     },
     async session({ session, token }) {
-      // Expose access token and username in session
+      // Expose access token, username and userId in session
       return {
         ...session,
         accessToken: token.accessToken as string,
         user: {
           ...session.user,
           username: token.username as string,
+          id: token.userId as string,
         },
       };
     },

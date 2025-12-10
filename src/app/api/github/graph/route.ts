@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { createOctokit, getFullVaultTree, getFileContent, getLastRateLimit } from "@/lib/github";
+import { getFullVaultTree, getFileContent, getLastRateLimit } from "@/lib/github";
+import { getAuthenticatedContext } from "@/lib/server-vault-config";
 import { parseWikilinks } from "@/lib/wikilinks";
 import { filterPrivatePaths, isPrivateContent } from "@/lib/privacy";
 
@@ -22,16 +21,16 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const includeOrphans = searchParams.get("includeOrphans") === "true";
 
-    const session = await getServerSession(authOptions);
+    const context = await getAuthenticatedContext();
 
-    if (!session?.accessToken) {
+    if (!context) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    const octokit = createOctokit(session.accessToken);
+    const { octokit, vaultConfig } = context;
 
     // Get all files and filter private paths
-    const allFiles = await getFullVaultTree(octokit);
+    const allFiles = await getFullVaultTree(octokit, false, vaultConfig);
     const publicFiles = filterPrivatePaths(allFiles);
     const mdFiles = publicFiles.filter(f => f.type === "file" && f.path.endsWith(".md"));
 
@@ -59,7 +58,7 @@ export async function GET(request: Request) {
 
     for (const file of filesToParse) {
       try {
-        const { content } = await getFileContent(octokit, file.path);
+        const { content } = await getFileContent(octokit, file.path, vaultConfig);
         const sourceId = file.path.replace(".md", "");
 
         // Check if content marks this file as private

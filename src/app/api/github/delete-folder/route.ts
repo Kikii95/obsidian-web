@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { createOctokit, getFullVaultTree, deleteFile } from "@/lib/github";
+import { getFullVaultTree, deleteFile } from "@/lib/github";
+import { getAuthenticatedContext } from "@/lib/server-vault-config";
 
 export async function DELETE(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const context = await getAuthenticatedContext();
 
-    if (!session?.accessToken) {
+    if (!context) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
@@ -20,10 +19,10 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const octokit = createOctokit(session.accessToken);
+    const { octokit, vaultConfig } = context;
 
     // Get all files in the vault
-    const allFiles = await getFullVaultTree(octokit);
+    const allFiles = await getFullVaultTree(octokit, false, vaultConfig);
 
     // Filter files that are inside the folder to delete
     const filesToDelete = allFiles.filter(
@@ -44,7 +43,7 @@ export async function DELETE(request: NextRequest) {
     for (const file of filesToDelete) {
       try {
         if (file.sha) {
-          await deleteFile(octokit, file.path, file.sha, `Delete ${file.path}`);
+          await deleteFile(octokit, file.path, file.sha, `Delete ${file.path}`, vaultConfig);
         }
       } catch (err) {
         errors.push(file.path);

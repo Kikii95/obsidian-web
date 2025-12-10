@@ -1,20 +1,19 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { createOctokit, getFullVaultTree, getLastRateLimit } from "@/lib/github";
+import { getFullVaultTree, getLastRateLimit } from "@/lib/github";
+import { getAuthenticatedContext } from "@/lib/server-vault-config";
 import { isPrivatePath } from "@/lib/privacy";
 import type { VaultFile } from "@/types";
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
+    const context = await getAuthenticatedContext();
 
-    if (!session?.accessToken) {
+    if (!context) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    const octokit = createOctokit(session.accessToken);
-    const allFiles = await getFullVaultTree(octokit);
+    const { octokit, vaultConfig } = context;
+    const allFiles = await getFullVaultTree(octokit, false, vaultConfig);
 
     // Mark private paths as locked (instead of filtering)
     const filesWithLockStatus = allFiles.map(file => ({

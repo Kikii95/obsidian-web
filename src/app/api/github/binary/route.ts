@@ -1,18 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { createOctokit, getLastRateLimit } from "@/lib/github";
+import { getLastRateLimit, createOctokit } from "@/lib/github";
+import { getAuthenticatedContext } from "@/lib/server-vault-config";
 import { getMimeType } from "@/lib/file-types";
-
-const REPO_OWNER = process.env.GITHUB_REPO_OWNER!;
-const REPO_NAME = process.env.GITHUB_REPO_NAME!;
-const BRANCH = process.env.GITHUB_BRANCH || "master";
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const context = await getAuthenticatedContext();
 
-    if (!session?.accessToken) {
+    if (!context) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
@@ -23,13 +18,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Path requis" }, { status: 400 });
     }
 
-    const octokit = createOctokit(session.accessToken);
+    const { octokit, vaultConfig } = context;
 
     const { data } = await octokit.repos.getContent({
-      owner: REPO_OWNER,
-      repo: REPO_NAME,
+      owner: vaultConfig.owner,
+      repo: vaultConfig.repo,
       path,
-      ref: BRANCH,
+      ref: vaultConfig.branch,
     });
 
     if (Array.isArray(data) || data.type !== "file") {

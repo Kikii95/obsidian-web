@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { createOctokit } from "@/lib/github";
+import { getAuthenticatedContext } from "@/lib/server-vault-config";
 
 interface CommitInfo {
   sha: string;
@@ -23,16 +21,16 @@ export async function GET(request: Request) {
       );
     }
 
-    const session = await getServerSession(authOptions);
+    const context = await getAuthenticatedContext();
 
-    if (!session?.accessToken) {
+    if (!context) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    const octokit = createOctokit(session.accessToken);
+    const { octokit, vaultConfig } = context;
 
-    const owner = process.env.GITHUB_REPO_OWNER!;
-    const repo = process.env.GITHUB_REPO_NAME!;
+    const owner = vaultConfig.owner;
+    const repo = vaultConfig.repo;
 
     // Get commits for this file
     const { data: commits } = await octokit.repos.listCommits({

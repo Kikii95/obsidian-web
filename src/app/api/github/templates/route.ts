@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { createOctokit, getFullVaultTree, getFileContent } from "@/lib/github";
+import { getFullVaultTree, getFileContent } from "@/lib/github";
+import { getAuthenticatedContext } from "@/lib/server-vault-config";
 
 interface Template {
   name: string;
@@ -14,16 +13,16 @@ const TEMPLATES_FOLDER = "Templates";
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
+    const context = await getAuthenticatedContext();
 
-    if (!session?.accessToken) {
+    if (!context) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    const octokit = createOctokit(session.accessToken);
+    const { octokit, vaultConfig } = context;
 
     // Get all files
-    const allFiles = await getFullVaultTree(octokit);
+    const allFiles = await getFullVaultTree(octokit, false, vaultConfig);
 
     // Find templates folder
     const templatesFolder = allFiles.find(
@@ -49,7 +48,7 @@ export async function GET() {
 
     for (const file of templateFiles.slice(0, 20)) {
       try {
-        const { content } = await getFileContent(octokit, file.path);
+        const { content } = await getFileContent(octokit, file.path, vaultConfig);
 
         // Get preview (first 200 chars, without frontmatter)
         let preview = content;

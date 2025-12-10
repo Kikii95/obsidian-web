@@ -30,6 +30,7 @@ import { RateLimitIndicator } from "@/components/ui/rate-limit-indicator";
 import { ScrollProgress } from "@/components/ui/scroll-progress";
 import { DynamicPwaMeta } from "@/components/pwa/dynamic-pwa-meta";
 import { useSettingsSync } from "@/hooks/use-settings-sync";
+import { useVaultConfig } from "@/hooks/use-vault-config";
 
 export default function DashboardLayout({
   children,
@@ -41,6 +42,9 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const { sidebarOpen, toggleSidebar } = useVaultStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Load and validate vault config (redirects to /setup if not configured)
+  const { isLoading: isVaultConfigLoading, isConfigured } = useVaultConfig();
 
   // Sync settings with GitHub cloud
   useSettingsSync();
@@ -56,7 +60,7 @@ export default function DashboardLayout({
     setMobileMenuOpen(false);
   }, [pathname]);
 
-  if (status === "loading") {
+  if (status === "loading" || isVaultConfigLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-pulse text-muted-foreground">Chargement...</div>
@@ -64,7 +68,7 @@ export default function DashboardLayout({
     );
   }
 
-  if (!session) {
+  if (!session || !isConfigured) {
     return null;
   }
 

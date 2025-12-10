@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { createOctokit, createFile } from "@/lib/github";
+import { createFile } from "@/lib/github";
+import { getAuthenticatedContext } from "@/lib/server-vault-config";
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const context = await getAuthenticatedContext();
 
-    if (!session?.accessToken) {
+    if (!context) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
@@ -28,7 +27,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const octokit = createOctokit(session.accessToken);
+    const { octokit, vaultConfig } = context;
 
     // Create folder by creating a .gitkeep file inside it
     const gitkeepPath = `${path}/.gitkeep`;
@@ -37,7 +36,8 @@ export async function POST(request: NextRequest) {
       octokit,
       gitkeepPath,
       "", // Empty content
-      `Create folder ${path}`
+      `Create folder ${path}`,
+      vaultConfig
     );
 
     return NextResponse.json({

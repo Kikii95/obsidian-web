@@ -1,9 +1,35 @@
 import { Octokit } from "@octokit/rest";
 import type { VaultFile } from "@/types";
 
-const REPO_OWNER = process.env.GITHUB_REPO_OWNER!;
-const REPO_NAME = process.env.GITHUB_REPO_NAME!;
-const BRANCH = process.env.GITHUB_BRANCH || "master";
+// ═══════════════════════════════════════════════
+// VAULT CONFIG TYPE
+// ═══════════════════════════════════════════════
+
+export interface VaultConfig {
+  owner: string;
+  repo: string;
+  branch: string;
+}
+
+// Default config from env vars (fallback for existing users)
+const DEFAULT_CONFIG: VaultConfig = {
+  owner: process.env.GITHUB_REPO_OWNER || "",
+  repo: process.env.GITHUB_REPO_NAME || "",
+  branch: process.env.GITHUB_BRANCH || "main",
+};
+
+/**
+ * Get vault config from various sources (priority order):
+ * 1. Explicit config parameter
+ * 2. Environment variables (default)
+ */
+export function getVaultConfig(config?: Partial<VaultConfig>): VaultConfig {
+  return {
+    owner: config?.owner || DEFAULT_CONFIG.owner,
+    repo: config?.repo || DEFAULT_CONFIG.repo,
+    branch: config?.branch || DEFAULT_CONFIG.branch,
+  };
+}
 
 // Rate limit info type
 export interface RateLimitInfo {
@@ -45,14 +71,16 @@ export function getLastRateLimit(): RateLimitInfo | null {
  */
 export async function getVaultTree(
   octokit: Octokit,
-  path: string = ""
+  path: string = "",
+  config?: Partial<VaultConfig>
 ): Promise<VaultFile[]> {
+  const { owner, repo, branch } = getVaultConfig(config);
   try {
     const { data } = await octokit.repos.getContent({
-      owner: REPO_OWNER,
-      repo: REPO_NAME,
+      owner,
+      repo,
       path,
-      ref: BRANCH,
+      ref: branch,
     });
 
     if (!Array.isArray(data)) {
@@ -85,14 +113,16 @@ export async function getVaultTree(
  */
 export async function getFileContent(
   octokit: Octokit,
-  path: string
+  path: string,
+  config?: Partial<VaultConfig>
 ): Promise<{ content: string; sha: string }> {
+  const { owner, repo, branch } = getVaultConfig(config);
   try {
     const { data } = await octokit.repos.getContent({
-      owner: REPO_OWNER,
-      repo: REPO_NAME,
+      owner,
+      repo,
       path,
-      ref: BRANCH,
+      ref: branch,
     });
 
     if (Array.isArray(data) || data.type !== "file") {
@@ -115,17 +145,19 @@ export async function saveFileContent(
   path: string,
   content: string,
   sha?: string,
-  message?: string
+  message?: string,
+  config?: Partial<VaultConfig>
 ): Promise<{ sha: string }> {
+  const { owner, repo, branch } = getVaultConfig(config);
   try {
     const { data } = await octokit.repos.createOrUpdateFileContents({
-      owner: REPO_OWNER,
-      repo: REPO_NAME,
+      owner,
+      repo,
       path,
       message: message || `Update ${path}`,
       content: Buffer.from(content).toString("base64"),
       sha,
-      branch: BRANCH,
+      branch,
     });
 
     return { sha: data.content?.sha || "" };
@@ -142,16 +174,18 @@ export async function deleteFile(
   octokit: Octokit,
   path: string,
   sha: string,
-  message?: string
+  message?: string,
+  config?: Partial<VaultConfig>
 ): Promise<void> {
+  const { owner, repo, branch } = getVaultConfig(config);
   try {
     await octokit.repos.deleteFile({
-      owner: REPO_OWNER,
-      repo: REPO_NAME,
+      owner,
+      repo,
       path,
       message: message || `Delete ${path}`,
       sha,
-      branch: BRANCH,
+      branch,
     });
   } catch (error) {
     console.error("Error deleting file:", error);
@@ -166,9 +200,10 @@ export async function createFile(
   octokit: Octokit,
   path: string,
   content: string,
-  message?: string
+  message?: string,
+  config?: Partial<VaultConfig>
 ): Promise<{ sha: string }> {
-  return saveFileContent(octokit, path, content, undefined, message || `Create ${path}`);
+  return saveFileContent(octokit, path, content, undefined, message || `Create ${path}`, config);
 }
 
 /**
@@ -176,11 +211,13 @@ export async function createFile(
  */
 export async function searchInVault(
   octokit: Octokit,
-  query: string
+  query: string,
+  config?: Partial<VaultConfig>
 ): Promise<{ path: string; name: string }[]> {
+  const { owner, repo } = getVaultConfig(config);
   try {
     const { data } = await octokit.search.code({
-      q: `${query} repo:${REPO_OWNER}/${REPO_NAME}`,
+      q: `${query} repo:${owner}/${repo}`,
       per_page: 20,
     });
 
@@ -200,18 +237,20 @@ export async function searchInVault(
  */
 export async function getFullVaultTree(
   octokit: Octokit,
-  includeHidden: boolean = false
+  includeHidden: boolean = false,
+  config?: Partial<VaultConfig>
 ): Promise<VaultFile[]> {
+  const { owner, repo, branch } = getVaultConfig(config);
   try {
     const { data: ref } = await octokit.git.getRef({
-      owner: REPO_OWNER,
-      repo: REPO_NAME,
-      ref: `heads/${BRANCH}`,
+      owner,
+      repo,
+      ref: `heads/${branch}`,
     });
 
     const { data: tree } = await octokit.git.getTree({
-      owner: REPO_OWNER,
-      repo: REPO_NAME,
+      owner,
+      repo,
       tree_sha: ref.object.sha,
       recursive: "true",
     });

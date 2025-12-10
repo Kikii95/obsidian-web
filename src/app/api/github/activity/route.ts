@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { createOctokit, getLastRateLimit } from "@/lib/github";
+import { getLastRateLimit } from "@/lib/github";
+import { getAuthenticatedContext } from "@/lib/server-vault-config";
 
 interface CommitActivity {
   date: string; // YYYY-MM-DD
@@ -13,21 +12,21 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const days = parseInt(searchParams.get("days") || "365");
 
-    const session = await getServerSession(authOptions);
+    const context = await getAuthenticatedContext();
 
-    if (!session?.accessToken) {
+    if (!context) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    const octokit = createOctokit(session.accessToken);
+    const { octokit, vaultConfig } = context;
 
     // Calculate date range
     const since = new Date();
     since.setDate(since.getDate() - days);
 
     // Get commits from the vault repo
-    const owner = process.env.GITHUB_REPO_OWNER!;
-    const repo = process.env.GITHUB_REPO_NAME!;
+    const owner = vaultConfig.owner;
+    const repo = vaultConfig.repo;
 
     // Fetch commits with pagination (max 100 per page)
     const commits: Array<{ date: string }> = [];

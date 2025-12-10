@@ -15,6 +15,8 @@ export default withAuth(
         if (
           path.startsWith("/login") ||
           path.startsWith("/api/auth") ||
+          path.startsWith("/setup") ||
+          path.startsWith("/api/vault-config") ||
           path === "/offline"
         ) {
           return true;

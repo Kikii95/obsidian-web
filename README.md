@@ -1,8 +1,46 @@
 # Obsidian Web
 
-A modern web-based viewer for Obsidian vaults, powered by GitHub as the backend storage.
+A modern web-based viewer and editor for Obsidian vaults, powered by GitHub as the backend storage.
 
-**Live Demo**: [obsidian-web-gray.vercel.app](https://obsidian-web-gray.vercel.app)
+**Live Demo**: [obsidian-web.vercel.app](https://obsidian-web.vercel.app)
+
+## What is Obsidian Web?
+
+Obsidian Web lets you access your Obsidian vault from any device with a web browser. Your notes stay on GitHub — we just provide the interface to view and edit them.
+
+**Key benefits:**
+- Access your notes from any device (phone, tablet, work computer)
+- No sync conflicts — GitHub is the single source of truth
+- Works offline with PWA support
+- Full Obsidian-like experience (graph view, backlinks, tags, daily notes)
+
+## Security & Privacy
+
+**Your data stays yours.** Here's how the security model works:
+
+| Aspect | How it works |
+|--------|--------------|
+| **Authentication** | GitHub OAuth — you login with your GitHub account |
+| **Token Storage** | Your GitHub token is stored in an encrypted JWT cookie, **never** on our servers |
+| **Data Access** | We only access repos you explicitly configure — nothing else |
+| **No Database** | We don't store your notes, settings, or any data on our servers |
+| **Open Source** | Full source code available for audit |
+
+### What permissions are requested?
+
+When you login, GitHub OAuth requests `repo` scope. This allows:
+- Reading your vault repository
+- Writing changes when you edit notes
+- Creating the `.obsidian-web-config` private repo (stores your vault settings)
+
+**We cannot:**
+- Access repos you haven't configured
+- Read your private repos without your explicit setup
+- Store or share your data with third parties
+
+### Self-hosting
+
+Don't trust our hosted version? You can self-host! See [Deployment](#deployment) below.
 
 ## Features
 
@@ -28,7 +66,7 @@ A modern web-based viewer for Obsidian vaults, powered by GitHub as the backend 
 
 ### Media Support
 - **Images** — Zoom, rotation, fullscreen viewing
-- **PDF Viewer** — Navigation, zoom, download (via react-pdf)
+- **PDF Viewer** — Navigation, zoom, download
 - **Canvas Viewer** — Visual editing with React Flow (zoom, pan, minimap)
 
 ### Privacy & Security
@@ -41,22 +79,14 @@ A modern web-based viewer for Obsidian vaults, powered by GitHub as the backend 
 - **Service Worker** — Offline fallback page
 - **iOS Ready** — Apple touch icons, splash screens
 
-### Customization (Phase 9)
-- **36 Color Themes** — 18 dark + 18 light themes (Magenta, Ocean, Forest, Turquoise, Carmine, Brown, Mono...)
-- **Mode Toggle** — Light/Dark mode switch with filtered theme dropdown
+### Customization
+- **36 Color Themes** — 18 dark + 18 light themes
+- **Mode Toggle** — Light/Dark mode switch
 - **Editor Settings** — Font size, line height, max width, frontmatter toggle
-- **Sidebar Settings** — Sort by name/type, hide patterns, custom folder order, vault root path
-- **Header Settings** — Date/time display with format options (FR/EN/ISO)
-- **General Settings** — Auto-save delay, daily notes folder configuration
+- **Sidebar Settings** — Sort by name/type, hide patterns, custom folder order
 - **Dashboard Layout** — Compact, spacious, or minimal views
 
-### Cloud Sync (Phase 12)
-- **Settings Sync** — Automatic sync to GitHub (`.obsidian-web/settings-{desktop,mobile}.json`)
-- **Separate Profiles** — Desktop and mobile settings stored independently
-- **Auto Detection** — Automatic mobile device detection via user agent
-- **Vault Root Path** — Define custom root folder for vaults in subfolders (e.g., `MonVault/`)
-
-### Obsidian-like Features (Phase 10)
+### Obsidian-like Features
 - **Quick Switcher** — Ctrl+P to instantly search and navigate to any note
 - **Tags Explorer** — `/tags` page with tag cloud and note filtering
 - **Daily Notes** — Calendar button creates/opens today's note (YYYY-MM-DD)
@@ -65,11 +95,10 @@ A modern web-based viewer for Obsidian vaults, powered by GitHub as the backend 
 - **Version History** — View git commit history for any file
 
 ### Productivity
-- **Export** — Download as .md, print/PDF via jspdf
-- **Import** — Drag & drop .md files with folder selection
+- **Export** — Download as .md, print/PDF
+- **Import** — Drag & drop files with folder selection
 - **Copy Code** — One-click copy for code blocks
 - **Markdown Cheatsheet** — Quick reference bar in editor
-- **Folder Explorer** — Dedicated `/folder` route for vault exploration
 
 ## Tech Stack
 
@@ -83,7 +112,7 @@ A modern web-based viewer for Obsidian vaults, powered by GitHub as the backend 
 | Auth | NextAuth.js (GitHub OAuth) |
 | Editor | CodeMirror 6 |
 | Markdown | react-markdown + remark/rehype |
-| Graph | D3.js (lazy-loaded) |
+| Graph | D3.js |
 | Canvas | React Flow (@xyflow/react) |
 | PDF | react-pdf |
 | Search | Fuse.js |
@@ -94,31 +123,48 @@ A modern web-based viewer for Obsidian vaults, powered by GitHub as the backend 
 ### Prerequisites
 - Node.js 20+
 - pnpm (recommended) or npm
-- GitHub OAuth App credentials
+- A GitHub account
+- An Obsidian vault stored in a GitHub repository
 
-### Installation
+### Quick Start (Use hosted version)
+
+1. Go to [obsidian-web.vercel.app](https://obsidian-web.vercel.app)
+2. Login with GitHub
+3. Configure your vault (owner, repo, branch)
+4. Done!
+
+### Self-Hosting
+
+#### 1. Clone and install
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/obsidian-web.git
+git clone https://github.com/Kikii95/obsidian-web.git
 cd obsidian-web
-
-# Install dependencies
 pnpm install
-
-# Copy environment variables
-cp .env.example .env.local
-
-# Start development server
-pnpm dev
 ```
 
-### Environment Variables
+#### 2. Create GitHub OAuth App
 
-Create a `.env.local` file with the following:
+1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
+2. Click "New OAuth App"
+3. Fill in:
+   - **Application name**: Obsidian Web (or your choice)
+   - **Homepage URL**: `http://localhost:3000` (or your domain)
+   - **Authorization callback URL**: `http://localhost:3000/api/auth/callback/github`
+4. Click "Register application"
+5. Copy the **Client ID**
+6. Generate a new **Client Secret** and copy it
+
+#### 3. Configure environment
+
+```bash
+cp .env.example .env.local
+```
+
+Edit `.env.local`:
 
 ```env
-# GitHub OAuth (create at https://github.com/settings/developers)
+# GitHub OAuth (from step 2)
 GITHUB_CLIENT_ID=your_client_id
 GITHUB_CLIENT_SECRET=your_client_secret
 
@@ -127,72 +173,33 @@ NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=your_secret_key  # Generate with: openssl rand -base64 32
 ```
 
-### GitHub OAuth Setup
+#### 4. Run
 
-1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
-2. Create a new OAuth App
-3. Set **Homepage URL**: `http://localhost:3000`
-4. Set **Callback URL**: `http://localhost:3000/api/auth/callback/github`
-5. Copy Client ID and Client Secret to `.env.local`
-
-## Project Structure
-
+```bash
+pnpm dev
 ```
-src/
-├── app/                    # Next.js App Router
-│   ├── (dashboard)/       # Protected routes
-│   │   ├── note/          # Note viewer/editor
-│   │   ├── file/          # File viewer (images, PDFs)
-│   │   ├── canvas/        # Canvas viewer
-│   │   ├── graph/         # Graph view (D3)
-│   │   ├── folder/        # Folder explorer
-│   │   ├── tags/          # Tags explorer (P10)
-│   │   ├── settings/      # Settings page
-│   │   └── profile/       # User profile
-│   ├── api/               # API routes
-│   │   ├── auth/          # NextAuth endpoints
-│   │   └── github/        # GitHub API proxy
-│   │       ├── tree/      # Vault structure
-│   │       ├── read/      # File content
-│   │       ├── save/      # Save file
-│   │       ├── graph/     # Graph data
-│   │       ├── activity/  # Commit history
-│   │       ├── backlinks/ # Backlinks (P10)
-│   │       ├── tags/      # Tags list (P10)
-│   │       ├── templates/ # Templates list (P10)
-│   │       ├── history/   # Version history (P10)
-│   │       └── settings/  # Cloud settings sync (P12)
-│   └── layout.tsx         # Root layout
-├── components/
-│   ├── dashboard/         # Dashboard widgets (mini-graph, activity-heatmap)
-│   ├── dialogs/           # Generic dialog components (form, confirm)
-│   ├── editor/            # CodeMirror editor
-│   ├── graph/             # D3 force graph + settings popover
-│   ├── lock/              # PIN lock dialogs
-│   ├── navigation/        # Sidebar, header
-│   ├── notes/             # CRUD dialogs
-│   ├── ui/                # shadcn/ui components
-│   └── viewer/            # Markdown, image, PDF, canvas viewers
-├── hooks/                 # Custom React hooks (9 hooks)
-│   ├── use-note-data.ts   # Note fetching + offline cache
-│   ├── use-note-editor.ts # Editor state management
-│   ├── use-note-export.ts # MD/PDF export
-│   ├── use-dialog-action.ts # Dialog async actions
-│   ├── use-settings-sync.ts # Cloud settings sync (P12)
-│   └── ...                # See docs/ARCHITECTURE.md
-├── services/              # API clients
-│   └── github-client.ts   # Centralized GitHub API
-├── lib/                   # Utilities
-│   ├── github.ts          # Server-side GitHub (Octokit)
-│   ├── note-cache.ts      # Offline cache
-│   ├── tree-cache.ts      # Tree cache for offline nav
-│   ├── store.ts           # Zustand vault store
-│   ├── settings-store.ts  # Zustand settings store
-│   ├── pinned-store.ts    # Zustand pinned notes store
-│   └── utils.ts           # General utilities
-├── types/                 # TypeScript types
-└── docs/                  # Documentation
-    └── ARCHITECTURE.md    # Architecture & patterns
+
+Open [http://localhost:3000](http://localhost:3000)
+
+## Deployment
+
+### Vercel (Recommended)
+
+1. Fork this repository
+2. Import on [Vercel](https://vercel.com/new)
+3. Add environment variables:
+   - `GITHUB_CLIENT_ID`
+   - `GITHUB_CLIENT_SECRET`
+   - `NEXTAUTH_URL` (your production URL)
+   - `NEXTAUTH_SECRET`
+4. Deploy
+5. Update your GitHub OAuth App callback URL to `https://your-domain.vercel.app/api/auth/callback/github`
+
+### Docker
+
+```bash
+docker build -t obsidian-web .
+docker run -p 3000:3000 --env-file .env.local obsidian-web
 ```
 
 ## Scripts
@@ -204,88 +211,45 @@ pnpm start     # Start production server
 pnpm lint      # Run ESLint
 ```
 
-## Deployment
+## FAQ
 
-### Vercel (Recommended)
+### Is my data safe?
 
-1. Push to GitHub
-2. Import project on [Vercel](https://vercel.com)
-3. Add environment variables in Vercel dashboard
-4. Update GitHub OAuth callback URL to production domain
+Yes. Your notes never leave GitHub. We use GitHub's API to read/write directly to your repository. No data is stored on our servers.
 
-### Docker
+### Can you see my private repositories?
 
-```bash
-docker build -t obsidian-web .
-docker run -p 3000:3000 --env-file .env.local obsidian-web
-```
+Only if you configure them as your vault. We don't enumerate or access any repos without your explicit configuration.
 
-## Architecture
+### What if the service goes down?
 
-For detailed information about the codebase architecture, custom hooks, and optimization patterns, see **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**.
+Your notes are on GitHub! You can always access them directly or switch to another tool. There's no lock-in.
 
-Key highlights:
-- **9 Custom Hooks** — Extracted from monolithic components
-- **Centralized API Client** — `githubClient` for all GitHub operations
-- **Offline-first** — Cache API for notes and file tree
-- **Cloud Sync** — Settings synced to GitHub with desktop/mobile profiles
-- **React.memo** — Optimized heavy components (ForceGraph, MarkdownRenderer)
+### Can I use this with a private repository?
 
-## Development Workflow
+Absolutely. Private repos work perfectly. Your GitHub token (stored in your browser) authenticates all requests.
 
-### Branch Strategy
+### Does it work on mobile?
 
-| Branch | Purpose | Vercel Environment |
-|--------|---------|-------------------|
-| `main` | Production — stable releases only | **Production** (`obsidian-web.vercel.app`) |
-| `dev` | Development — testing & features | **Preview** (`obsidian-web-git-dev-*.vercel.app`) |
-
-### Workflow
-
-```bash
-# Always work on dev branch
-git checkout dev
-
-# Make changes, commit, push
-git add -A && git commit -m "feat: new feature" && git push
-
-# Test on preview URL (auto-generated by Vercel)
-# https://obsidian-web-git-dev-kikii95s-projects.vercel.app
-
-# When validated → merge to production
-git checkout main
-git merge dev
-git push
-
-# Back to dev for next feature
-git checkout dev
-```
-
-### Quick Commands
-
-```bash
-# Switch to dev
-git checkout dev
-
-# Push to preview (auto-deploy)
-git push
-
-# Deploy to production
-git checkout main && git merge dev && git push && git checkout dev
-```
+Yes! It's a PWA — you can install it on your home screen for an app-like experience.
 
 ## Contributing
 
 1. Fork the repository
-2. Create a feature branch from `dev` (`git checkout dev && git checkout -b feat/amazing-feature`)
+2. Create a feature branch (`git checkout -b feat/amazing-feature`)
 3. Commit changes (`git commit -m 'feat: add amazing feature'`)
 4. Push to branch (`git push origin feat/amazing-feature`)
-5. Open a Pull Request targeting `dev` branch
+5. Open a Pull Request
 
 ## License
 
 MIT License - see [LICENSE](LICENSE) for details.
 
+## Support
+
+- **Bug reports**: [Open an issue](https://github.com/Kikii95/obsidian-web/issues/new)
+- **Feature requests**: [Open an issue](https://github.com/Kikii95/obsidian-web/issues/new)
+
 ---
 
-Built with Next.js and deployed on Vercel.
+Made with Next.js, deployed on Vercel.

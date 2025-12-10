@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { History, Loader2, GitCommit, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useVaultConfigStore } from "@/lib/vault-config";
 
 interface CommitInfo {
   sha: string;
@@ -65,6 +66,7 @@ export function NoteHistory({ notePath, trigger }: NoteHistoryProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [data, setData] = useState<HistoryResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { config } = useVaultConfigStore();
 
   useEffect(() => {
     if (!open) return;
@@ -95,8 +97,9 @@ export function NoteHistory({ notePath, trigger }: NoteHistoryProps) {
     fetchHistory();
   }, [open, notePath]);
 
-  const owner = process.env.NEXT_PUBLIC_GITHUB_REPO_OWNER || "Kikii95";
-  const repo = process.env.NEXT_PUBLIC_GITHUB_REPO_NAME || "obsidian-vault";
+  // Use user's configured vault
+  const owner = config.owner;
+  const repo = config.repo;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

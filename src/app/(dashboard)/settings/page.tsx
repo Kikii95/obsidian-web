@@ -41,6 +41,7 @@ import {
   Settings2,
   Save,
   AlertCircle,
+  Bug,
 } from "lucide-react";
 import Link from "next/link";
 import { useTheme } from "@/hooks/use-theme";
@@ -939,6 +940,48 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Stack</span>
             <span className="text-sm">Next.js 16 + TypeScript</span>
+          </div>
+
+          {/* Report Issue Button */}
+          <div className="pt-4 border-t">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                const title = encodeURIComponent("[Bug] ");
+                const body = encodeURIComponent(`## Description du problème
+
+<!-- Décrivez le bug de manière claire et concise -->
+
+## Étapes pour reproduire
+
+1.
+2.
+3.
+
+## Comportement attendu
+
+<!-- Qu'est-ce qui devrait se passer ? -->
+
+## Captures d'écran
+
+<!-- Si applicable, ajoutez des captures d'écran -->
+
+## Environnement
+
+- **Navigateur**: ${navigator.userAgent.includes("Chrome") ? "Chrome" : navigator.userAgent.includes("Firefox") ? "Firefox" : navigator.userAgent.includes("Safari") ? "Safari" : "Autre"}
+- **Appareil**: ${/Mobile|Android|iPhone/i.test(navigator.userAgent) ? "Mobile" : "Desktop"}
+- **Version**: 1.1.0
+`);
+                window.open(
+                  `https://github.com/Kikii95/obsidian-web/issues/new?title=${title}&body=${body}&labels=bug`,
+                  "_blank"
+                );
+              }}
+            >
+              <Bug className="h-4 w-4 mr-2" />
+              Signaler un problème
+            </Button>
           </div>
         </CardContent>
       </Card>

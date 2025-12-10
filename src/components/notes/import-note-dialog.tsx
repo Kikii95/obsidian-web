@@ -570,16 +570,34 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>{files.length} fichier{files.length > 1 ? "s" : ""} ({(totalSize / 1024 / 1024).toFixed(2)} MB)</Label>
-                <div className="flex gap-1">
+                <div className="relative group">
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => fileInputRef.current?.click()}
                     disabled={isImporting}
+                    className="pr-6"
                   >
                     <Upload className="h-3 w-3 mr-1" />
                     Ajouter
+                    <ChevronDown className="h-3 w-3 absolute right-1.5" />
                   </Button>
+                  {/* Dropdown menu */}
+                  <div className="absolute right-0 top-full mt-1 bg-popover border rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10 min-w-[140px]">
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors"
+                    >
+                      <Upload className="h-3.5 w-3.5" />
+                      Fichiers
+                    </button>
+                    <button
+                      onClick={() => folderInputRef.current?.click()}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors"
+                    >
+                      <Folder className="h-3.5 w-3.5" />
+                      Dossier
+                    </button>
+                  </div>
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -588,15 +606,6 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
                     className="hidden"
                     multiple
                   />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => folderInputRef.current?.click()}
-                    disabled={isImporting}
-                  >
-                    <Folder className="h-3 w-3 mr-1" />
-                    Dossier
-                  </Button>
                   <input
                     ref={folderInputRef}
                     type="file"

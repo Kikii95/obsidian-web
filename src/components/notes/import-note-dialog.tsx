@@ -70,7 +70,7 @@ function getFileIcon(category: ReturnType<typeof getFileCategory>) {
   }
 }
 
-interface ZipContent {
+interface FileContent {
   path: string;
   name: string;
   size: number;
@@ -82,8 +82,18 @@ interface FileWithPath {
   relativePath: string; // For folder uploads, keeps the relative path
   displayName: string;
   isZip?: boolean;
-  zipContents?: ZipContent[]; // Preview of ZIP contents
-  zipExpanded?: boolean; // UI state for collapsing
+  isFolder?: boolean; // For grouped folder imports
+  folderName?: string; // Root folder name for grouped imports
+  contents?: FileContent[]; // Preview of ZIP or folder contents
+  expanded?: boolean; // UI state for collapsing
+}
+
+// Group files by their root folder for display
+interface FolderGroup {
+  folderName: string;
+  files: FileWithPath[];
+  totalSize: number;
+  expanded: boolean;
 }
 
 interface ImportResult {
@@ -118,6 +128,9 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
     let hasLargeFile = false;
     let skippedCount = 0;
 
+    // For folder imports, group files by root folder
+    const folderGroups: Map<string, { files: File[]; contents: FileContent[]; totalSize: number }> = new Map();
+
     for (let i = 0; i < fileList.length; i++) {
       const file = fileList[i];
 
@@ -139,14 +152,6 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
       // e.g., "MyFolder/subfolder/file.md"
       const webkitPath = (file as File & { webkitRelativePath?: string }).webkitRelativePath || "";
 
-      let relativePath = "";
-      if (isFromFolder && webkitPath) {
-        // Remove the filename to get the folder path
-        const parts = webkitPath.split("/");
-        parts.pop(); // Remove filename
-        relativePath = parts.join("/");
-      }
-
       if (file.size > LFS_WARNING_SIZE) {
         hasLargeFile = true;
       }
@@ -155,7 +160,7 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
       if (ext === ".zip") {
         try {
           const zip = await JSZip.loadAsync(file);
-          const zipContents: ZipContent[] = [];
+          const zipContents: FileContent[] = [];
 
           zip.forEach((path, zipEntry) => {
             if (!zipEntry.dir) {
@@ -164,7 +169,7 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
               zipContents.push({
                 path,
                 name: entryName,
-                size: 0, // Size will be determined on extract
+                size: 0,
                 isSupported: SUPPORTED_INNER_EXTENSIONS.some(
                   (supported) => supported.toLowerCase() === entryExt.toLowerCase()
                 ),
@@ -174,24 +179,62 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
 
           newFiles.push({
             file,
-            relativePath,
+            relativePath: "",
             displayName: file.name,
             isZip: true,
-            zipContents,
-            zipExpanded: false,
+            contents: zipContents,
+            expanded: false,
           });
         } catch {
-          // If ZIP reading fails, skip it
           skippedCount++;
           continue;
         }
+      } else if (isFromFolder && webkitPath) {
+        // Group by root folder name
+        const rootFolder = webkitPath.split("/")[0];
+        const relativePath = webkitPath.split("/").slice(1).join("/"); // Path inside the folder
+
+        if (!folderGroups.has(rootFolder)) {
+          folderGroups.set(rootFolder, { files: [], contents: [], totalSize: 0 });
+        }
+
+        const group = folderGroups.get(rootFolder)!;
+        group.files.push(file);
+        group.totalSize += file.size;
+        group.contents.push({
+          path: relativePath,
+          name: file.name,
+          size: file.size,
+          isSupported: true,
+        });
       } else {
+        // Regular file (not from folder)
         newFiles.push({
           file,
-          relativePath,
+          relativePath: "",
           displayName: file.name,
         });
       }
+    }
+
+    // Convert folder groups to FileWithPath entries
+    for (const [folderName, group] of folderGroups) {
+      // Create a virtual "folder" entry that holds all files
+      // We use the first file as the "main" file but store all files for import
+      newFiles.push({
+        file: group.files[0], // Primary file (we'll handle all files during import)
+        relativePath: "",
+        displayName: folderName,
+        isFolder: true,
+        folderName,
+        contents: group.contents,
+        expanded: false,
+      });
+
+      // Store additional files in a way we can access during import
+      // We'll use a custom property on the file object
+      const folderEntry = newFiles[newFiles.length - 1];
+      (folderEntry as FileWithPath & { _allFiles?: File[] })._allFiles = group.files;
     }
 
     if (newFiles.length === 0) {
@@ -322,10 +365,10 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
     setFiles((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
-  const toggleZipExpanded = useCallback((index: number) => {
+  const toggleExpanded = useCallback((index: number) => {
     setFiles((prev) =>
       prev.map((f, i) =>
-        i === index ? { ...f, zipExpanded: !f.zipExpanded } : f
+        i === index ? { ...f, expanded: !f.expanded } : f
       )
     );
   }, []);
@@ -346,13 +389,12 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
     setResults([]);
 
     const importResults: ImportResult[] = [];
-    const total = files.length;
 
-    // Count total items to import (including ZIP contents)
+    // Count total items to import (including ZIP/folder contents)
     let totalItems = 0;
     for (const f of files) {
-      if (f.isZip && f.zipContents) {
-        totalItems += f.zipContents.filter((c) => c.isSupported).length;
+      if ((f.isZip || f.isFolder) && f.contents) {
+        totalItems += f.contents.filter((c) => c.isSupported).length;
       } else {
         totalItems += 1;
       }
@@ -367,17 +409,17 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
       }
 
       const fileItem = files[i];
-      const { file, relativePath, isZip, zipContents } = fileItem;
+      const { file, isZip, isFolder, folderName, contents } = fileItem;
 
       // Handle ZIP files - extract and import supported files into a folder named after the ZIP
-      if (isZip && zipContents) {
+      if (isZip && contents) {
         try {
           const zip = await JSZip.loadAsync(file);
 
           // Create folder name from ZIP filename (without .zip extension)
           const zipFolderName = file.name.replace(/\.zip$/i, "");
 
-          for (const content of zipContents) {
+          for (const content of contents) {
             if (cancelledRef.current) break;
             if (!content.isSupported) continue;
 
@@ -427,11 +469,55 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
         continue;
       }
 
-      // Regular file handling
-      let fullPath = file.name;
-      if (relativePath) {
-        fullPath = `${relativePath}/${file.name}`;
+      // Handle folder imports - import all files in the folder group
+      if (isFolder && folderName && contents) {
+        const allFiles = (fileItem as FileWithPath & { _allFiles?: File[] })._allFiles || [file];
+
+        for (let fi = 0; fi < allFiles.length; fi++) {
+          if (cancelledRef.current) break;
+
+          const folderFile = allFiles[fi];
+          const content = contents[fi];
+          if (!content || !content.isSupported) continue;
+
+          // Build full path: targetFolder/folderName/relativePath
+          let fullPath = `${folderName}/${content.path}`;
+          if (targetFolder) {
+            fullPath = `${targetFolder}/${fullPath}`;
+          }
+
+          try {
+            const category = getFileCategory(folderFile.name);
+
+            if (category === "markdown" || category === "canvas") {
+              const textContent = await folderFile.text();
+              await githubClient.createNote(fullPath, textContent);
+            } else {
+              const arrayBuffer = await folderFile.arrayBuffer();
+              const base64 = btoa(
+                new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), "")
+              );
+              await githubClient.createBinaryFile(fullPath, base64);
+            }
+
+            importResults.push({ path: fullPath, success: true });
+          } catch (err) {
+            importResults.push({
+              path: fullPath,
+              success: false,
+              error: err instanceof Error ? err.message : "Erreur",
+            });
+          }
+
+          processedItems++;
+          setProgress((processedItems / totalItems) * 100);
+          setResults([...importResults]);
+        }
+        continue;
       }
+
+      // Regular file handling (single files, not from folder)
+      let fullPath = file.name;
       if (targetFolder) {
         fullPath = `${targetFolder}/${fullPath}`;
       }
@@ -619,40 +705,50 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
               </div>
               <div className="max-h-48 overflow-y-auto border rounded-md divide-y divide-border">
                 {files.map((f, index) => {
-                  const IconComponent = getFileIcon(getFileCategory(f.file.name));
-                  const supportedInZip = f.zipContents?.filter((c) => c.isSupported).length || 0;
-                  const totalInZip = f.zipContents?.length || 0;
+                  const isExpandable = (f.isZip || f.isFolder) && f.contents && f.contents.length > 0;
+                  const supportedCount = f.contents?.filter((c) => c.isSupported).length || 0;
+                  const totalCount = f.contents?.length || 0;
+                  const totalSize = f.isFolder
+                    ? f.contents?.reduce((acc, c) => acc + c.size, 0) || 0
+                    : f.file.size;
+
+                  // Icon: Folder for folders, Archive for ZIP, file icon for others
+                  const IconComponent = f.isFolder
+                    ? Folder
+                    : f.isZip
+                      ? Archive
+                      : getFileIcon(getFileCategory(f.file.name));
 
                   return (
                     <div key={index}>
                       <div className="flex items-center gap-2 p-2 text-sm">
-                        {/* ZIP expand toggle */}
-                        {f.isZip && f.zipContents && f.zipContents.length > 0 && (
+                        {/* Expand toggle for ZIP and folders */}
+                        {isExpandable ? (
                           <button
-                            onClick={() => toggleZipExpanded(index)}
+                            onClick={() => toggleExpanded(index)}
                             className="shrink-0 p-0.5 hover:bg-muted rounded"
                           >
-                            {f.zipExpanded ? (
+                            {f.expanded ? (
                               <ChevronDown className="h-3 w-3" />
                             ) : (
                               <ChevronRight className="h-3 w-3" />
                             )}
                           </button>
+                        ) : (
+                          <div className="w-4 shrink-0" />
                         )}
                         <IconComponent className="h-4 w-4 text-muted-foreground shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="truncate font-medium">{f.displayName}</p>
-                          {f.relativePath && (
-                            <p className="text-xs text-muted-foreground truncate">{f.relativePath}/</p>
-                          )}
-                          {f.isZip && (
+                          {(f.isZip || f.isFolder) && (
                             <p className="text-xs text-muted-foreground">
-                              {supportedInZip}/{totalInZip} fichier{totalInZip > 1 ? "s" : ""} supporté{supportedInZip > 1 ? "s" : ""} • sera décompressé
+                              {supportedCount}/{totalCount} fichier{totalCount > 1 ? "s" : ""}
+                              {f.isZip && " • sera décompressé"}
                             </p>
                           )}
                         </div>
                         <span className="text-xs text-muted-foreground shrink-0">
-                          {(f.file.size / 1024).toFixed(0)} KB
+                          {(totalSize / 1024).toFixed(0)} KB
                         </span>
                         {!isImporting && (
                           <Button
@@ -665,10 +761,10 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
                           </Button>
                         )}
                       </div>
-                      {/* ZIP contents preview */}
-                      {f.isZip && f.zipExpanded && f.zipContents && (
+                      {/* Contents preview (ZIP or folder) */}
+                      {isExpandable && f.expanded && f.contents && (
                         <div className="bg-muted/30 border-t border-border/50 px-2 py-1 max-h-32 overflow-y-auto">
-                          {f.zipContents.map((content, ci) => (
+                          {f.contents.map((content, ci) => (
                             <div
                               key={ci}
                               className={`flex items-center gap-2 py-0.5 text-xs ${

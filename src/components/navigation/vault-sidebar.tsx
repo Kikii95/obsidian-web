@@ -6,7 +6,7 @@ import { VirtualFileTree } from "./virtual-file-tree";
 import { useVaultStore } from "@/lib/store";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
-import { AlertCircle, FolderTree, RefreshCw, FilePlus, FolderPlus, ChevronsDownUp, ChevronsUpDown, MoreHorizontal, FolderPen, FolderX, Upload, Search, X, ArrowUpDown } from "lucide-react";
+import { AlertCircle, FolderTree, RefreshCw, FilePlus, FolderPlus, ChevronsDownUp, ChevronsUpDown, MoreHorizontal, FolderPen, FolderX, FileX, Upload, Search, X, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -17,6 +17,7 @@ import {
 import { CreateNoteDialog } from "@/components/notes/create-note-dialog";
 import { CreateFolderDialog } from "@/components/notes/create-folder-dialog";
 import { ManageFolderDialog } from "@/components/notes/manage-folder-dialog";
+import { ManageFileDialog } from "@/components/notes/manage-file-dialog";
 import { ImportNoteDialog } from "@/components/notes/import-note-dialog";
 import { ReorderFoldersDialog } from "@/components/notes/reorder-folders-dialog";
 import { githubClient } from "@/services/github-client";
@@ -201,6 +202,7 @@ export function VaultSidebar() {
   } = useVaultStore();
 
   const [manageFolderMode, setManageFolderMode] = useState<"rename" | "delete" | null>(null);
+  const [manageFileDialogOpen, setManageFileDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [reorderDialogOpen, setReorderDialogOpen] = useState(false);
 
@@ -408,6 +410,13 @@ export function VaultSidebar() {
                   <FolderX className="h-4 w-4 mr-2" />
                   Supprimer un dossier
                 </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setManageFileDialogOpen(true)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <FileX className="h-4 w-4 mr-2" />
+                  Supprimer un fichier
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
@@ -498,6 +507,12 @@ export function VaultSidebar() {
           onOpenChange={(open) => !open && setManageFolderMode(null)}
         />
       )}
+
+      {/* Manage file dialog (delete) */}
+      <ManageFileDialog
+        open={manageFileDialogOpen}
+        onOpenChange={setManageFileDialogOpen}
+      />
 
       {/* Reorder folders dialog (root level) */}
       <ReorderFoldersDialog

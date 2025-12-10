@@ -14,6 +14,7 @@ import {
   File,
   ArrowUpDown,
   Lock,
+  Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useVaultStore } from "@/lib/store";
@@ -23,6 +24,7 @@ import { decodeSlugSegments } from "@/lib/path-utils";
 import { getFileType, isViewableFile } from "@/lib/file-types";
 import { cn } from "@/lib/utils";
 import { ReorderFoldersDialog } from "@/components/notes/reorder-folders-dialog";
+import { ImportNoteDialog } from "@/components/notes/import-note-dialog";
 import type { VaultFile } from "@/types";
 
 // Check if folder name indicates a private folder
@@ -187,16 +189,29 @@ export default function FolderPage() {
               </p>
             )}
           </div>
-          {!shouldHideContent && stats.folders > 1 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setReorderDialogOpen(true)}
-              title="Réorganiser les dossiers"
-            >
-              <ArrowUpDown className="h-4 w-4 mr-2" />
-              Ordre
-            </Button>
+          {!shouldHideContent && (
+            <div className="flex items-center gap-2">
+              <ImportNoteDialog
+                defaultTargetFolder={folderPath}
+                trigger={
+                  <Button variant="outline" size="sm" title="Importer des fichiers">
+                    <Upload className="h-4 w-4 mr-2" />
+                    Importer
+                  </Button>
+                }
+              />
+              {stats.folders > 1 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setReorderDialogOpen(true)}
+                  title="Réorganiser les dossiers"
+                >
+                  <ArrowUpDown className="h-4 w-4 mr-2" />
+                  Ordre
+                </Button>
+              )}
+            </div>
           )}
         </div>
 

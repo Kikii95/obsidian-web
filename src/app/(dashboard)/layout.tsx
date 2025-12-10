@@ -17,6 +17,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/s
 import { VaultSidebar } from "@/components/navigation/vault-sidebar";
 import { useVaultStore } from "@/lib/store";
 import { LogOut, Menu, PanelLeftClose, PanelLeft, Settings, User, Home, Network, Tag } from "lucide-react";
+import { useSelectionStore } from "@/lib/selection-store";
 import { ThemeSwitcher } from "@/components/theme/theme-switcher";
 import { Logo } from "@/components/ui/logo";
 import { NetworkStatus } from "@/components/ui/network-status";
@@ -41,6 +42,7 @@ export default function DashboardLayout({
   const router = useRouter();
   const pathname = usePathname();
   const { sidebarOpen, toggleSidebar } = useVaultStore();
+  const { exitSelectionMode } = useSelectionStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Load and validate vault config (redirects to /setup if not configured)
@@ -59,6 +61,23 @@ export default function DashboardLayout({
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [pathname]);
+
+  // Exit selection mode when mobile menu closes
+  const handleMobileMenuChange = (open: boolean) => {
+    setMobileMenuOpen(open);
+    if (!open) {
+      exitSelectionMode();
+    }
+  };
+
+  // Exit selection mode when desktop sidebar closes
+  const handleToggleSidebar = () => {
+    if (sidebarOpen) {
+      // Sidebar is about to close
+      exitSelectionMode();
+    }
+    toggleSidebar();
+  };
 
   if (status === "loading" || isVaultConfigLoading) {
     return (
@@ -88,7 +107,7 @@ export default function DashboardLayout({
           {/* Left side */}
           <div className="flex items-center gap-2">
             {/* Mobile menu */}
-            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <Sheet open={mobileMenuOpen} onOpenChange={handleMobileMenuChange}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="md:hidden">
                   <Menu className="h-5 w-5" />
@@ -124,7 +143,7 @@ export default function DashboardLayout({
               variant="ghost"
               size="icon"
               className="hidden md:flex"
-              onClick={toggleSidebar}
+              onClick={handleToggleSidebar}
               title={sidebarOpen ? "Masquer la sidebar" : "Afficher la sidebar"}
             >
               {sidebarOpen ? (

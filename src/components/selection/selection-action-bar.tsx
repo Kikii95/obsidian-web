@@ -2,15 +2,19 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Trash2, FolderInput, X, Loader2, Download } from "lucide-react";
+import { Trash2, FolderInput, X, Download } from "lucide-react";
 import { useSelectionStore } from "@/lib/selection-store";
 import { useVaultStore } from "@/lib/store";
 import { BatchDeleteDialog } from "./batch-delete-dialog";
+import { BatchMoveDialog } from "./batch-move-dialog";
+import { BatchExportDialog } from "./batch-export-dialog";
 
 export function SelectionActionBar() {
   const { isSelectionMode, selectedCount, exitSelectionMode, getSelectedItems } = useSelectionStore();
   const { triggerTreeRefresh } = useVaultStore();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showMoveDialog, setShowMoveDialog] = useState(false);
+  const [showExportDialog, setShowExportDialog] = useState(false);
 
   const count = selectedCount();
 
@@ -52,22 +56,22 @@ export function SelectionActionBar() {
               <Trash2 className="h-4 w-4" />
             </Button>
 
-            {/* Move - TODO */}
+            {/* Move */}
             <Button
               variant="ghost"
               size="sm"
-              title="Déplacer (bientôt)"
-              disabled
+              title="Déplacer"
+              onClick={() => setShowMoveDialog(true)}
             >
               <FolderInput className="h-4 w-4" />
             </Button>
 
-            {/* Export - TODO */}
+            {/* Export */}
             <Button
               variant="ghost"
               size="sm"
-              title="Exporter (bientôt)"
-              disabled
+              title="Exporter (ZIP)"
+              onClick={() => setShowExportDialog(true)}
             >
               <Download className="h-4 w-4" />
             </Button>
@@ -94,6 +98,27 @@ export function SelectionActionBar() {
         items={selectedItems}
         onSuccess={() => {
           triggerTreeRefresh();
+          exitSelectionMode();
+        }}
+      />
+
+      {/* Batch move dialog */}
+      <BatchMoveDialog
+        open={showMoveDialog}
+        onOpenChange={setShowMoveDialog}
+        items={selectedItems}
+        onSuccess={() => {
+          triggerTreeRefresh();
+          exitSelectionMode();
+        }}
+      />
+
+      {/* Batch export dialog */}
+      <BatchExportDialog
+        open={showExportDialog}
+        onOpenChange={setShowExportDialog}
+        items={selectedItems}
+        onSuccess={() => {
           exitSelectionMode();
         }}
       />

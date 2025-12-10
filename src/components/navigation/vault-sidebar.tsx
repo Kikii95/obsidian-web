@@ -6,12 +6,13 @@ import { VirtualFileTree } from "./virtual-file-tree";
 import { useVaultStore } from "@/lib/store";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
-import { AlertCircle, FolderTree, RefreshCw, FilePlus, FolderPlus, ChevronsDownUp, ChevronsUpDown, MoreHorizontal, FolderPen, FolderX, Upload, Search, X, ArrowUpDown, CheckSquare, Square } from "lucide-react";
+import { AlertCircle, FolderTree, RefreshCw, FilePlus, FolderPlus, ChevronsDownUp, ChevronsUpDown, MoreHorizontal, FolderPen, FolderX, Upload, Search, X, ArrowUpDown, CheckSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { CreateNoteDialog } from "@/components/notes/create-note-dialog";
@@ -383,34 +384,24 @@ export function VaultSidebar() {
           {searchQuery ? `${filteredTree.length} résultat(s)` : "Vault"}
         </span>
         <div className="flex items-center gap-0.5">
-            {/* Selection mode toggle */}
-            <Button
-              variant={isSelectionMode ? "secondary" : "ghost"}
-              size="icon"
-              className="h-6 w-6"
-              onClick={toggleSelectionMode}
-              title={isSelectionMode ? "Annuler la sélection" : "Sélectionner"}
-            >
-              {isSelectionMode ? (
-                <CheckSquare className="h-3 w-3" />
-              ) : (
-                <Square className="h-3 w-3" />
-              )}
-            </Button>
-
-            {/* Folder management dropdown */}
+            {/* Options dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
                   className="h-6 w-6"
-                  title="Gérer les dossiers"
+                  title="Options"
                 >
                   <MoreHorizontal className="h-3 w-3" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48">
+                <DropdownMenuItem onClick={toggleSelectionMode}>
+                  <CheckSquare className="h-4 w-4 mr-2" />
+                  {isSelectionMode ? "Annuler sélection" : "Mode sélection"}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => setReorderDialogOpen(true)}>
                   <ArrowUpDown className="h-4 w-4 mr-2" />
                   Réorganiser dossiers

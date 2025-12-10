@@ -73,9 +73,10 @@ interface ImportResult {
 
 interface ImportNoteDialogProps {
   trigger?: React.ReactNode;
+  defaultTargetFolder?: string; // Pre-select target folder
 }
 
-export function ImportNoteDialog({ trigger }: ImportNoteDialogProps) {
+export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDialogProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
@@ -83,28 +84,38 @@ export function ImportNoteDialog({ trigger }: ImportNoteDialogProps) {
 
   const [open, setOpen] = useState(false);
   const [files, setFiles] = useState<FileWithPath[]>([]);
-  const [targetFolder, setTargetFolder] = useState("");
+  const [targetFolder, setTargetFolder] = useState(defaultTargetFolder || "");
   const [isImporting, setIsImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<ImportResult[]>([]);
   const [showLfsWarning, setShowLfsWarning] = useState(false);
 
-  const validateAndAddFiles = useCallback((fileList: FileList, basePath = "") => {
+  const validateAndAddFiles = useCallback((fileList: FileList, isFromFolder = false) => {
     const newFiles: FileWithPath[] = [];
     let hasLargeFile = false;
+    let skippedCount = 0;
 
     for (let i = 0; i < fileList.length; i++) {
       const file = fileList[i];
       const ext = "." + file.name.split(".").pop()?.toLowerCase();
 
       if (!ACCEPTED_EXTENSIONS.includes(ext)) {
+        skippedCount++;
         continue; // Skip unsupported files silently
       }
 
-      // For folder uploads, webkitRelativePath contains the relative path
-      const relativePath = (file as File & { webkitRelativePath?: string }).webkitRelativePath || "";
-      const pathWithoutFile = relativePath ? relativePath.replace(/\/[^/]+$/, "") : basePath;
+      // For folder uploads, webkitRelativePath contains the full relative path including filename
+      // e.g., "MyFolder/subfolder/file.md"
+      const webkitPath = (file as File & { webkitRelativePath?: string }).webkitRelativePath || "";
+
+      let relativePath = "";
+      if (isFromFolder && webkitPath) {
+        // Remove the filename to get the folder path
+        const parts = webkitPath.split("/");
+        parts.pop(); // Remove filename
+        relativePath = parts.join("/");
+      }
 
       if (file.size > LFS_WARNING_SIZE) {
         hasLargeFile = true;
@@ -112,13 +123,17 @@ export function ImportNoteDialog({ trigger }: ImportNoteDialogProps) {
 
       newFiles.push({
         file,
-        relativePath: pathWithoutFile,
+        relativePath,
         displayName: file.name,
       });
     }
 
     if (newFiles.length === 0) {
-      setError("Aucun fichier supporté trouvé");
+      if (skippedCount > 0) {
+        setError(`Aucun fichier supporté trouvé (${skippedCount} fichier${skippedCount > 1 ? "s" : ""} ignoré${skippedCount > 1 ? "s" : ""})`);
+      } else {
+        setError("Aucun fichier trouvé dans le dossier");
+      }
       return;
     }
 
@@ -130,7 +145,7 @@ export function ImportNoteDialog({ trigger }: ImportNoteDialogProps) {
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;
     if (fileList && fileList.length > 0) {
-      validateAndAddFiles(fileList);
+      validateAndAddFiles(fileList, false);
     }
     // Reset input
     e.target.value = "";
@@ -139,7 +154,7 @@ export function ImportNoteDialog({ trigger }: ImportNoteDialogProps) {
   const handleFolderSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;
     if (fileList && fileList.length > 0) {
-      validateAndAddFiles(fileList);
+      validateAndAddFiles(fileList, true); // Mark as folder upload
     }
     // Reset input
     e.target.value = "";
@@ -149,7 +164,11 @@ export function ImportNoteDialog({ trigger }: ImportNoteDialogProps) {
     e.preventDefault();
     const fileList = e.dataTransfer.files;
     if (fileList && fileList.length > 0) {
-      validateAndAddFiles(fileList);
+      // Check if any file has webkitRelativePath (folder drop)
+      const isFromFolder = Array.from(fileList).some(
+        (f) => (f as File & { webkitRelativePath?: string }).webkitRelativePath
+      );
+      validateAndAddFiles(fileList, isFromFolder);
     }
   }, [validateAndAddFiles]);
 
@@ -242,7 +261,7 @@ export function ImportNoteDialog({ trigger }: ImportNoteDialogProps) {
     if (!newOpen) {
       // Reset state when closing
       setFiles([]);
-      setTargetFolder("");
+      setTargetFolder(defaultTargetFolder || "");
       setError(null);
       setProgress(0);
       setResults([]);

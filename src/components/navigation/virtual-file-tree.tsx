@@ -242,10 +242,11 @@ const VirtualTreeItem = memo(function VirtualTreeItem({
         )}
         <button
           onClick={() => {
+            // In selection mode: toggle expand AND select
+            // In normal mode: just toggle expand
+            toggleFolder(file.path);
             if (isSelectionMode) {
               toggleItem({ path: file.path, name: file.name, type: "dir" });
-            } else {
-              toggleFolder(file.path);
             }
           }}
           className={cn(
@@ -257,14 +258,12 @@ const VirtualTreeItem = memo(function VirtualTreeItem({
           )}
         >
           {indentGuides}
-          {!isSelectionMode && (
-            <ChevronRight
-              className={cn(
-                "h-3 w-3 shrink-0 transition-transform",
-                isExpanded && "rotate-90"
-              )}
-            />
-          )}
+          <ChevronRight
+            className={cn(
+              "h-3 w-3 shrink-0 transition-transform",
+              isExpanded && "rotate-90"
+            )}
+          />
           <span className="shrink-0">{icon}</span>
           <span className="truncate font-medium">{displayName}</span>
           {file.isLocked && (

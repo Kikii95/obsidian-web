@@ -133,6 +133,8 @@ Don't trust our hosted version? You can self-host! See [Deployment](#deployment)
 3. Configure your vault (owner, repo, branch)
 4. Done!
 
+**Bonus**: Using the hosted version means you get all updates instantly — just refresh the page to get new features and bug fixes. No rebuild, no redeploy, no hassle.
+
 ### Self-Hosting
 
 #### 1. Clone and install

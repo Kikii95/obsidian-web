@@ -14,6 +14,8 @@ export type DashboardLayout = "compact" | "spacious" | "minimal";
 export type SidebarSortBy = "name" | "type";
 export type DateFormat = "fr" | "en" | "iso";
 
+export type FeedbackFilter = "bug" | "idea" | "question";
+
 export interface UserSettings {
   // Dashboard
   recentNotesCount: number;
@@ -21,6 +23,9 @@ export interface UserSettings {
   showActivityHeatmap: boolean;
   activityDefaultPeriod: ActivityPeriod;
   dashboardLayout: DashboardLayout;
+  showCommunityFeedback: boolean;
+  feedbackCount: number; // 3-10
+  feedbackFilters: FeedbackFilter[]; // Which types to show
 
   // Editor
   editorFontSize: number; // 10-32px
@@ -90,6 +95,9 @@ const defaultSettings: UserSettings = {
   showActivityHeatmap: true,
   activityDefaultPeriod: "90",
   dashboardLayout: "spacious",
+  showCommunityFeedback: true,
+  feedbackCount: 5,
+  feedbackFilters: ["bug", "idea", "question"], // Show all by default
 
   // Editor
   editorFontSize: 16,

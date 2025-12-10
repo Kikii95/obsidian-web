@@ -65,6 +65,19 @@ const ActivityHeatmap = dynamic(
   }
 );
 
+// Lazy load community feedback
+const CommunityFeedback = dynamic(
+  () => import("@/components/dashboard/community-feedback").then((mod) => mod.CommunityFeedback),
+  {
+    loading: () => (
+      <div className="h-full flex items-center justify-center py-8">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    ),
+    ssr: false,
+  }
+);
+
 interface VaultStats {
   notes: number;
   folders: number;
@@ -542,6 +555,13 @@ export default function HomePage() {
               </CardContent>
             </Card>
           )}
+        </div>
+      )}
+
+      {/* Community Feedback - Last card */}
+      {(settings.showCommunityFeedback ?? true) && (
+        <div className={mbClass}>
+          <CommunityFeedback />
         </div>
       )}
     </div>

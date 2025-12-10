@@ -43,6 +43,7 @@ import {
   AlertCircle,
   Bug,
   Lightbulb,
+  HelpCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { useTheme } from "@/hooks/use-theme";
@@ -345,6 +346,86 @@ export default function SettingsPage() {
               Compact réduit les marges, Minimal masque le graph et heatmap
             </p>
           </div>
+
+          {/* Show community feedback */}
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>Afficher Community Feedback</Label>
+              <p className="text-sm text-muted-foreground">
+                Bugs, idées et questions de la communauté
+              </p>
+            </div>
+            <Switch
+              checked={draft.showCommunityFeedback ?? true}
+              onCheckedChange={(checked) => updateDraft("showCommunityFeedback", checked)}
+            />
+          </div>
+
+          {/* Feedback settings (only shown if enabled) */}
+          {(draft.showCommunityFeedback ?? true) && (
+            <>
+              {/* Feedback count */}
+              <div className="space-y-2">
+                <Label>Nombre de feedbacks affichés</Label>
+                <div className="flex items-center gap-4">
+                  <Slider
+                    value={[draft.feedbackCount ?? 5]}
+                    onValueChange={([value]) => updateDraft("feedbackCount", value)}
+                    min={3}
+                    max={10}
+                    step={1}
+                    className="flex-1"
+                  />
+                  <span className="w-8 text-center font-mono">
+                    {draft.feedbackCount ?? 5}
+                  </span>
+                </div>
+              </div>
+
+              {/* Feedback type filters */}
+              <div className="space-y-2">
+                <Label>Types de feedback à afficher</Label>
+                <div className="flex flex-wrap gap-3">
+                  {[
+                    { id: "bug", label: "🐛 Bugs", color: "text-red-500" },
+                    { id: "idea", label: "💡 Idées", color: "text-amber-500" },
+                    { id: "question", label: "❓ Questions", color: "text-blue-500" },
+                  ].map(({ id, label }) => {
+                    const filters = draft.feedbackFilters ?? ["bug", "idea", "question"];
+                    const isChecked = filters.includes(id as "bug" | "idea" | "question");
+                    return (
+                      <label
+                        key={id}
+                        className={`
+                          flex items-center gap-2 px-3 py-1.5 rounded-lg border cursor-pointer transition-all
+                          ${isChecked
+                            ? "border-primary bg-primary/10"
+                            : "border-border hover:border-primary/50"
+                          }
+                        `}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => {
+                            const newFilters = isChecked
+                              ? filters.filter((f) => f !== id)
+                              : [...filters, id as "bug" | "idea" | "question"];
+                            // Ensure at least one filter is selected
+                            if (newFilters.length > 0) {
+                              updateDraft("feedbackFilters", newFilters);
+                            }
+                          }}
+                          className="accent-primary"
+                        />
+                        <span className="text-sm">{label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 
@@ -943,12 +1024,12 @@ export default function SettingsPage() {
             <span className="text-sm">Next.js 16 + TypeScript</span>
           </div>
 
-          {/* Report Issue / Suggest Idea Buttons */}
+          {/* Report Issue / Suggest Idea / Question Buttons */}
           <div className="pt-4 border-t space-y-2">
             <p className="text-sm text-muted-foreground mb-3">
               Une question, un bug ou une idée ?
             </p>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <Button
                 variant="outline"
                 className="w-full"
@@ -1003,12 +1084,6 @@ export default function SettingsPage() {
 ## 📋 Détails
 
 <!-- Détails supplémentaires, inspirations, mockups... -->
-
-## ⚡ Priorité suggérée
-
-- [ ] Nice to have
-- [ ] Would be useful
-- [ ] Really need this
 `);
                   window.open(
                     `https://github.com/Kikii95/obsidian-web/issues/new?title=${title}&body=${body}&labels=enhancement`,
@@ -1018,6 +1093,28 @@ export default function SettingsPage() {
               >
                 <Lightbulb className="h-4 w-4 mr-2" />
                 Idée
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  const title = encodeURIComponent("[Question] ");
+                  const body = encodeURIComponent(`## ❓ Ma question
+
+<!-- Posez votre question ici -->
+
+## 📝 Contexte
+
+<!-- Contexte supplémentaire si nécessaire -->
+`);
+                  window.open(
+                    `https://github.com/Kikii95/obsidian-web/issues/new?title=${title}&body=${body}&labels=question`,
+                    "_blank"
+                  );
+                }}
+              >
+                <HelpCircle className="h-4 w-4 mr-2" />
+                Question
               </Button>
             </div>
           </div>

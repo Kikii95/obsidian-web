@@ -42,6 +42,7 @@ import {
   Save,
   AlertCircle,
   Bug,
+  Lightbulb,
 } from "lucide-react";
 import Link from "next/link";
 import { useTheme } from "@/hooks/use-theme";
@@ -942,14 +943,18 @@ export default function SettingsPage() {
             <span className="text-sm">Next.js 16 + TypeScript</span>
           </div>
 
-          {/* Report Issue Button */}
-          <div className="pt-4 border-t">
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => {
-                const title = encodeURIComponent("[Bug] ");
-                const body = encodeURIComponent(`## Description du problème
+          {/* Report Issue / Suggest Idea Buttons */}
+          <div className="pt-4 border-t space-y-2">
+            <p className="text-sm text-muted-foreground mb-3">
+              Une question, un bug ou une idée ?
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  const title = encodeURIComponent("[Bug] ");
+                  const body = encodeURIComponent(`## Description du problème
 
 <!-- Décrivez le bug de manière claire et concise -->
 
@@ -973,15 +978,48 @@ export default function SettingsPage() {
 - **Appareil**: ${/Mobile|Android|iPhone/i.test(navigator.userAgent) ? "Mobile" : "Desktop"}
 - **Version**: 1.1.0
 `);
-                window.open(
-                  `https://github.com/Kikii95/obsidian-web/issues/new?title=${title}&body=${body}&labels=bug`,
-                  "_blank"
-                );
-              }}
-            >
-              <Bug className="h-4 w-4 mr-2" />
-              Signaler un problème
-            </Button>
+                  window.open(
+                    `https://github.com/Kikii95/obsidian-web/issues/new?title=${title}&body=${body}&labels=bug`,
+                    "_blank"
+                  );
+                }}
+              >
+                <Bug className="h-4 w-4 mr-2" />
+                Bug
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  const title = encodeURIComponent("[Idea] ");
+                  const body = encodeURIComponent(`## 💡 Description de l'idée
+
+<!-- Décrivez votre idée de manière claire et concise -->
+
+## 🎯 Cas d'usage
+
+<!-- Dans quel contexte cette feature serait utile ? -->
+
+## 📋 Détails
+
+<!-- Détails supplémentaires, inspirations, mockups... -->
+
+## ⚡ Priorité suggérée
+
+- [ ] Nice to have
+- [ ] Would be useful
+- [ ] Really need this
+`);
+                  window.open(
+                    `https://github.com/Kikii95/obsidian-web/issues/new?title=${title}&body=${body}&labels=enhancement`,
+                    "_blank"
+                  );
+                }}
+              >
+                <Lightbulb className="h-4 w-4 mr-2" />
+                Idée
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

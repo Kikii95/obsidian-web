@@ -52,9 +52,12 @@ This document tracks planned features, known issues, and community ideas for Obs
 
 | Issue | Priority | Description |
 |-------|----------|-------------|
+| Settings sync unreliable | High | Cloud settings sync (PIN, theme, preferences) between mobile and desktop doesn't always work correctly |
+| GitHub API rate limiting | High | Tags explorer and some features consume too many API requests, making them nearly unusable on large vaults |
 | Large file handling | Medium | Files > 1MB can be slow to load |
 | Offline sync conflicts | Low | No conflict resolution UI yet |
 | Canvas node editing | Medium | Can't edit text nodes inline |
+| Search performance | Medium | Full-text search on large vaults can be slow (Fuse.js limitations) |
 
 ---
 
@@ -116,17 +119,46 @@ interface ObsidianWebPlugin {
 
 ---
 
+### 👥 Collaboration & Sharing (Big Feature)
+
+**Goal**: Enable vault sharing and collaborative workflows.
+
+**Proposed Features**:
+
+| Feature | Complexity | Description |
+|---------|------------|-------------|
+| Shared vaults | 🔴 High | Multiple users accessing the same vault with different permissions |
+| Shared folders | 🟡 Medium | Share specific folders without exposing entire vault |
+| File/folder transfer | 🟡 Medium | Send a note or folder to another user's vault |
+| Permission system | 🔴 High | Read/write/admin roles per user per vault |
+| Share via link | 🟡 Medium | Generate shareable links (public or with login required) |
+| Multi-account switcher | 🟡 Medium | Quick switch between different GitHub accounts/vaults |
+
+**Architecture considerations**:
+- OAuth token per vault (user grants access to specific repos)
+- Config stored in `.obsidian-web-config` private repo
+- Invitation system via GitHub collaborator or custom token
+
+**Timeline**: TBD — Requires careful security design.
+
+---
+
 ### Other Ideas
 
 | Idea | Complexity | Description |
 |------|------------|-------------|
-| Collaboration (real-time) | 🔴 Very High | Multiple users editing same note |
+| Collaboration (real-time) | 🔴 Very High | Multiple users editing same note (like Google Docs) |
 | Comments/annotations | 🟡 Medium | Add comments to notes |
 | Publish mode | 🟡 Medium | Public read-only view of selected notes |
 | AI integration | 🟡 Medium | Summarize, search, suggest links |
 | Mobile app (React Native) | 🔴 Very High | Native app wrapping the web |
 | Browser extension | 🟡 Medium | Clip web pages to vault |
 | Dataview-like queries | 🔴 High | Query notes by frontmatter |
+| Code syntax themes | 🟡 Medium | Choose syntax highlighting theme (github, monokai, dracula) |
+| Custom theme editor | 🔴 High | Full theme customization (every color configurable) |
+| i18n (multi-language) | 🟡 Medium | Support for FR/EN/other languages |
+| Keyboard shortcuts customization | 🟡 Medium | Remap keyboard shortcuts |
+| Offline editing queue | 🔴 High | Queue changes when offline, sync when back online |
 
 ---
 

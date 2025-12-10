@@ -271,6 +271,14 @@ Obsidian Web works transparently with Git LFS — no additional configuration ne
 
 **Free tier**: GitHub LFS offers 1GB storage + 1GB bandwidth/month for free. [Learn more](https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-git-large-file-storage)
 
+## Roadmap
+
+See **[ROADMAP.md](ROADMAP.md)** for:
+- Planned features
+- Known issues
+- Community ideas
+- Plugin system proposal
+
 ## Contributing
 
 1. Fork the repository

@@ -23,10 +23,11 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const limit = Math.min(parseInt(searchParams.get("limit") || "5"), 20);
+    const state = searchParams.get("state") === "closed" ? "closed" : "open";
 
-    // Fetch open issues from the public repo (no auth needed for public repos)
+    // Fetch issues from the public repo (no auth needed for public repos)
     const response = await fetch(
-      `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/issues?state=open&per_page=${limit}&sort=created&direction=desc`,
+      `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/issues?state=${state}&per_page=${limit}&sort=created&direction=desc`,
       {
         headers: {
           Accept: "application/vnd.github.v3+json",

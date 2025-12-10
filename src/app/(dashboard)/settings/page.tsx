@@ -1073,17 +1073,17 @@ export default function SettingsPage() {
                 className="w-full"
                 onClick={() => {
                   const title = encodeURIComponent("[Idea] ");
-                  const body = encodeURIComponent(`## 💡 Description de l'idée
+                  const body = encodeURIComponent(`## Description
 
-<!-- Décrivez votre idée de manière claire et concise -->
+<!-- Décrivez votre idée -->
 
-## 🎯 Cas d'usage
+## Cas d'usage
 
 <!-- Dans quel contexte cette feature serait utile ? -->
 
-## 📋 Détails
+## Détails
 
-<!-- Détails supplémentaires, inspirations, mockups... -->
+<!-- Infos supplémentaires, inspirations, mockups... -->
 `);
                   window.open(
                     `https://github.com/Kikii95/obsidian-web/issues/new?title=${title}&body=${body}&labels=enhancement`,
@@ -1099,11 +1099,11 @@ export default function SettingsPage() {
                 className="w-full"
                 onClick={() => {
                   const title = encodeURIComponent("[Question] ");
-                  const body = encodeURIComponent(`## ❓ Ma question
+                  const body = encodeURIComponent(`## Question
 
-<!-- Posez votre question ici -->
+<!-- Posez votre question -->
 
-## 📝 Contexte
+## Contexte
 
 <!-- Contexte supplémentaire si nécessaire -->
 `);

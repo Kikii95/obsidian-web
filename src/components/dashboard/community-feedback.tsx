@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, memo, useMemo } from "react";
-import { Bug, Lightbulb, MessageSquare, HelpCircle, ExternalLink, Loader2 } from "lucide-react";
+import { Bug, Lightbulb, MessageSquare, HelpCircle, ExternalLink, Loader2, CheckCircle, Circle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSettingsStore, type FeedbackFilter } from "@/lib/settings-store";
 
@@ -96,9 +96,9 @@ function getIssueType(labels: { name: string }[]): FeedbackType {
 function CommunityFeedbackComponent() {
   const { settings } = useSettingsStore();
   const [issues, setIssues] = useState<GitHubIssue[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showClosed, setShowClosed] = useState(false);
 
   const feedbackCount = settings.feedbackCount ?? 5;
   const feedbackFilters = settings.feedbackFilters ?? ["bug", "idea", "question"];
@@ -108,12 +108,12 @@ function CommunityFeedbackComponent() {
       setIsLoading(true);
       setError(null);
       try {
-        // Fetch more than needed for filtering
-        const response = await fetch(`/api/github/issues?limit=20`);
+        // Fetch both open and closed issues
+        const state = showClosed ? "closed" : "open";
+        const response = await fetch(`/api/github/issues?limit=20&state=${state}`);
         if (!response.ok) throw new Error("Failed to fetch issues");
         const data = await response.json();
         setIssues(data.issues || []);
-        setTotalCount(data.total || 0);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Erreur");
       } finally {
@@ -121,15 +121,12 @@ function CommunityFeedbackComponent() {
       }
     };
     fetchIssues();
-  }, []);
+  }, [showClosed]);
 
-  // Filter issues based on settings filters (only open issues)
+  // Filter issues based on settings filters
   const filteredIssues = useMemo(() => {
     return issues
       .filter((issue) => {
-        // Only show open issues
-        if (issue.state !== "open") return false;
-
         const type = getIssueType(issue.labels);
         // Include if type matches any of the filters, or if it's "other" and we have all filters
         if (type === "other") return feedbackFilters.length === 3;
@@ -138,11 +135,14 @@ function CommunityFeedbackComponent() {
       .slice(0, feedbackCount);
   }, [issues, feedbackFilters, feedbackCount]);
 
+  // Count for display
+  const displayCount = filteredIssues.length;
+
   const openBugReport = () => {
     const title = encodeURIComponent("[Bug] ");
-    const body = encodeURIComponent(`## Description du problème
+    const body = encodeURIComponent(`## Description
 
-<!-- Décrivez le bug de manière claire et concise -->
+<!-- Décrivez le bug -->
 
 ## Étapes pour reproduire
 
@@ -156,8 +156,8 @@ function CommunityFeedbackComponent() {
 
 ## Environnement
 
-- **Navigateur**: ${navigator.userAgent.includes("Chrome") ? "Chrome" : navigator.userAgent.includes("Firefox") ? "Firefox" : navigator.userAgent.includes("Safari") ? "Safari" : "Autre"}
-- **Appareil**: ${/Mobile|Android|iPhone/i.test(navigator.userAgent) ? "Mobile" : "Desktop"}
+- Navigateur: ${navigator.userAgent.includes("Chrome") ? "Chrome" : navigator.userAgent.includes("Firefox") ? "Firefox" : navigator.userAgent.includes("Safari") ? "Safari" : "Autre"}
+- Appareil: ${/Mobile|Android|iPhone/i.test(navigator.userAgent) ? "Mobile" : "Desktop"}
 `);
     window.open(
       `https://github.com/Kikii95/obsidian-web/issues/new?title=${title}&body=${body}&labels=bug`,
@@ -167,17 +167,17 @@ function CommunityFeedbackComponent() {
 
   const openIdeaSuggestion = () => {
     const title = encodeURIComponent("[Idea] ");
-    const body = encodeURIComponent(`## 💡 Description de l'idée
+    const body = encodeURIComponent(`## Description
 
-<!-- Décrivez votre idée de manière claire et concise -->
+<!-- Décrivez votre idée -->
 
-## 🎯 Cas d'usage
+## Cas d'usage
 
 <!-- Dans quel contexte cette feature serait utile ? -->
 
-## 📋 Détails
+## Détails
 
-<!-- Détails supplémentaires, inspirations, mockups... -->
+<!-- Infos supplémentaires, inspirations, mockups... -->
 `);
     window.open(
       `https://github.com/Kikii95/obsidian-web/issues/new?title=${title}&body=${body}&labels=enhancement`,
@@ -187,11 +187,11 @@ function CommunityFeedbackComponent() {
 
   const openQuestion = () => {
     const title = encodeURIComponent("[Question] ");
-    const body = encodeURIComponent(`## ❓ Ma question
+    const body = encodeURIComponent(`## Question
 
-<!-- Posez votre question ici -->
+<!-- Posez votre question -->
 
-## 📝 Contexte
+## Contexte
 
 <!-- Contexte supplémentaire si nécessaire -->
 `);
@@ -236,19 +236,40 @@ function CommunityFeedbackComponent() {
         <div className="flex items-center gap-2">
           <MessageSquare className="h-5 w-5 text-primary" />
           <h3 className="font-semibold">Community Feedback</h3>
-          {totalCount > 0 && (
-            <span className="text-xs text-muted-foreground">({totalCount})</span>
-          )}
+          <span className="text-xs text-muted-foreground">({displayCount})</span>
         </div>
-        <a
-          href="https://github.com/Kikii95/obsidian-web/issues"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
-        >
-          Voir tout
-          <ExternalLink className="h-3 w-3" />
-        </a>
+        <div className="flex items-center gap-3">
+          {/* Open/Closed toggle */}
+          <button
+            onClick={() => setShowClosed(!showClosed)}
+            className={`flex items-center gap-1 text-xs px-2 py-1 rounded-md transition-colors ${
+              showClosed
+                ? "bg-purple-500/10 text-purple-500"
+                : "bg-green-500/10 text-green-500"
+            }`}
+          >
+            {showClosed ? (
+              <>
+                <CheckCircle className="h-3 w-3" />
+                Closed
+              </>
+            ) : (
+              <>
+                <Circle className="h-3 w-3" />
+                Open
+              </>
+            )}
+          </button>
+          <a
+            href="https://github.com/Kikii95/obsidian-web/issues"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
+          >
+            Voir tout
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        </div>
       </div>
 
       {/* Issues list */}

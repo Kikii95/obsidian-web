@@ -158,7 +158,7 @@ export const githubClient = {
   },
 
   /**
-   * Create a new note
+   * Create a new note (text file)
    */
   async createNote(
     path: string,
@@ -167,6 +167,21 @@ export const githubClient = {
     return apiFetch<{ sha: string; path: string }>("/api/github/create", {
       method: "POST",
       body: JSON.stringify({ path, content }),
+    });
+  },
+
+  /**
+   * Create a binary file (image, video, pdf, etc.)
+   * @param path - File path
+   * @param base64Content - Base64 encoded content (without data: prefix)
+   */
+  async createBinaryFile(
+    path: string,
+    base64Content: string
+  ): Promise<{ sha: string; path: string }> {
+    return apiFetch<{ sha: string; path: string }>("/api/github/create", {
+      method: "POST",
+      body: JSON.stringify({ path, content: base64Content, binary: true }),
     });
   },
 

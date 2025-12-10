@@ -6,8 +6,9 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, ChevronRight, RefreshCw, Image, FileText, Loader2, Home } from "lucide-react";
+import { AlertCircle, ChevronRight, RefreshCw, Image, FileText, Loader2, Home, Film } from "lucide-react";
 import { ImageViewer } from "@/components/viewer/image-viewer";
+import { VideoViewer } from "@/components/viewer/video-viewer";
 import { getFileType } from "@/lib/file-types";
 import { githubClient, type BinaryFileData } from "@/services/github-client";
 import { useSettingsStore } from "@/lib/settings-store";
@@ -25,7 +26,11 @@ const PDFViewer = dynamic(
   }
 );
 
-const SUPPORTED_EXTENSIONS = [".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".bmp", ".ico", ".pdf"];
+const SUPPORTED_EXTENSIONS = [
+  ".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".bmp", ".ico", // Images
+  ".pdf", // PDF
+  ".mp4", ".webm", ".mov", ".avi", ".mkv", ".m4v", // Videos
+];
 
 export default function FilePage() {
   const params = useParams();
@@ -157,6 +162,7 @@ export default function FilePage() {
                 <span className="font-medium flex items-center gap-1.5">
                   {fileType === "image" && <Image className="h-4 w-4 text-emerald-500" />}
                   {fileType === "pdf" && <FileText className="h-4 w-4 text-red-500" />}
+                  {fileType === "video" && <Film className="h-4 w-4 text-purple-500" />}
                   {crumb.name}
                 </span>
               ) : (
@@ -183,6 +189,13 @@ export default function FilePage() {
         )}
         {fileType === "pdf" && (
           <PDFViewer content={file.content} fileName={fileName} />
+        )}
+        {fileType === "video" && (
+          <VideoViewer
+            content={file.content}
+            mimeType={file.mimeType}
+            fileName={fileName}
+          />
         )}
       </div>
     </div>

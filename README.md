@@ -252,6 +252,25 @@ Absolutely. Private repos work perfectly. Your GitHub token (stored in your brow
 
 Yes! It's a PWA — you can install it on your home screen for an app-like experience.
 
+### What about large files (videos, PDFs)?
+
+GitHub has a **100MB file size limit**. For vaults with large media files, we recommend setting up **Git LFS** (Large File Storage):
+
+1. Install Git LFS: `git lfs install`
+2. Track large file types in your vault repo:
+   ```bash
+   git lfs track "*.mp4"
+   git lfs track "*.mov"
+   git lfs track "*.pdf"
+   git lfs track "*.zip"
+   ```
+3. Commit the `.gitattributes` file
+4. Push your changes
+
+Obsidian Web works transparently with Git LFS — no additional configuration needed on our side.
+
+**Free tier**: GitHub LFS offers 1GB storage + 1GB bandwidth/month for free. [Learn more](https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-git-large-file-storage)
+
 ## Contributing
 
 1. Fork the repository

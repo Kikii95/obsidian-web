@@ -1,12 +1,13 @@
 // File type detection utilities
 
-export type FileType = 'markdown' | 'image' | 'pdf' | 'canvas' | 'other';
+export type FileType = 'markdown' | 'image' | 'pdf' | 'canvas' | 'video' | 'other';
 
 const EXTENSIONS: Record<FileType, string[]> = {
   markdown: ['.md'],
   image: ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.bmp', '.ico'],
   pdf: ['.pdf'],
   canvas: ['.canvas'],
+  video: ['.mp4', '.webm', '.mov', '.avi', '.mkv', '.m4v'],
   other: [],
 };
 
@@ -22,6 +23,12 @@ const MIME_TYPES: Record<string, string> = {
   '.pdf': 'application/pdf',
   '.canvas': 'application/json',
   '.md': 'text/markdown',
+  '.mp4': 'video/mp4',
+  '.webm': 'video/webm',
+  '.mov': 'video/quicktime',
+  '.avi': 'video/x-msvideo',
+  '.mkv': 'video/x-matroska',
+  '.m4v': 'video/x-m4v',
 };
 
 export function getFileExtension(filename: string): string {
@@ -54,7 +61,7 @@ export function isViewableFile(filename: string): boolean {
 
 export function isBinaryFile(filename: string): boolean {
   const type = getFileType(filename);
-  return type === 'image' || type === 'pdf';
+  return type === 'image' || type === 'pdf' || type === 'video';
 }
 
 export function getFileIcon(filename: string): string {
@@ -64,6 +71,7 @@ export function getFileIcon(filename: string): string {
     case 'image': return 'image';
     case 'pdf': return 'file-text';
     case 'canvas': return 'layout-dashboard';
+    case 'video': return 'film';
     default: return 'file';
   }
 }

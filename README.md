@@ -14,6 +14,23 @@ Obsidian Web lets you access your Obsidian vault from any device with a web brow
 - Works offline with PWA support
 - Full Obsidian-like experience (graph view, backlinks, tags, daily notes)
 
+### How it works with Obsidian Desktop
+
+```
+┌─────────────────┐         ┌─────────────┐         ┌─────────────────┐
+│  Obsidian App   │ ──git── │   GitHub    │ ──api── │  Obsidian Web   │
+│   (Desktop)     │  push   │    Repo     │  sync   │    (Mobile)     │
+└─────────────────┘         └─────────────┘         └─────────────────┘
+```
+
+Your vault lives on **GitHub**. You can use:
+- **Obsidian desktop app** on your computer (with Git plugin to sync)
+- **Obsidian Web** on your phone/tablet (syncs directly with GitHub)
+
+Both read and write to the **same repository** — your notes are always in sync. Edit on desktop, see changes on mobile. Edit on mobile, pull changes on desktop.
+
+**No Obsidian Sync subscription needed.** GitHub is your free sync layer.
+
 ## Security & Privacy
 
 **Your data stays yours.** Here's how the security model works:

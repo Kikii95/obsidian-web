@@ -208,25 +208,25 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
     setError(null);
   }, []);
 
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;
     if (fileList && fileList.length > 0) {
-      validateAndAddFiles(fileList, false);
+      await validateAndAddFiles(fileList, false);
     }
     // Reset input
     e.target.value = "";
   }, [validateAndAddFiles]);
 
-  const handleFolderSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFolderSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;
     if (fileList && fileList.length > 0) {
-      validateAndAddFiles(fileList, true); // Mark as folder upload
+      await validateAndAddFiles(fileList, true); // Mark as folder upload
     }
     // Reset input
     e.target.value = "";
   }, [validateAndAddFiles]);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault();
     const fileList = e.dataTransfer.files;
     if (fileList && fileList.length > 0) {
@@ -234,7 +234,7 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
       const isFromFolder = Array.from(fileList).some(
         (f) => (f as File & { webkitRelativePath?: string }).webkitRelativePath
       );
-      validateAndAddFiles(fileList, isFromFolder);
+      await validateAndAddFiles(fileList, isFromFolder);
     }
   }, [validateAndAddFiles]);
 
@@ -289,17 +289,20 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
       const fileItem = files[i];
       const { file, relativePath, isZip, zipContents } = fileItem;
 
-      // Handle ZIP files - extract and import supported files
+      // Handle ZIP files - extract and import supported files into a folder named after the ZIP
       if (isZip && zipContents) {
         try {
           const zip = await JSZip.loadAsync(file);
+
+          // Create folder name from ZIP filename (without .zip extension)
+          const zipFolderName = file.name.replace(/\.zip$/i, "");
 
           for (const content of zipContents) {
             if (cancelledRef.current) break;
             if (!content.isSupported) continue;
 
-            // Build full path for ZIP content
-            let contentPath = content.path;
+            // Build full path for ZIP content - place inside folder named after ZIP
+            let contentPath = `${zipFolderName}/${content.path}`;
             if (targetFolder) {
               contentPath = `${targetFolder}/${contentPath}`;
             }

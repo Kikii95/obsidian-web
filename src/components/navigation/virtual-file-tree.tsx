@@ -270,14 +270,14 @@ const VirtualTreeItem = memo(function VirtualTreeItem({
             <Lock className="h-3.5 w-3.5 ml-1 shrink-0 text-amber-500" />
           )}
         </button>
-        {/* Folder explorer button - visible on mobile, hover on desktop */}
+        {/* Folder explorer button - hidden by default, visible on hover (desktop) or always visible (mobile handled via touch) */}
         {!isSelectionMode && (
           <Link
             href={folderHref}
             onClick={(e) => e.stopPropagation()}
             className={cn(
               "p-1 mr-1 rounded transition-all",
-              "md:opacity-0 md:group-hover:opacity-100",
+              "opacity-0 group-hover:opacity-100",
               "hover:bg-primary/20 text-muted-foreground hover:text-primary"
             )}
             title="Ouvrir l'explorateur"
@@ -353,7 +353,7 @@ const VirtualTreeItem = memo(function VirtualTreeItem({
           <Pin className="h-3 w-3 ml-1 shrink-0 text-primary" />
         )}
       </Link>
-      {/* Pin button - visible on mobile, hover on desktop */}
+      {/* Pin button - hidden by default, visible on hover */}
       {canPin && (
         <button
           onClick={handleTogglePin}
@@ -361,7 +361,7 @@ const VirtualTreeItem = memo(function VirtualTreeItem({
             "p-1 mr-1 rounded transition-all",
             isPinned
               ? "hover:bg-primary/20 text-primary"
-              : "md:opacity-0 md:group-hover:opacity-100 hover:bg-primary/20 text-muted-foreground hover:text-primary"
+              : "opacity-0 group-hover:opacity-100 hover:bg-primary/20 text-muted-foreground hover:text-primary"
           )}
           title={isPinned ? "Désépingler" : "Épingler"}
         >

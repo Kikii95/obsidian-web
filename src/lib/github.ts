@@ -302,8 +302,17 @@ export async function getFullVaultTree(
           const fileName = item.path.split("/").pop() || "";
           if (fileName === ".gitkeep") {
             // Always include .gitkeep
-          } else if (item.path.startsWith(".") || item.path.includes("/.")) {
-            return false;
+          } else {
+            // Get the path relative to rootPath for hidden check
+            // This allows rootPath like ".obsidian" to work
+            let pathToCheck = item.path;
+            if (rootPath && pathToCheck.startsWith(rootPath + "/")) {
+              pathToCheck = pathToCheck.slice(rootPath.length + 1);
+            }
+            // Now check if the RELATIVE path is hidden
+            if (pathToCheck.startsWith(".") || pathToCheck.includes("/.")) {
+              return false;
+            }
           }
         }
         return true;

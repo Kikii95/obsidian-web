@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Dialog,
@@ -15,10 +15,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { Upload, FileText, Loader2, AlertCircle, Check, AlertTriangle, Image, Film, FileJson, FileIcon, X, CheckCircle, XCircle, Folder } from "lucide-react";
+import { Upload, FileText, Loader2, AlertCircle, Check, AlertTriangle, Image, Film, FileJson, FileIcon, X, CheckCircle, XCircle, Folder, Archive, ChevronRight, ChevronDown } from "lucide-react";
 import { useVaultStore } from "@/lib/store";
 import { githubClient } from "@/services/github-client";
 import { FolderTreePicker } from "./folder-tree-picker";
+import JSZip from "jszip";
 
 const ROOT_VALUE = "__root__";
 
@@ -29,6 +30,14 @@ const ACCEPTED_EXTENSIONS = [
   ".pdf",     // PDF
   ".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", // Images
   ".mp4", ".webm", ".mov", ".avi",  // Videos
+  ".zip",     // ZIP archives
+];
+
+// Extensions inside ZIP that are supported
+const SUPPORTED_INNER_EXTENSIONS = [
+  ".md", ".canvas", ".pdf",
+  ".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg",
+  ".mp4", ".webm", ".mov", ".avi",
 ];
 
 const ACCEPT_STRING = ACCEPTED_EXTENSIONS.join(",");
@@ -37,11 +46,12 @@ const ACCEPT_STRING = ACCEPTED_EXTENSIONS.join(",");
 const LFS_WARNING_SIZE = 50 * 1024 * 1024;
 
 // Get file type category
-function getFileCategory(filename: string): "markdown" | "canvas" | "image" | "video" | "pdf" | "other" {
+function getFileCategory(filename: string): "markdown" | "canvas" | "image" | "video" | "pdf" | "zip" | "other" {
   const ext = filename.toLowerCase().split(".").pop();
   if (ext === "md") return "markdown";
   if (ext === "canvas") return "canvas";
   if (ext === "pdf") return "pdf";
+  if (ext === "zip") return "zip";
   if (["png", "jpg", "jpeg", "gif", "webp", "svg"].includes(ext || "")) return "image";
   if (["mp4", "webm", "mov", "avi"].includes(ext || "")) return "video";
   return "other";
@@ -55,14 +65,25 @@ function getFileIcon(category: ReturnType<typeof getFileCategory>) {
     case "image": return Image;
     case "video": return Film;
     case "pdf": return FileIcon;
+    case "zip": return Archive;
     default: return FileText;
   }
+}
+
+interface ZipContent {
+  path: string;
+  name: string;
+  size: number;
+  isSupported: boolean;
 }
 
 interface FileWithPath {
   file: File;
   relativePath: string; // For folder uploads, keeps the relative path
   displayName: string;
+  isZip?: boolean;
+  zipContents?: ZipContent[]; // Preview of ZIP contents
+  zipExpanded?: boolean; // UI state for collapsing
 }
 
 interface ImportResult {
@@ -90,17 +111,26 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<ImportResult[]>([]);
   const [showLfsWarning, setShowLfsWarning] = useState(false);
+  const cancelledRef = useRef(false);
 
-  const validateAndAddFiles = useCallback((fileList: FileList, isFromFolder = false) => {
+  const validateAndAddFiles = useCallback(async (fileList: FileList, isFromFolder = false) => {
     const newFiles: FileWithPath[] = [];
     let hasLargeFile = false;
     let skippedCount = 0;
 
     for (let i = 0; i < fileList.length; i++) {
       const file = fileList[i];
-      const ext = "." + file.name.split(".").pop()?.toLowerCase();
 
-      if (!ACCEPTED_EXTENSIONS.includes(ext)) {
+      // Get extension properly
+      const nameParts = file.name.split(".");
+      const ext = nameParts.length > 1 ? "." + nameParts.pop()?.toLowerCase() : "";
+
+      // Check if extension is supported
+      const isSupported = ACCEPTED_EXTENSIONS.some(
+        (accepted) => accepted.toLowerCase() === ext.toLowerCase()
+      );
+
+      if (!isSupported) {
         skippedCount++;
         continue; // Skip unsupported files silently
       }
@@ -121,11 +151,47 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
         hasLargeFile = true;
       }
 
-      newFiles.push({
-        file,
-        relativePath,
-        displayName: file.name,
-      });
+      // Special handling for ZIP files - read contents for preview
+      if (ext === ".zip") {
+        try {
+          const zip = await JSZip.loadAsync(file);
+          const zipContents: ZipContent[] = [];
+
+          zip.forEach((path, zipEntry) => {
+            if (!zipEntry.dir) {
+              const entryExt = "." + path.split(".").pop()?.toLowerCase();
+              const entryName = path.split("/").pop() || path;
+              zipContents.push({
+                path,
+                name: entryName,
+                size: 0, // Size will be determined on extract
+                isSupported: SUPPORTED_INNER_EXTENSIONS.some(
+                  (supported) => supported.toLowerCase() === entryExt.toLowerCase()
+                ),
+              });
+            }
+          });
+
+          newFiles.push({
+            file,
+            relativePath,
+            displayName: file.name,
+            isZip: true,
+            zipContents,
+            zipExpanded: false,
+          });
+        } catch {
+          // If ZIP reading fails, skip it
+          skippedCount++;
+          continue;
+        }
+      } else {
+        newFiles.push({
+          file,
+          relativePath,
+          displayName: file.name,
+        });
+      }
     }
 
     if (newFiles.length === 0) {
@@ -176,9 +242,24 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
     setFiles((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
+  const toggleZipExpanded = useCallback((index: number) => {
+    setFiles((prev) =>
+      prev.map((f, i) =>
+        i === index ? { ...f, zipExpanded: !f.zipExpanded } : f
+      )
+    );
+  }, []);
+
+  const handleCancel = useCallback(() => {
+    cancelledRef.current = true;
+    setIsImporting(false);
+    setError("Import annulé");
+  }, []);
+
   const handleImport = async () => {
     if (files.length === 0) return;
 
+    cancelledRef.current = false;
     setIsImporting(true);
     setError(null);
     setProgress(0);
@@ -187,10 +268,83 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
     const importResults: ImportResult[] = [];
     const total = files.length;
 
-    for (let i = 0; i < files.length; i++) {
-      const { file, relativePath } = files[i];
+    // Count total items to import (including ZIP contents)
+    let totalItems = 0;
+    for (const f of files) {
+      if (f.isZip && f.zipContents) {
+        totalItems += f.zipContents.filter((c) => c.isSupported).length;
+      } else {
+        totalItems += 1;
+      }
+    }
 
-      // Build full path
+    let processedItems = 0;
+
+    for (let i = 0; i < files.length; i++) {
+      // Check if cancelled
+      if (cancelledRef.current) {
+        break;
+      }
+
+      const fileItem = files[i];
+      const { file, relativePath, isZip, zipContents } = fileItem;
+
+      // Handle ZIP files - extract and import supported files
+      if (isZip && zipContents) {
+        try {
+          const zip = await JSZip.loadAsync(file);
+
+          for (const content of zipContents) {
+            if (cancelledRef.current) break;
+            if (!content.isSupported) continue;
+
+            // Build full path for ZIP content
+            let contentPath = content.path;
+            if (targetFolder) {
+              contentPath = `${targetFolder}/${contentPath}`;
+            }
+
+            try {
+              const zipFile = zip.file(content.path);
+              if (!zipFile) throw new Error("File not found in ZIP");
+
+              const contentCategory = getFileCategory(content.name);
+
+              if (contentCategory === "markdown" || contentCategory === "canvas") {
+                const text = await zipFile.async("text");
+                await githubClient.createNote(contentPath, text);
+              } else {
+                const base64 = await zipFile.async("base64");
+                await githubClient.createBinaryFile(contentPath, base64);
+              }
+
+              importResults.push({ path: contentPath, success: true });
+            } catch (err) {
+              importResults.push({
+                path: contentPath,
+                success: false,
+                error: err instanceof Error ? err.message : "Erreur",
+              });
+            }
+
+            processedItems++;
+            setProgress((processedItems / totalItems) * 100);
+            setResults([...importResults]);
+          }
+        } catch (err) {
+          importResults.push({
+            path: file.name,
+            success: false,
+            error: `ZIP error: ${err instanceof Error ? err.message : "Erreur"}`,
+          });
+          processedItems++;
+          setProgress((processedItems / totalItems) * 100);
+          setResults([...importResults]);
+        }
+        continue;
+      }
+
+      // Regular file handling
       let fullPath = file.name;
       if (relativePath) {
         fullPath = `${relativePath}/${file.name}`;
@@ -225,12 +379,17 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
         });
       }
 
-      setProgress(((i + 1) / total) * 100);
+      processedItems++;
+      setProgress((processedItems / totalItems) * 100);
       setResults([...importResults]);
     }
 
     setIsImporting(false);
-    triggerTreeRefresh();
+
+    // Only refresh if not cancelled and something was imported
+    if (!cancelledRef.current && importResults.length > 0) {
+      triggerTreeRefresh();
+    }
 
     // If single file and success, navigate to it
     const successCount = importResults.filter((r) => r.success).length;
@@ -366,30 +525,71 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
                   />
                 </div>
               </div>
-              <div className="max-h-40 overflow-y-auto border rounded-md divide-y divide-border">
+              <div className="max-h-48 overflow-y-auto border rounded-md divide-y divide-border">
                 {files.map((f, index) => {
                   const IconComponent = getFileIcon(getFileCategory(f.file.name));
+                  const supportedInZip = f.zipContents?.filter((c) => c.isSupported).length || 0;
+                  const totalInZip = f.zipContents?.length || 0;
+
                   return (
-                    <div key={index} className="flex items-center gap-2 p-2 text-sm">
-                      <IconComponent className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="truncate font-medium">{f.displayName}</p>
-                        {f.relativePath && (
-                          <p className="text-xs text-muted-foreground truncate">{f.relativePath}/</p>
+                    <div key={index}>
+                      <div className="flex items-center gap-2 p-2 text-sm">
+                        {/* ZIP expand toggle */}
+                        {f.isZip && f.zipContents && f.zipContents.length > 0 && (
+                          <button
+                            onClick={() => toggleZipExpanded(index)}
+                            className="shrink-0 p-0.5 hover:bg-muted rounded"
+                          >
+                            {f.zipExpanded ? (
+                              <ChevronDown className="h-3 w-3" />
+                            ) : (
+                              <ChevronRight className="h-3 w-3" />
+                            )}
+                          </button>
+                        )}
+                        <IconComponent className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="truncate font-medium">{f.displayName}</p>
+                          {f.relativePath && (
+                            <p className="text-xs text-muted-foreground truncate">{f.relativePath}/</p>
+                          )}
+                          {f.isZip && (
+                            <p className="text-xs text-muted-foreground">
+                              {supportedInZip}/{totalInZip} fichier{totalInZip > 1 ? "s" : ""} supporté{supportedInZip > 1 ? "s" : ""}
+                            </p>
+                          )}
+                        </div>
+                        <span className="text-xs text-muted-foreground shrink-0">
+                          {(f.file.size / 1024).toFixed(0)} KB
+                        </span>
+                        {!isImporting && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 shrink-0"
+                            onClick={() => removeFile(index)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
                         )}
                       </div>
-                      <span className="text-xs text-muted-foreground shrink-0">
-                        {(f.file.size / 1024).toFixed(0)} KB
-                      </span>
-                      {!isImporting && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 shrink-0"
-                          onClick={() => removeFile(index)}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
+                      {/* ZIP contents preview */}
+                      {f.isZip && f.zipExpanded && f.zipContents && (
+                        <div className="bg-muted/30 border-t border-border/50 px-2 py-1 max-h-32 overflow-y-auto">
+                          {f.zipContents.map((content, ci) => (
+                            <div
+                              key={ci}
+                              className={`flex items-center gap-2 py-0.5 text-xs ${
+                                content.isSupported ? "text-muted-foreground" : "text-muted-foreground/50 line-through"
+                              }`}
+                            >
+                              <span className="truncate flex-1 pl-4">{content.path}</span>
+                              <span className="shrink-0">
+                                {content.size > 0 ? `${(content.size / 1024).toFixed(0)} KB` : ""}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
                       )}
                     </div>
                   );
@@ -485,8 +685,7 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
             <>
               <Button
                 variant="outline"
-                onClick={() => handleOpenChange(false)}
-                disabled={isImporting}
+                onClick={isImporting ? handleCancel : () => handleOpenChange(false)}
               >
                 Annuler
               </Button>

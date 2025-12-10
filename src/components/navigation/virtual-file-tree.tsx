@@ -276,8 +276,8 @@ const VirtualTreeItem = memo(function VirtualTreeItem({
             href={folderHref}
             onClick={(e) => e.stopPropagation()}
             className={cn(
-              "p-1 mr-1 rounded transition-opacity",
-              "opacity-100 md:opacity-0 md:group-hover:opacity-100",
+              "p-1 mr-1 rounded transition-all",
+              "md:opacity-0 md:group-hover:opacity-100",
               "hover:bg-primary/20 text-muted-foreground hover:text-primary"
             )}
             title="Ouvrir l'explorateur"
@@ -358,10 +358,10 @@ const VirtualTreeItem = memo(function VirtualTreeItem({
         <button
           onClick={handleTogglePin}
           className={cn(
-            "p-1 mr-1 rounded transition-opacity",
+            "p-1 mr-1 rounded transition-all",
             isPinned
-              ? "opacity-100 hover:bg-primary/20 text-primary"
-              : "opacity-100 md:opacity-0 md:group-hover:opacity-100 hover:bg-primary/20 text-muted-foreground hover:text-primary"
+              ? "hover:bg-primary/20 text-primary"
+              : "md:opacity-0 md:group-hover:opacity-100 hover:bg-primary/20 text-muted-foreground hover:text-primary"
           )}
           title={isPinned ? "Désépingler" : "Épingler"}
         >

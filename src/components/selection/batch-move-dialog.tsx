@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { FolderInput, Loader2, CheckCircle, XCircle, File, Folder } from "lucide-react";
+import { FolderInput, Loader2, CheckCircle, XCircle, File, Folder, AlertTriangle } from "lucide-react";
 import { githubClient } from "@/services/github-client";
 import { FolderTreePicker } from "@/components/notes/folder-tree-picker";
 import { useVaultStore } from "@/lib/store";
@@ -50,6 +50,24 @@ export function BatchMoveDialog({
 
   // Get all paths being moved (to exclude from destination picker)
   const movingPaths = items.map((i) => i.path);
+
+  // Check if target is invalid (moving folder into itself or its children)
+  const isInvalidTarget = (target: string): boolean => {
+    const dest = target === ROOT_VALUE ? "" : target;
+
+    // Check each folder being moved
+    for (const item of items) {
+      if (item.type === "dir") {
+        // Can't move into itself
+        if (dest === item.path) return true;
+        // Can't move into a subfolder of itself
+        if (dest.startsWith(item.path + "/")) return true;
+      }
+    }
+    return false;
+  };
+
+  const targetIsInvalid = isInvalidTarget(targetFolder);
 
   const handleMove = async () => {
     setIsMoving(true);
@@ -187,6 +205,13 @@ export function BatchMoveDialog({
                 currentPath={movingPaths[0]} // Exclude first item's parent
                 showRoot={true}
               />
+              {/* Warning if trying to move folder into itself */}
+              {targetIsInvalid && (
+                <div className="flex items-center gap-2 p-2 rounded-md bg-destructive/10 text-destructive text-xs">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  <span>Impossible de déplacer un dossier dans lui-même</span>
+                </div>
+              )}
             </div>
           )}
 
@@ -259,7 +284,7 @@ export function BatchMoveDialog({
                 </Button>
                 <Button
                   onClick={handleMove}
-                  disabled={isMoving || targetFolder === ROOT_VALUE && items.some(i => !i.path.includes("/"))}
+                  disabled={isMoving || targetIsInvalid || (targetFolder === ROOT_VALUE && items.some(i => !i.path.includes("/")))}
                 >
                   {isMoving ? (
                     <>

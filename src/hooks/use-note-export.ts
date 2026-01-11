@@ -60,9 +60,10 @@ export function useNoteExport({
         const element = contentRef.current.cloneNode(true) as HTMLElement;
 
         // Convert CSS lab/oklch/oklab colors to RGB (html2canvas doesn't support them)
-        const sanitizeColors = (el: HTMLElement) => {
-          const computed = window.getComputedStyle(el);
-          const colorProps = ["color", "backgroundColor", "borderColor", "borderTopColor", "borderBottomColor", "borderLeftColor", "borderRightColor"];
+        // Get computed styles from ORIGINAL elements (in DOM), then apply to cloned
+        const sanitizeColors = (original: HTMLElement, clone: HTMLElement) => {
+          const computed = window.getComputedStyle(original);
+          const colorProps = ["color", "background-color", "border-color", "border-top-color", "border-bottom-color", "border-left-color", "border-right-color"];
 
           for (const prop of colorProps) {
             const value = computed.getPropertyValue(prop);
@@ -71,15 +72,19 @@ export function useNoteExport({
               const ctx = canvas.getContext("2d");
               if (ctx) {
                 ctx.fillStyle = value;
-                el.style.setProperty(prop, ctx.fillStyle);
+                clone.style.setProperty(prop, ctx.fillStyle);
               }
             }
           }
-          for (const child of Array.from(el.children)) {
-            sanitizeColors(child as HTMLElement);
+          const originalChildren = Array.from(original.children);
+          const cloneChildren = Array.from(clone.children);
+          for (let i = 0; i < originalChildren.length; i++) {
+            if (cloneChildren[i]) {
+              sanitizeColors(originalChildren[i] as HTMLElement, cloneChildren[i] as HTMLElement);
+            }
           }
         };
-        sanitizeColors(element);
+        sanitizeColors(contentRef.current, element);
 
         // Apply print-friendly styles
         element.style.padding = "20px";

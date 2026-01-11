@@ -59,6 +59,28 @@ export function useNoteExport({
         // Clone the element to avoid modifying the original
         const element = contentRef.current.cloneNode(true) as HTMLElement;
 
+        // Convert CSS lab/oklch/oklab colors to RGB (html2canvas doesn't support them)
+        const sanitizeColors = (el: HTMLElement) => {
+          const computed = window.getComputedStyle(el);
+          const colorProps = ["color", "backgroundColor", "borderColor", "borderTopColor", "borderBottomColor", "borderLeftColor", "borderRightColor"];
+
+          for (const prop of colorProps) {
+            const value = computed.getPropertyValue(prop);
+            if (value && (value.includes("lab(") || value.includes("oklch(") || value.includes("oklab("))) {
+              const canvas = document.createElement("canvas");
+              const ctx = canvas.getContext("2d");
+              if (ctx) {
+                ctx.fillStyle = value;
+                el.style.setProperty(prop, ctx.fillStyle);
+              }
+            }
+          }
+          for (const child of Array.from(el.children)) {
+            sanitizeColors(child as HTMLElement);
+          }
+        };
+        sanitizeColors(element);
+
         // Apply print-friendly styles
         element.style.padding = "20px";
         element.style.maxWidth = "none";

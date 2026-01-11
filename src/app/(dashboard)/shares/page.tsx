@@ -14,8 +14,11 @@ import {
   Loader2,
   Link2,
   AlertCircle,
+  Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -23,6 +26,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -96,6 +108,28 @@ export default function SharesPage() {
     await navigator.clipboard.writeText(url);
     setCopiedToken(token);
     setTimeout(() => setCopiedToken(null), 2000);
+  };
+
+  // Rename share
+  const handleRename = async (token: string, newName: string) => {
+    try {
+      const res = await fetch(`/api/shares/${token}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newName }),
+      });
+      if (!res.ok) throw new Error("Erreur lors du renommage");
+      const data = await res.json();
+      setShares((prev) =>
+        prev.map((s) =>
+          s.token === token ? { ...s, name: data.share.name } : s
+        )
+      );
+      return true;
+    } catch (err) {
+      console.error("Rename error:", err);
+      return false;
+    }
   };
 
   // Format date
@@ -185,6 +219,7 @@ export default function SharesPage() {
                     share={share}
                     onDelete={handleDelete}
                     onCopy={handleCopy}
+                    onRename={handleRename}
                     deletingId={deletingId}
                     copiedToken={copiedToken}
                     formatDate={formatDate}
@@ -209,6 +244,7 @@ export default function SharesPage() {
                     share={share}
                     onDelete={handleDelete}
                     onCopy={handleCopy}
+                    onRename={handleRename}
                     deletingId={deletingId}
                     copiedToken={copiedToken}
                     formatDate={formatDate}
@@ -229,6 +265,7 @@ function ShareCard({
   share,
   onDelete,
   onCopy,
+  onRename,
   deletingId,
   copiedToken,
   formatDate,
@@ -237,11 +274,29 @@ function ShareCard({
   share: Share;
   onDelete: (token: string) => void;
   onCopy: (token: string) => void;
+  onRename: (token: string, newName: string) => Promise<boolean>;
   deletingId: string | null;
   copiedToken: string | null;
   formatDate: (date: string) => string;
   getTimeRemaining: (date: string) => string;
 }) {
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [renameValue, setRenameValue] = useState(share.name);
+  const [isRenaming, setIsRenaming] = useState(false);
+
+  const handleRenameSubmit = async () => {
+    if (renameValue.trim() === share.name) {
+      setRenameOpen(false);
+      return;
+    }
+    setIsRenaming(true);
+    const success = await onRename(share.token, renameValue.trim());
+    setIsRenaming(false);
+    if (success) {
+      setRenameOpen(false);
+    }
+  };
+
   const isNote = share.shareType === "note";
   const shareUrl = typeof window !== "undefined"
     ? `${window.location.origin}/s/${share.token}`
@@ -274,6 +329,58 @@ function ShareCard({
             </div>
           </div>
           <div className="flex items-center gap-1 shrink-0">
+            {/* Rename dialog */}
+            <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  title="Renommer"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Renommer ce lien</DialogTitle>
+                  <DialogDescription>
+                    Changez le nom d'affichage de ce lien de partage
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                  <Label htmlFor="share-rename">Nouveau nom</Label>
+                  <Input
+                    id="share-rename"
+                    value={renameValue}
+                    onChange={(e) => setRenameValue(e.target.value)}
+                    placeholder={share.folderName}
+                    className="mt-2"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleRenameSubmit();
+                      }
+                    }}
+                  />
+                </div>
+                <DialogFooter>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setRenameOpen(false)}
+                    disabled={isRenaming}
+                  >
+                    Annuler
+                  </Button>
+                  <Button onClick={handleRenameSubmit} disabled={isRenaming}>
+                    {isRenaming ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : null}
+                    {isRenaming ? "Enregistrement..." : "Enregistrer"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
             {!share.isExpired && (
               <>
                 <Button

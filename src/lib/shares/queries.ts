@@ -98,6 +98,23 @@ export async function deleteShare(
 }
 
 /**
+ * Update share name
+ */
+export async function updateShareName(
+  token: string,
+  userId: string,
+  name: string
+): Promise<Share | null> {
+  const result = await db
+    .update(shares)
+    .set({ name: name || null })
+    .where(and(eq(shares.token, token), eq(shares.userId, userId)))
+    .returning();
+
+  return result[0] ?? null;
+}
+
+/**
  * Increment access count and update last accessed timestamp
  */
 export async function recordShareAccess(token: string): Promise<void> {

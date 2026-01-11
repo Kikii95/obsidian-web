@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedContext } from "@/lib/server-vault-config";
 import { getShareMetadata } from "@/lib/server-share-context";
-import { deleteShare, getShareByTokenRaw } from "@/lib/shares/queries";
+import { deleteShare, getShareByTokenRaw, updateShareName } from "@/lib/shares/queries";
 
 interface RouteParams {
   params: Promise<{ token: string }>;
@@ -67,6 +67,56 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     console.error("Error deleting share:", error);
     return NextResponse.json(
       { error: "Erreur lors de la suppression du partage" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * PATCH /api/shares/[token] - Update share name (requires auth)
+ */
+export async function PATCH(request: NextRequest, { params }: RouteParams) {
+  try {
+    const context = await getAuthenticatedContext();
+
+    if (!context) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    }
+
+    const { token } = await params;
+    const { session } = context;
+    const body = await request.json();
+
+    if (typeof body.name !== "string") {
+      return NextResponse.json(
+        { error: "Le champ 'name' est requis" },
+        { status: 400 }
+      );
+    }
+
+    const updated = await updateShareName(token, session.user.id, body.name);
+
+    if (!updated) {
+      return NextResponse.json(
+        { error: "Partage non trouvé ou non autorisé" },
+        { status: 404 }
+      );
+    }
+
+    const folderName = updated.folderPath.split("/").pop() || updated.folderPath;
+
+    return NextResponse.json({
+      success: true,
+      share: {
+        token: updated.token,
+        name: updated.name || folderName,
+        folderName,
+      },
+    });
+  } catch (error) {
+    console.error("Error updating share:", error);
+    return NextResponse.json(
+      { error: "Erreur lors de la mise à jour du partage" },
       { status: 500 }
     );
   }

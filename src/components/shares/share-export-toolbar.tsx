@@ -44,6 +44,33 @@ export function ShareExportToolbar({
         const html2pdf = (await import("html2pdf.js")).default;
         const element = contentRef.current.cloneNode(true) as HTMLElement;
 
+        // Convert CSS lab/oklch/oklab colors to RGB (html2canvas doesn't support them)
+        const sanitizeColors = (el: HTMLElement) => {
+          const computed = window.getComputedStyle(el);
+          const colorProps = ["color", "backgroundColor", "borderColor", "borderTopColor", "borderBottomColor", "borderLeftColor", "borderRightColor"];
+
+          for (const prop of colorProps) {
+            const value = computed.getPropertyValue(prop);
+            if (value && (value.includes("lab(") || value.includes("oklch(") || value.includes("oklab("))) {
+              // Force conversion by setting then getting the computed value via canvas
+              const canvas = document.createElement("canvas");
+              const ctx = canvas.getContext("2d");
+              if (ctx) {
+                ctx.fillStyle = value;
+                // ctx.fillStyle will be converted to RGB format
+                el.style.setProperty(prop, ctx.fillStyle);
+              }
+            }
+          }
+
+          // Recursively process children
+          for (const child of Array.from(el.children)) {
+            sanitizeColors(child as HTMLElement);
+          }
+        };
+
+        sanitizeColors(element);
+
         // Apply print-friendly styles
         element.style.padding = "20px";
         element.style.maxWidth = "none";

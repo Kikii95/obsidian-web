@@ -56,124 +56,104 @@ export function useNoteExport({
       if (contentRef?.current) {
         const html2pdf = (await import("html2pdf.js")).default;
 
-        // Clone the element to avoid modifying the original
-        const element = contentRef.current.cloneNode(true) as HTMLElement;
+        // Helper to apply print-friendly styles to an element
+        const applyPrintStyles = (element: HTMLElement) => {
+          element.style.padding = "20px";
+          element.style.maxWidth = "none";
+          element.style.width = "100%";
+          element.style.fontSize = "12px";
+          element.style.lineHeight = "1.6";
+          element.style.color = "#1a1a1a";
+          element.style.backgroundColor = "#ffffff";
 
-        // Convert CSS lab/oklch/oklab colors to RGB (html2canvas doesn't support them)
-        // Get computed styles from ORIGINAL elements (in DOM), then apply to cloned
-        const sanitizeColors = (original: HTMLElement, clone: HTMLElement) => {
-          const computed = window.getComputedStyle(original);
-          const colorProps = ["color", "background-color", "border-color", "border-top-color", "border-bottom-color", "border-left-color", "border-right-color"];
+          // Style code blocks for print
+          element.querySelectorAll("pre").forEach((pre) => {
+            (pre as HTMLElement).style.backgroundColor = "#f5f5f5";
+            (pre as HTMLElement).style.border = "1px solid #e0e0e0";
+            (pre as HTMLElement).style.borderRadius = "4px";
+            (pre as HTMLElement).style.padding = "12px";
+            (pre as HTMLElement).style.overflow = "visible";
+            (pre as HTMLElement).style.whiteSpace = "pre-wrap";
+            (pre as HTMLElement).style.wordBreak = "break-word";
+            (pre as HTMLElement).style.color = "#1a1a1a";
+          });
 
-          for (const prop of colorProps) {
-            const value = computed.getPropertyValue(prop);
-            if (value && (value.includes("lab(") || value.includes("oklch(") || value.includes("oklab("))) {
-              const canvas = document.createElement("canvas");
-              const ctx = canvas.getContext("2d");
-              if (ctx) {
-                ctx.fillStyle = value;
-                clone.style.setProperty(prop, ctx.fillStyle);
-              }
-            }
-          }
-          const originalChildren = Array.from(original.children);
-          const cloneChildren = Array.from(clone.children);
-          for (let i = 0; i < originalChildren.length; i++) {
-            if (cloneChildren[i]) {
-              sanitizeColors(originalChildren[i] as HTMLElement, cloneChildren[i] as HTMLElement);
-            }
-          }
+          // Style inline code
+          element.querySelectorAll("code:not(pre code)").forEach((code) => {
+            (code as HTMLElement).style.backgroundColor = "#f0f0f0";
+            (code as HTMLElement).style.padding = "2px 6px";
+            (code as HTMLElement).style.borderRadius = "3px";
+            (code as HTMLElement).style.fontSize = "0.9em";
+            (code as HTMLElement).style.color = "#1a1a1a";
+          });
+
+          // Style headers
+          element.querySelectorAll("h1, h2, h3, h4, h5, h6").forEach((h) => {
+            (h as HTMLElement).style.color = "#1a1a1a";
+            (h as HTMLElement).style.marginTop = "1.5em";
+            (h as HTMLElement).style.marginBottom = "0.5em";
+          });
+
+          // Style paragraphs and text
+          element.querySelectorAll("p, li, span, div").forEach((el) => {
+            (el as HTMLElement).style.color = "#1a1a1a";
+          });
+
+          // Style links
+          element.querySelectorAll("a").forEach((a) => {
+            (a as HTMLElement).style.color = "#1a1a1a";
+            (a as HTMLElement).style.textDecoration = "underline";
+          });
+
+          // Style tables
+          element.querySelectorAll("table").forEach((table) => {
+            (table as HTMLElement).style.borderCollapse = "collapse";
+            (table as HTMLElement).style.width = "100%";
+            (table as HTMLElement).style.marginBottom = "1em";
+          });
+          element.querySelectorAll("th, td").forEach((cell) => {
+            (cell as HTMLElement).style.border = "1px solid #ddd";
+            (cell as HTMLElement).style.padding = "8px";
+            (cell as HTMLElement).style.textAlign = "left";
+            (cell as HTMLElement).style.color = "#1a1a1a";
+          });
+          element.querySelectorAll("th").forEach((th) => {
+            (th as HTMLElement).style.backgroundColor = "#f5f5f5";
+            (th as HTMLElement).style.fontWeight = "600";
+          });
+
+          // Style blockquotes
+          element.querySelectorAll("blockquote").forEach((bq) => {
+            (bq as HTMLElement).style.borderLeft = "4px solid #ddd";
+            (bq as HTMLElement).style.paddingLeft = "16px";
+            (bq as HTMLElement).style.margin = "1em 0";
+            (bq as HTMLElement).style.color = "#555";
+          });
+
+          // Style lists
+          element.querySelectorAll("ul, ol").forEach((list) => {
+            (list as HTMLElement).style.paddingLeft = "24px";
+            (list as HTMLElement).style.marginBottom = "1em";
+          });
+
+          // Style checkboxes (task lists)
+          element.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+            (cb as HTMLElement).style.marginRight = "8px";
+          });
+
+          // Style images
+          element.querySelectorAll("img").forEach((img) => {
+            (img as HTMLElement).style.maxWidth = "100%";
+            (img as HTMLElement).style.height = "auto";
+          });
+
+          // Style horizontal rules
+          element.querySelectorAll("hr").forEach((hr) => {
+            (hr as HTMLElement).style.border = "none";
+            (hr as HTMLElement).style.borderTop = "1px solid #ddd";
+            (hr as HTMLElement).style.margin = "2em 0";
+          });
         };
-        sanitizeColors(contentRef.current, element);
-
-        // Apply print-friendly styles
-        element.style.padding = "20px";
-        element.style.maxWidth = "none";
-        element.style.width = "100%";
-        element.style.fontSize = "12px";
-        element.style.lineHeight = "1.6";
-        element.style.color = "#1a1a1a";
-        element.style.backgroundColor = "#ffffff";
-
-        // Style code blocks for print
-        element.querySelectorAll("pre").forEach((pre) => {
-          (pre as HTMLElement).style.backgroundColor = "#f5f5f5";
-          (pre as HTMLElement).style.border = "1px solid #e0e0e0";
-          (pre as HTMLElement).style.borderRadius = "4px";
-          (pre as HTMLElement).style.padding = "12px";
-          (pre as HTMLElement).style.overflow = "visible";
-          (pre as HTMLElement).style.whiteSpace = "pre-wrap";
-          (pre as HTMLElement).style.wordBreak = "break-word";
-        });
-
-        // Style inline code
-        element.querySelectorAll("code:not(pre code)").forEach((code) => {
-          (code as HTMLElement).style.backgroundColor = "#f0f0f0";
-          (code as HTMLElement).style.padding = "2px 6px";
-          (code as HTMLElement).style.borderRadius = "3px";
-          (code as HTMLElement).style.fontSize = "0.9em";
-        });
-
-        // Style headers
-        element.querySelectorAll("h1, h2, h3, h4, h5, h6").forEach((h) => {
-          (h as HTMLElement).style.color = "#1a1a1a";
-          (h as HTMLElement).style.marginTop = "1.5em";
-          (h as HTMLElement).style.marginBottom = "0.5em";
-        });
-
-        // Style links (remove blue, show URL)
-        element.querySelectorAll("a").forEach((a) => {
-          (a as HTMLElement).style.color = "#1a1a1a";
-          (a as HTMLElement).style.textDecoration = "underline";
-        });
-
-        // Style tables
-        element.querySelectorAll("table").forEach((table) => {
-          (table as HTMLElement).style.borderCollapse = "collapse";
-          (table as HTMLElement).style.width = "100%";
-          (table as HTMLElement).style.marginBottom = "1em";
-        });
-        element.querySelectorAll("th, td").forEach((cell) => {
-          (cell as HTMLElement).style.border = "1px solid #ddd";
-          (cell as HTMLElement).style.padding = "8px";
-          (cell as HTMLElement).style.textAlign = "left";
-        });
-        element.querySelectorAll("th").forEach((th) => {
-          (th as HTMLElement).style.backgroundColor = "#f5f5f5";
-          (th as HTMLElement).style.fontWeight = "600";
-        });
-
-        // Style blockquotes
-        element.querySelectorAll("blockquote").forEach((bq) => {
-          (bq as HTMLElement).style.borderLeft = "4px solid #ddd";
-          (bq as HTMLElement).style.paddingLeft = "16px";
-          (bq as HTMLElement).style.margin = "1em 0";
-          (bq as HTMLElement).style.color = "#555";
-        });
-
-        // Style lists
-        element.querySelectorAll("ul, ol").forEach((list) => {
-          (list as HTMLElement).style.paddingLeft = "24px";
-          (list as HTMLElement).style.marginBottom = "1em";
-        });
-
-        // Style checkboxes (task lists)
-        element.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
-          (cb as HTMLElement).style.marginRight = "8px";
-        });
-
-        // Style images
-        element.querySelectorAll("img").forEach((img) => {
-          (img as HTMLElement).style.maxWidth = "100%";
-          (img as HTMLElement).style.height = "auto";
-        });
-
-        // Style horizontal rules
-        element.querySelectorAll("hr").forEach((hr) => {
-          (hr as HTMLElement).style.border = "none";
-          (hr as HTMLElement).style.borderTop = "1px solid #ddd";
-          (hr as HTMLElement).style.margin = "2em 0";
-        });
 
         const opt = {
           margin: [15, 15, 15, 15] as [number, number, number, number],
@@ -184,6 +164,36 @@ export function useNoteExport({
             useCORS: true,
             letterRendering: true,
             logging: false,
+            // This callback is called with the cloned document BEFORE rendering
+            onclone: (clonedDoc: Document) => {
+              // Add a style tag to force all colors to simple RGB values
+              // This overrides any lab/oklch/oklab colors that html2canvas can't parse
+              const style = clonedDoc.createElement("style");
+              style.textContent = `
+                * {
+                  color: #1a1a1a !important;
+                  background-color: transparent !important;
+                  border-color: #ddd !important;
+                }
+                body, .prose, article, main, div {
+                  background-color: #ffffff !important;
+                }
+                pre, code {
+                  background-color: #f5f5f5 !important;
+                  color: #1a1a1a !important;
+                }
+                a { color: #1a1a1a !important; }
+                blockquote { color: #555 !important; border-color: #ddd !important; }
+                th { background-color: #f5f5f5 !important; }
+              `;
+              clonedDoc.head.appendChild(style);
+
+              // Find our content in the cloned document and apply styles
+              const clonedElement = clonedDoc.body.querySelector("[data-pdf-export]");
+              if (clonedElement) {
+                applyPrintStyles(clonedElement as HTMLElement);
+              }
+            },
           },
           jsPDF: {
             unit: "mm" as const,
@@ -193,7 +203,13 @@ export function useNoteExport({
           pagebreak: { mode: ["avoid-all", "css", "legacy"] },
         };
 
-        await html2pdf().set(opt).from(element).save();
+        // Mark the element for the onclone callback to find
+        contentRef.current.setAttribute("data-pdf-export", "true");
+
+        await html2pdf().set(opt).from(contentRef.current).save();
+
+        // Clean up
+        contentRef.current.removeAttribute("data-pdf-export");
       } else {
         // Fallback to basic jsPDF for raw text
         const { jsPDF } = await import("jspdf");

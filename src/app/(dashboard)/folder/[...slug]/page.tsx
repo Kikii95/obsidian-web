@@ -16,6 +16,7 @@ import {
   Lock,
   Upload,
   Trash2,
+  Share2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useVaultStore } from "@/lib/store";
@@ -27,6 +28,7 @@ import { cn } from "@/lib/utils";
 import { ReorderFoldersDialog } from "@/components/notes/reorder-folders-dialog";
 import { ImportNoteDialog } from "@/components/notes/import-note-dialog";
 import { DeleteFolderDialog } from "@/components/notes/delete-folder-dialog";
+import { ShareFolderDialog } from "@/components/shares/share-folder-dialog";
 import type { VaultFile } from "@/types";
 
 // Check if folder name indicates a private folder
@@ -213,6 +215,17 @@ export default function FolderPage() {
                   Ordre
                 </Button>
               )}
+              {/* Share folder button */}
+              <ShareFolderDialog
+                folderPath={folderPath}
+                folderName={folderName}
+                trigger={
+                  <Button variant="outline" size="sm" title="Partager ce dossier">
+                    <Share2 className="h-4 w-4 mr-2" />
+                    Partager
+                  </Button>
+                }
+              />
               {/* Delete folder button */}
               <DeleteFolderDialog
                 path={folderPath}

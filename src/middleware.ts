@@ -17,6 +17,9 @@ export default withAuth(
           path.startsWith("/api/auth") ||
           path.startsWith("/setup") ||
           path.startsWith("/api/vault-config") ||
+          path.startsWith("/s/") ||
+          // Public share API endpoints (GET only, token-based)
+          (path.startsWith("/api/shares/") && path !== "/api/shares") ||
           path === "/offline"
         ) {
           return true;

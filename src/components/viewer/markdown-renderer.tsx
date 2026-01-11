@@ -48,11 +48,22 @@ function CodeBlockWrapper({ children, code }: { children: React.ReactNode; code:
 interface MarkdownRendererProps {
   content: string;
   className?: string;
+  currentPath?: string;
+  isShareViewer?: boolean;
 }
 
-export const MarkdownRenderer = memo(function MarkdownRenderer({ content, className }: MarkdownRendererProps) {
+export const MarkdownRenderer = memo(function MarkdownRenderer({
+  content,
+  className,
+  currentPath,
+  isShareViewer = false,
+}: MarkdownRendererProps) {
   // Pre-process content to convert wikilinks to markdown links
-  const processedContent = useMemo(() => processWikilinks(content), [content]);
+  // In share viewer mode, wikilinks are displayed as plain text (no navigation)
+  const processedContent = useMemo(
+    () => (isShareViewer ? processWikilinksForShare(content) : processWikilinks(content)),
+    [content, isShareViewer]
+  );
 
   return (
     <div className={cn("prose prose-invert max-w-none", className)}>
@@ -293,5 +304,19 @@ function processWikilinks(content: string): string {
     const text = display || target;
     const path = wikilinkToPath(target);
     return `[${text}](${path})`;
+  });
+}
+
+/**
+ * Convert Obsidian wikilinks to styled text (no links) for share viewer
+ */
+function processWikilinksForShare(content: string): string {
+  // Match [[target]] or [[target|display]]
+  const wikilinkRegex = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
+
+  return content.replace(wikilinkRegex, (match, target, display) => {
+    const text = display || target;
+    // Return as styled text, not a link
+    return `**${text}**`;
   });
 }

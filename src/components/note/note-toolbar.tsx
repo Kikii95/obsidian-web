@@ -28,11 +28,13 @@ import {
   Pin,
   PinOff,
   History,
+  Share2,
 } from "lucide-react";
 import { usePinnedStore } from "@/lib/pinned-store";
 import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
 import { MoveNoteDialog } from "@/components/notes/move-note-dialog";
 import { RenameNoteDialog } from "@/components/notes/rename-note-dialog";
+import { ShareNoteDialog } from "@/components/shares/share-note-dialog";
 import { NoteHistory } from "./note-history";
 import type { NoteData } from "@/services/github-client";
 
@@ -252,6 +254,17 @@ export const NoteToolbar = memo(function NoteToolbar({
               </DropdownMenuContent>
             </DropdownMenu>
 
+            {/* Share button */}
+            <ShareNoteDialog
+              notePath={note.path.replace(/\.md$/, "")}
+              noteName={noteName}
+              trigger={
+                <Button variant="ghost" size="sm" title="Partager">
+                  <Share2 className="h-4 w-4" />
+                </Button>
+              }
+            />
+
             {/* History button */}
             <NoteHistory
               notePath={note.path}
@@ -336,6 +349,16 @@ export const NoteToolbar = memo(function NoteToolbar({
                 {isExportingPdf ? "Export..." : "Télécharger .pdf"}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
+              <ShareNoteDialog
+                notePath={note.path.replace(/\.md$/, "")}
+                noteName={noteName}
+                trigger={
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    <Share2 className="h-4 w-4 mr-2" />
+                    Partager
+                  </DropdownMenuItem>
+                }
+              />
               <NoteHistory
                 notePath={note.path}
                 trigger={

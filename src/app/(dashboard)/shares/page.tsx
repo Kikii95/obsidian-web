@@ -43,6 +43,7 @@ interface Share {
   shareType: "folder" | "note";
   folderPath: string;
   folderName: string;
+  name: string; // custom name or defaults to folderName
   includeSubfolders: boolean;
   createdAt: string;
   expiresAt: string;
@@ -265,7 +266,7 @@ function ShareCard({
             </div>
             <div className="min-w-0">
               <CardTitle className="text-base truncate">
-                {share.folderName}
+                {share.name}
               </CardTitle>
               <CardDescription className="truncate">
                 {share.folderPath}
@@ -319,7 +320,7 @@ function ShareCard({
                 <AlertDialogHeader>
                   <AlertDialogTitle>Supprimer ce lien ?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Le lien vers "{share.folderName}" sera définitivement
+                    Le lien vers "{share.name}" sera définitivement
                     supprimé. Les personnes ayant ce lien ne pourront plus
                     accéder au contenu.
                   </AlertDialogDescription>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -15,6 +15,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { ShareViewerHeader } from "@/components/shares/share-viewer-header";
+import { ShareExportToolbar } from "@/components/shares/share-export-toolbar";
 import { MarkdownRenderer } from "@/components/viewer/markdown-renderer";
 import { getFileType, isViewableFile } from "@/lib/file-types";
 import { cn } from "@/lib/utils";
@@ -56,6 +57,7 @@ export default function ShareViewerPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expired, setExpired] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   // Fetch share data
   useEffect(() => {
@@ -192,8 +194,15 @@ export default function ShareViewerPage() {
         />
 
         <main className="max-w-4xl mx-auto p-4 md:p-8">
-          {/* Note title */}
-          <h1 className="text-3xl font-bold mb-6">{metadata.folderName}</h1>
+          {/* Note header with title and export */}
+          <div className="flex items-start justify-between gap-4 mb-6">
+            <h1 className="text-3xl font-bold">{metadata.folderName}</h1>
+            <ShareExportToolbar
+              content={note.content}
+              fileName={metadata.folderName}
+              contentRef={contentRef}
+            />
+          </div>
 
           {/* Frontmatter tags if present */}
           {Array.isArray(note.frontmatter.tags) && note.frontmatter.tags.length > 0 && (
@@ -210,7 +219,7 @@ export default function ShareViewerPage() {
           )}
 
           {/* Note content */}
-          <div className="prose prose-neutral dark:prose-invert max-w-none">
+          <div ref={contentRef} className="prose prose-neutral dark:prose-invert max-w-none">
             <MarkdownRenderer
               content={note.content}
               currentPath={note.path}

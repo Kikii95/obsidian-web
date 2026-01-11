@@ -17,6 +17,7 @@ export async function createShare(params: {
   rootPath: string;
   shareType?: ShareType;
   folderPath: string;
+  name?: string;
   includeSubfolders?: boolean;
   expiresIn: ExpirationValue;
 }): Promise<Share> {
@@ -34,6 +35,7 @@ export async function createShare(params: {
     rootPath: params.rootPath ?? "",
     shareType: params.shareType ?? "folder",
     folderPath: params.folderPath,
+    name: params.name || null,
     includeSubfolders: params.shareType === "note" ? false : (params.includeSubfolders ?? true),
     expiresAt,
   };

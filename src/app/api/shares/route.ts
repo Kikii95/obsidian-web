@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
       rootPath: vaultConfig.rootPath ?? "",
       shareType: body.shareType ?? "folder",
       folderPath: body.folderPath,
+      name: body.name,
       includeSubfolders: body.shareType === "note" ? false : (body.includeSubfolders ?? true),
       expiresIn: body.expiresIn,
     });
@@ -76,17 +77,21 @@ export async function GET() {
     const shares = await listUserShares(session.user.id);
 
     // Return shares without encrypted tokens
-    const safeShares = shares.map((share) => ({
-      token: share.token,
-      shareType: share.shareType,
-      folderPath: share.folderPath,
-      folderName: share.folderPath.split("/").pop() || share.folderPath,
-      includeSubfolders: share.includeSubfolders,
-      expiresAt: share.expiresAt.toISOString(),
-      createdAt: share.createdAt.toISOString(),
-      accessCount: share.accessCount,
-      isExpired: share.expiresAt < new Date(),
-    }));
+    const safeShares = shares.map((share) => {
+      const folderName = share.folderPath.split("/").pop() || share.folderPath;
+      return {
+        token: share.token,
+        shareType: share.shareType,
+        folderPath: share.folderPath,
+        folderName,
+        name: share.name || folderName, // Use custom name or default to folder/note name
+        includeSubfolders: share.includeSubfolders,
+        expiresAt: share.expiresAt.toISOString(),
+        createdAt: share.createdAt.toISOString(),
+        accessCount: share.accessCount,
+        isExpired: share.expiresAt < new Date(),
+      };
+    });
 
     return NextResponse.json({ shares: safeShares });
   } catch (error) {

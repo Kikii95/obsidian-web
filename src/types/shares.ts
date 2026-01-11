@@ -7,6 +7,7 @@ export type ShareType = "folder" | "note";
 export interface CreateShareInput {
   shareType?: ShareType;
   folderPath: string; // folder path OR note path (without .md)
+  name?: string; // optional custom name (defaults to folder/note name)
   includeSubfolders?: boolean; // only used for folders
   expiresIn: ExpirationValue;
 }
@@ -36,6 +37,7 @@ export interface ShareMetadata {
   shareType: ShareType;
   folderPath: string;
   folderName: string;
+  name: string | null; // custom name or null
   includeSubfolders: boolean;
   createdAt: string;
   expiresAt: string;

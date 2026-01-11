@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -93,17 +93,21 @@ export default function NotePage() {
     updateNote,
   } = useNoteData(filePath, { isUnlocked });
 
+  // Ref for PDF export (captures rendered HTML)
+  const contentRef = useRef<HTMLDivElement>(null);
+
   // Editor hook
   const editor = useNoteEditor({
     note,
     onNoteUpdate: updateNote,
   });
 
-  // Export hook
+  // Export hook (with contentRef for styled PDF export)
   const exportFns = useNoteExport({
     note,
     fileName: noteName,
     currentContent: editor.isEditing ? editor.editContent : undefined,
+    contentRef,
   });
 
   // Lock hook
@@ -264,7 +268,9 @@ export default function NotePage() {
         {editor.isEditing ? (
           <MarkdownEditor content={editor.editContent} onChange={editor.setEditContent} />
         ) : (
-          <MarkdownRenderer content={note.content} />
+          <div ref={contentRef}>
+            <MarkdownRenderer content={note.content} />
+          </div>
         )}
       </article>
 

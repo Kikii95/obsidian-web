@@ -43,6 +43,7 @@
     "drizzle-orm": "^0.45.1",
     "fuse.js": "^7.1.0",
     "gray-matter": "^4.0.3",
+    "html2pdf.js": "^0.13.0",
     "jspdf": "^3.0.4",
     "jszip": "^3.10.1",
     "lucide-react": "^0.555.0",

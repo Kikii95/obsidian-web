@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -36,6 +37,7 @@ export function ShareFolderDialog({
   trigger,
 }: ShareFolderDialogProps) {
   const [open, setOpen] = useState(false);
+  const [name, setName] = useState(folderName);
   const [includeSubfolders, setIncludeSubfolders] = useState(true);
   const [expiresIn, setExpiresIn] = useState<ExpirationValue>("1w");
   const [shareToken, setShareToken] = useState<string | null>(null);
@@ -52,6 +54,7 @@ export function ShareFolderDialog({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           folderPath,
+          name: name !== folderName ? name : undefined,
           includeSubfolders,
           expiresIn,
         }),
@@ -77,6 +80,7 @@ export function ShareFolderDialog({
       // Reset state when closing
       setTimeout(() => {
         setShareToken(null);
+        setName(folderName);
         setIncludeSubfolders(true);
         setExpiresIn("1w");
         setError(null);
@@ -115,6 +119,20 @@ export function ShareFolderDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-6 pt-4">
+          {/* Name input */}
+          <div className="space-y-2">
+            <Label htmlFor="share-name">Nom du lien</Label>
+            <Input
+              id="share-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={folderName}
+            />
+            <p className="text-sm text-muted-foreground">
+              Nom affiché dans la liste de vos liens partagés
+            </p>
+          </div>
+
           {/* Subfolder toggle */}
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">

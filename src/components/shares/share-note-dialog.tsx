@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Share2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -34,6 +35,7 @@ export function ShareNoteDialog({
   trigger,
 }: ShareNoteDialogProps) {
   const [open, setOpen] = useState(false);
+  const [name, setName] = useState(noteName);
   const [expiresIn, setExpiresIn] = useState<ExpirationValue>("1w");
   const [shareToken, setShareToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -50,6 +52,7 @@ export function ShareNoteDialog({
         body: JSON.stringify({
           shareType: "note",
           folderPath: notePath,
+          name: name !== noteName ? name : undefined,
           expiresIn,
         }),
       });
@@ -73,6 +76,7 @@ export function ShareNoteDialog({
     if (!newOpen) {
       setTimeout(() => {
         setShareToken(null);
+        setName(noteName);
         setExpiresIn("1w");
         setError(null);
       }, 200);
@@ -110,6 +114,20 @@ export function ShareNoteDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-6 pt-4">
+          {/* Name input */}
+          <div className="space-y-2">
+            <Label htmlFor="share-name">Nom du lien</Label>
+            <Input
+              id="share-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={noteName}
+            />
+            <p className="text-sm text-muted-foreground">
+              Nom affiché dans la liste de vos liens partagés
+            </p>
+          </div>
+
           {/* Expiration select */}
           <div className="space-y-2">
             <Label htmlFor="expires-in">Expiration</Label>

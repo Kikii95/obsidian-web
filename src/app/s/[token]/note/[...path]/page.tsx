@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, AlertCircle, Loader2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ShareViewerHeader } from "@/components/shares/share-viewer-header";
+import { ShareExportToolbar } from "@/components/shares/share-export-toolbar";
 import { MarkdownRenderer } from "@/components/viewer/markdown-renderer";
 
 interface ShareMetadata {
@@ -31,6 +32,7 @@ export default function ShareNotePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expired, setExpired] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -144,8 +146,15 @@ export default function ShareNotePage() {
           </Button>
         </div>
 
-        {/* Note title */}
-        <h1 className="text-3xl font-bold mb-6">{noteName}</h1>
+        {/* Note header with title and export */}
+        <div className="flex items-start justify-between gap-4 mb-6">
+          <h1 className="text-3xl font-bold">{noteName}</h1>
+          <ShareExportToolbar
+            content={note.content}
+            fileName={noteName}
+            contentRef={contentRef}
+          />
+        </div>
 
         {/* Frontmatter tags if present */}
         {Array.isArray(note.frontmatter.tags) && note.frontmatter.tags.length > 0 && (
@@ -162,7 +171,7 @@ export default function ShareNotePage() {
         )}
 
         {/* Note content */}
-        <div className="prose prose-neutral dark:prose-invert max-w-none">
+        <div ref={contentRef} className="prose prose-neutral dark:prose-invert max-w-none">
           <MarkdownRenderer
             content={note.content}
             currentPath={note.path}

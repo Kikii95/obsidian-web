@@ -16,7 +16,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { VaultSidebar } from "@/components/navigation/vault-sidebar";
 import { useVaultStore } from "@/lib/store";
-import { LogOut, Menu, PanelLeftClose, PanelLeft, Settings, User, Home, Network, Tag } from "lucide-react";
+import { LogOut, Menu, PanelLeftClose, PanelLeft, Settings, User, Home, Network, Tag, Link2 } from "lucide-react";
 import { useSelectionStore } from "@/lib/selection-store";
 import { ThemeSwitcher } from "@/components/theme/theme-switcher";
 import { Logo } from "@/components/ui/logo";
@@ -241,6 +241,12 @@ export default function DashboardLayout({
                   <Link href="/settings">
                     <Settings className="mr-2 h-4 w-4" />
                     Paramètres
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/shares">
+                    <Link2 className="mr-2 h-4 w-4" />
+                    Liens partagés
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />

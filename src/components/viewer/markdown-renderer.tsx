@@ -53,18 +53,14 @@ interface MarkdownRendererProps {
   isShareViewer?: boolean;
 }
 
-export const MarkdownRenderer = memo(function MarkdownRenderer({
+// Inner component that handles the actual rendering
+function MarkdownRendererInner({
   content,
   className,
   currentPath,
   isShareViewer = false,
-}: MarkdownRendererProps) {
-  // Get vault tree for wikilink resolution
-  const { tree } = useVaultStore();
-
-  // Build lookup map for resolving wikilinks to full paths
-  const lookupMap = useMemo(() => buildNoteLookupMap(tree), [tree]);
-
+  lookupMap,
+}: MarkdownRendererProps & { lookupMap: NoteLookupMap }) {
   // Pre-process content to convert wikilinks to markdown links
   // In share viewer mode, wikilinks are displayed as plain text (no navigation)
   const processedContent = useMemo(
@@ -328,7 +324,35 @@ export const MarkdownRenderer = memo(function MarkdownRenderer({
       </ReactMarkdown>
     </div>
   );
-});
+}
+
+// Memoized inner component
+const MemoizedMarkdownRendererInner = memo(MarkdownRendererInner);
+
+// Outer component that builds lookupMap and passes it as prop
+// This ensures re-render when tree changes
+export function MarkdownRenderer({
+  content,
+  className,
+  currentPath,
+  isShareViewer = false,
+}: MarkdownRendererProps) {
+  // Get vault tree for wikilink resolution
+  const { tree } = useVaultStore();
+
+  // Build lookup map for resolving wikilinks to full paths
+  const lookupMap = useMemo(() => buildNoteLookupMap(tree), [tree]);
+
+  return (
+    <MemoizedMarkdownRendererInner
+      content={content}
+      className={className}
+      currentPath={currentPath}
+      isShareViewer={isShareViewer}
+      lookupMap={lookupMap}
+    />
+  );
+}
 
 /**
  * Convert Obsidian wikilinks to standard markdown links

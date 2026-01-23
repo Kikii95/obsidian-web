@@ -33,7 +33,9 @@ const MARKDOWN_EXTENSION = /\.md$/i;
 
 /**
  * Build a lookup map from the vault tree
- * Maps note name (lowercase, no extension) -> full path (without extension)
+ * Maps both:
+ * - note name (lowercase, no extension) -> full path
+ * - full path (lowercase, no extension) -> full path (for case-insensitive path lookup)
  */
 export function buildNoteLookupMap(tree: VaultFile[]): NoteLookupMap {
   const map: NoteLookupMap = new Map();
@@ -51,11 +53,18 @@ export function buildNoteLookupMap(tree: VaultFile[]): NoteLookupMap {
         const pathWithoutExt = fullPath
           .replace(/\.(md|canvas|pdf|png|jpg|jpeg|gif|svg|webp|bmp|ico|avif)$/i, "");
 
-        // Store with lowercase key for case-insensitive lookup
-        // If multiple notes have the same name, prefer the one at shorter path (closer to root)
-        const key = nameWithoutExt.toLowerCase();
-        if (!map.has(key) || pathWithoutExt.length < (map.get(key)?.length ?? Infinity)) {
-          map.set(key, pathWithoutExt);
+        // Store by filename (for [[NoteName]] style links)
+        // If multiple notes have the same name, prefer the one at shorter path
+        const nameKey = nameWithoutExt.toLowerCase();
+        if (!map.has(nameKey) || pathWithoutExt.length < (map.get(nameKey)?.length ?? Infinity)) {
+          map.set(nameKey, pathWithoutExt);
+        }
+
+        // Also store by full path (for [[folder/NoteName]] style links)
+        // This enables case-insensitive path matching
+        const pathKey = pathWithoutExt.toLowerCase();
+        if (!map.has(pathKey)) {
+          map.set(pathKey, pathWithoutExt);
         }
       }
     }
@@ -112,9 +121,10 @@ export function wikilinkToPath(target: string, lookupMap?: NoteLookupMap): strin
     pathWithoutExt = cleanTarget.replace(IMAGE_EXTENSIONS, "");
   }
 
-  // If lookupMap is provided and target doesn't already have a path (no "/"),
-  // try to resolve it to the full path
-  if (lookupMap && !pathWithoutExt.includes("/")) {
+  // If lookupMap is provided, try to resolve the path
+  // This handles both [[NoteName]] and [[folder/NoteName]] style links
+  // with case-insensitive matching
+  if (lookupMap) {
     const lookupKey = pathWithoutExt.toLowerCase();
     const resolvedPath = lookupMap.get(lookupKey);
     if (resolvedPath) {

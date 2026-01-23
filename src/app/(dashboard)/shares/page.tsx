@@ -305,7 +305,7 @@ function ShareCard({
   return (
     <Card className={cn(share.isExpired && "border-dashed")}>
       <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
           <div className="flex items-center gap-3 min-w-0">
             <div
               className={cn(
@@ -319,16 +319,16 @@ function ShareCard({
                 <Folder className="h-5 w-5 text-primary" />
               )}
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <CardTitle className="text-base truncate">
                 {share.name}
               </CardTitle>
-              <CardDescription className="truncate">
+              <CardDescription className="truncate max-w-[200px] sm:max-w-none">
                 {share.folderPath}
               </CardDescription>
             </div>
           </div>
-          <div className="flex items-center gap-1 shrink-0">
+          <div className="flex items-center gap-1 flex-wrap justify-end sm:shrink-0">
             {/* Rename dialog */}
             <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
               <DialogTrigger asChild>

@@ -159,13 +159,20 @@ function FolderTreeItem({
 
   const hasChildren = childDirs.length > 0;
 
-  // Handle row click: expand/collapse AND select (like file explorer)
-  const handleRowClick = () => {
-    if (isCurrent) return;
-    // Always select
-    onSelect(folder.path);
-    // Toggle expand if has children
+  // Handle expand/collapse (always allowed, even for current folder)
+  const handleToggleExpand = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (hasChildren) {
+      toggleFolder(folder.path);
+    }
+  };
+
+  // Handle folder selection (not allowed for current folder)
+  const handleSelect = () => {
+    if (isCurrent) return;
+    onSelect(folder.path);
+    // Also expand if has children
+    if (hasChildren && !expandedFolders.has(folder.path)) {
       toggleFolder(folder.path);
     }
   };
@@ -173,12 +180,11 @@ function FolderTreeItem({
   return (
     <div>
       <div
-        onClick={handleRowClick}
         className={cn(
-          "flex items-center gap-1 rounded-md transition-colors cursor-pointer",
+          "flex items-center gap-1 rounded-md transition-colors",
           "hover:bg-muted/50",
           isSelected && "bg-primary/10",
-          isCurrent && "opacity-50 cursor-not-allowed pointer-events-none"
+          isCurrent ? "opacity-50 cursor-default" : "cursor-pointer"
         )}
       >
         {/* Indent */}
@@ -192,21 +198,30 @@ function FolderTreeItem({
           </div>
         )}
 
-        {/* Expand indicator */}
-        <div className={cn("p-1 shrink-0", !hasChildren && "opacity-0")}>
+        {/* Expand indicator - always clickable */}
+        <button
+          onClick={handleToggleExpand}
+          className={cn(
+            "p-1 shrink-0 hover:bg-muted rounded cursor-pointer",
+            !hasChildren && "opacity-0 pointer-events-none"
+          )}
+          type="button"
+        >
           <ChevronRight
             className={cn(
               "h-3 w-3 transition-transform text-muted-foreground",
               isExpanded && "rotate-90"
             )}
           />
-        </div>
+        </button>
 
-        {/* Folder content */}
+        {/* Folder content - click to select */}
         <div
+          onClick={handleSelect}
           className={cn(
             "flex items-center gap-2 flex-1 py-1.5 pr-2 text-sm",
-            isSelected && "text-primary font-medium"
+            isSelected && "text-primary font-medium",
+            isCurrent && "pointer-events-none"
           )}
         >
           {isExpanded ? (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useCallback, memo } from "react";
+import { useRef, useCallback, memo, useState, createContext, useContext } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -18,7 +18,11 @@ import {
   PinOff,
   Square,
   CheckSquare,
+  FilePlus,
+  FolderPlus,
 } from "lucide-react";
+import { CreateNoteDialog } from "@/components/notes/create-note-dialog";
+import { CreateFolderDialog } from "@/components/notes/create-folder-dialog";
 import { cn } from "@/lib/utils";
 import { useVaultStore } from "@/lib/store";
 import { useSettingsStore } from "@/lib/settings-store";
@@ -30,6 +34,20 @@ import type { VaultFile } from "@/types";
 
 const ITEM_HEIGHT = 32; // Fixed height for each row
 
+// Context for folder actions (create note/folder in-place)
+interface FolderActionsContextType {
+  createNoteIn: (folderPath: string) => void;
+  createFolderIn: (folderPath: string) => void;
+}
+
+const FolderActionsContext = createContext<FolderActionsContextType | null>(null);
+
+function useFolderActions() {
+  const ctx = useContext(FolderActionsContext);
+  if (!ctx) throw new Error("useFolderActions must be used within FolderActionsProvider");
+  return ctx;
+}
+
 interface VirtualFileTreeProps {
   files: VaultFile[];
 }
@@ -37,6 +55,10 @@ interface VirtualFileTreeProps {
 export function VirtualFileTree({ files }: VirtualFileTreeProps) {
   const parentRef = useRef<HTMLDivElement>(null);
   const { expandedFolders } = useVaultStore();
+
+  // State for in-place creation dialogs
+  const [createNoteFolder, setCreateNoteFolder] = useState<string | null>(null);
+  const [createFolderParent, setCreateFolderParent] = useState<string | null>(null);
 
   // Flatten tree based on expanded folders
   const flatItems = useFlattenedTree(files, expandedFolders);
@@ -50,41 +72,64 @@ export function VirtualFileTree({ files }: VirtualFileTreeProps) {
 
   const virtualItems = virtualizer.getVirtualItems();
 
+  // Stable callbacks for context
+  const createNoteIn = useCallback((folderPath: string) => {
+    setCreateNoteFolder(folderPath);
+  }, []);
+
+  const createFolderIn = useCallback((folderPath: string) => {
+    setCreateFolderParent(folderPath);
+  }, []);
+
   return (
-    <div
-      ref={parentRef}
-      className="h-full overflow-auto"
-      style={{ contain: "strict" }}
-    >
+    <FolderActionsContext.Provider value={{ createNoteIn, createFolderIn }}>
       <div
-        style={{
-          height: `${virtualizer.getTotalSize()}px`,
-          minWidth: "100%",
-          width: "max-content",
-          position: "relative",
-        }}
+        ref={parentRef}
+        className="h-full overflow-auto"
+        style={{ contain: "strict" }}
       >
-        {virtualItems.map((virtualRow) => {
-          const item = flatItems[virtualRow.index];
-          return (
-            <div
-              key={item.file.path}
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                minWidth: "100%",
-                width: "max-content",
-                height: `${virtualRow.size}px`,
-                transform: `translateY(${virtualRow.start}px)`,
-              }}
-            >
-              <VirtualTreeItem item={item} />
-            </div>
-          );
-        })}
+        <div
+          style={{
+            height: `${virtualizer.getTotalSize()}px`,
+            minWidth: "100%",
+            width: "max-content",
+            position: "relative",
+          }}
+        >
+          {virtualItems.map((virtualRow) => {
+            const item = flatItems[virtualRow.index];
+            return (
+              <div
+                key={item.file.path}
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  minWidth: "100%",
+                  width: "max-content",
+                  height: `${virtualRow.size}px`,
+                  transform: `translateY(${virtualRow.start}px)`,
+                }}
+              >
+                <VirtualTreeItem item={item} />
+              </div>
+            );
+          })}
+        </div>
       </div>
-    </div>
+
+      {/* In-place creation dialogs */}
+      <CreateNoteDialog
+        currentFolder={createNoteFolder || undefined}
+        open={createNoteFolder !== null}
+        onOpenChange={(open) => !open && setCreateNoteFolder(null)}
+      />
+      <CreateFolderDialog
+        defaultParent={createFolderParent || undefined}
+        open={createFolderParent !== null}
+        onOpenChange={(open) => !open && setCreateFolderParent(null)}
+      />
+    </FolderActionsContext.Provider>
   );
 }
 
@@ -99,6 +144,7 @@ const VirtualTreeItem = memo(function VirtualTreeItem({
   const { toggleFolder } = useVaultStore();
   const { settings } = useSettingsStore();
   const { isSelectionMode, isSelected, toggleItem } = useSelectionStore();
+  const { createNoteIn, createFolderIn } = useFolderActions();
 
   const isDirectory = file.type === "dir";
   const fileType = getFileType(file.name);
@@ -200,6 +246,21 @@ const VirtualTreeItem = memo(function VirtualTreeItem({
     </button>
   ) : null;
 
+  // Pin functionality (available for files AND directories)
+  const { pinItem, unpinItem, isPinned: checkPinned } = usePinnedStore();
+  const isPinned = checkPinned(file.path);
+  const canPin = isDirectory || ["markdown", "image", "pdf", "canvas"].includes(fileType);
+
+  const handleTogglePin = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isPinned) {
+      unpinItem(file.path);
+    } else {
+      pinItem(file.path, displayName, isDirectory ? "folder" : "note");
+    }
+  };
+
   if (isDirectory) {
     // Build folder explorer URL
     const folderHref = `/folder/${file.path.split("/").map(s => encodeURIComponent(s)).join("/")}`;
@@ -269,40 +330,78 @@ const VirtualTreeItem = memo(function VirtualTreeItem({
           {file.isLocked && (
             <Lock className="h-3.5 w-3.5 ml-1 shrink-0 text-amber-500" />
           )}
+          {isPinned && (
+            <Pin className="h-3 w-3 ml-1 shrink-0 text-primary" />
+          )}
         </button>
-        {/* Folder explorer button - hidden by default, visible on hover (desktop) or always visible (mobile handled via touch) */}
+        {/* Folder action buttons - hidden by default, visible on hover */}
         {!isSelectionMode && (
-          <Link
-            href={folderHref}
-            onClick={(e) => e.stopPropagation()}
-            className={cn(
-              "p-1 mr-1 rounded transition-all",
-              "opacity-0 group-hover:opacity-100",
-              "hover:bg-primary/20 text-muted-foreground hover:text-primary"
-            )}
-            title="Ouvrir l'explorateur"
-          >
-            <ExternalLink className="h-3 w-3" />
-          </Link>
+          <div className="flex items-center shrink-0">
+            {/* Create note in folder */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                createNoteIn(file.path);
+              }}
+              className={cn(
+                "p-1 rounded transition-all",
+                "opacity-0 group-hover:opacity-100",
+                "hover:bg-primary/20 text-muted-foreground hover:text-primary"
+              )}
+              title="Nouvelle note ici"
+            >
+              <FilePlus className="h-3 w-3" />
+            </button>
+            {/* Create subfolder */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                createFolderIn(file.path);
+              }}
+              className={cn(
+                "p-1 rounded transition-all",
+                "opacity-0 group-hover:opacity-100",
+                "hover:bg-primary/20 text-muted-foreground hover:text-primary"
+              )}
+              title="Nouveau dossier ici"
+            >
+              <FolderPlus className="h-3 w-3" />
+            </button>
+            {/* Pin button */}
+            <button
+              onClick={handleTogglePin}
+              className={cn(
+                "p-1 rounded transition-all",
+                isPinned
+                  ? "hover:bg-primary/20 text-primary"
+                  : "opacity-0 group-hover:opacity-100 hover:bg-primary/20 text-muted-foreground hover:text-primary"
+              )}
+              title={isPinned ? "Désépingler" : "Épingler"}
+            >
+              {isPinned ? (
+                <PinOff className="h-3 w-3" />
+              ) : (
+                <Pin className="h-3 w-3" />
+              )}
+            </button>
+            {/* Folder explorer button */}
+            <Link
+              href={folderHref}
+              onClick={(e) => e.stopPropagation()}
+              className={cn(
+                "p-1 mr-1 rounded transition-all",
+                "opacity-0 group-hover:opacity-100",
+                "hover:bg-primary/20 text-muted-foreground hover:text-primary"
+              )}
+              title="Ouvrir l'explorateur"
+            >
+              <ExternalLink className="h-3 w-3" />
+            </Link>
+          </div>
         )}
       </div>
     );
   }
-
-  // Pin functionality
-  const { pinnedNotes, pinNote, unpinNote } = usePinnedStore();
-  const isPinned = pinnedNotes.some((p) => p.path === file.path);
-  const canPin = ["markdown", "image", "pdf", "canvas"].includes(fileType);
-
-  const handleTogglePin = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (isPinned) {
-      unpinNote(file.path);
-    } else {
-      pinNote(file.path, displayName);
-    }
-  };
 
   // In selection mode, clicking selects instead of navigating
   if (isSelectionMode) {

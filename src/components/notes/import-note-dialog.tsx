@@ -100,7 +100,10 @@ interface ImportResult {
   path: string;
   success: boolean;
   error?: string;
+  skipped?: boolean;
 }
+
+type ConflictBehavior = "overwrite" | "skip" | "ask";
 
 interface ImportNoteDialogProps {
   trigger?: React.ReactNode;
@@ -121,6 +124,8 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<ImportResult[]>([]);
   const [showLfsWarning, setShowLfsWarning] = useState(false);
+  const [currentFile, setCurrentFile] = useState<string | null>(null);
+  const [conflictBehavior, setConflictBehavior] = useState<ConflictBehavior>("skip");
   const cancelledRef = useRef(false);
 
   const validateAndAddFiles = useCallback(async (fileList: FileList, isFromFolder = false) => {
@@ -380,6 +385,21 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
 
   const [isCancelled, setIsCancelled] = useState(false);
 
+  // Helper to check if a file exists in the tree
+  const fileExists = useCallback((filePath: string): boolean => {
+    const normalizedPath = filePath.startsWith("/") ? filePath.slice(1) : filePath;
+
+    const checkInTree = (nodes: typeof tree, targetPath: string): boolean => {
+      for (const node of nodes) {
+        if (node.path === targetPath) return true;
+        if (node.children && checkInTree(node.children, targetPath)) return true;
+      }
+      return false;
+    };
+
+    return checkInTree(tree, normalizedPath);
+  }, [tree]);
+
   const handleCancel = useCallback(() => {
     cancelledRef.current = true;
     setIsImporting(false);
@@ -435,6 +455,17 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
             let contentPath = `${zipFolderName}/${content.path}`;
             if (targetFolder) {
               contentPath = `${targetFolder}/${contentPath}`;
+            }
+
+            setCurrentFile(content.name);
+
+            // Check for conflicts
+            if (fileExists(contentPath) && conflictBehavior === "skip") {
+              importResults.push({ path: contentPath, success: true, skipped: true });
+              processedItems++;
+              setProgress((processedItems / totalItems) * 100);
+              setResults([...importResults]);
+              continue;
             }
 
             try {
@@ -494,6 +525,17 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
             fullPath = `${targetFolder}/${fullPath}`;
           }
 
+          setCurrentFile(folderFile.name);
+
+          // Check for conflicts
+          if (fileExists(fullPath) && conflictBehavior === "skip") {
+            importResults.push({ path: fullPath, success: true, skipped: true });
+            processedItems++;
+            setProgress((processedItems / totalItems) * 100);
+            setResults([...importResults]);
+            continue;
+          }
+
           try {
             const category = getFileCategory(folderFile.name);
 
@@ -530,6 +572,17 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
         fullPath = `${targetFolder}/${fullPath}`;
       }
 
+      setCurrentFile(file.name);
+
+      // Check for conflicts
+      if (fileExists(fullPath) && conflictBehavior === "skip") {
+        importResults.push({ path: fullPath, success: true, skipped: true });
+        processedItems++;
+        setProgress((processedItems / totalItems) * 100);
+        setResults([...importResults]);
+        continue;
+      }
+
       try {
         const category = getFileCategory(file.name);
 
@@ -561,6 +614,7 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
       setResults([...importResults]);
     }
 
+    setCurrentFile(null);
     setIsImporting(false);
 
     // Only refresh if not cancelled and something was imported
@@ -603,6 +657,8 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
       setResults([]);
       setShowLfsWarning(false);
       setIsCancelled(false);
+      setCurrentFile(null);
+      setConflictBehavior("skip");
     }
   };
 
@@ -851,6 +907,31 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
             </div>
           )}
 
+          {/* Conflict behavior */}
+          {files.length > 0 && !isDone && !isCancelled && !isImporting && (
+            <div className="space-y-2">
+              <Label>En cas de conflit</Label>
+              <div className="flex gap-2">
+                <Button
+                  variant={conflictBehavior === "skip" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setConflictBehavior("skip")}
+                  className="flex-1"
+                >
+                  Ignorer existants
+                </Button>
+                <Button
+                  variant={conflictBehavior === "overwrite" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setConflictBehavior("overwrite")}
+                  className="flex-1"
+                >
+                  Écraser
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Target folder */}
           {files.length > 0 && tree.length > 0 && !isDone && !isCancelled && (
             <div className="space-y-2">
@@ -868,8 +949,16 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
           {(isImporting || isDone) && (
             <div className="space-y-2">
               <Progress value={progress} className="h-2" />
+              {isImporting && currentFile && (
+                <p className="text-xs text-primary text-center truncate">
+                  📄 {currentFile}
+                </p>
+              )}
               <p className="text-xs text-muted-foreground text-center">
-                {isImporting ? `Import en cours... ${Math.round(progress)}%` : `${successCount} importé${successCount > 1 ? "s" : ""}${failCount > 0 ? `, ${failCount} erreur${failCount > 1 ? "s" : ""}` : ""}`}
+                {isImporting
+                  ? `Import en cours... ${Math.round(progress)}%`
+                  : `${successCount} importé${successCount > 1 ? "s" : ""}${failCount > 0 ? `, ${failCount} erreur${failCount > 1 ? "s" : ""}` : ""}${results.filter(r => r.skipped).length > 0 ? `, ${results.filter(r => r.skipped).length} ignoré${results.filter(r => r.skipped).length > 1 ? "s" : ""}` : ""}`
+                }
               </p>
             </div>
           )}
@@ -881,16 +970,25 @@ export function ImportNoteDialog({ trigger, defaultTargetFolder }: ImportNoteDia
                 <div
                   key={index}
                   className={`flex items-center gap-2 text-xs p-2 rounded ${
-                    result.success ? "bg-green-500/10" : "bg-destructive/10"
+                    result.skipped
+                      ? "bg-amber-500/10"
+                      : result.success
+                        ? "bg-green-500/10"
+                        : "bg-destructive/10"
                   }`}
                 >
-                  {result.success ? (
+                  {result.skipped ? (
+                    <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                  ) : result.success ? (
                     <CheckCircle className="h-3.5 w-3.5 text-green-500 shrink-0" />
                   ) : (
                     <XCircle className="h-3.5 w-3.5 text-destructive shrink-0" />
                   )}
                   <span className="truncate flex-1">{result.path}</span>
-                  {!result.success && result.error && (
+                  {result.skipped && (
+                    <span className="text-amber-500 shrink-0">ignoré</span>
+                  )}
+                  {!result.success && !result.skipped && result.error && (
                     <span className="text-destructive shrink-0">{result.error}</span>
                   )}
                 </div>

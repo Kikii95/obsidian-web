@@ -22,29 +22,73 @@ export function parseWikilinks(content: string): WikiLink[] {
   return links;
 }
 
+// File type detection patterns
+const IMAGE_EXTENSIONS = /\.(png|jpg|jpeg|gif|svg|webp|bmp|ico|avif)$/i;
+const PDF_EXTENSION = /\.pdf$/i;
+const CANVAS_EXTENSION = /\.canvas$/i;
+const MARKDOWN_EXTENSION = /\.md$/i;
+
+/**
+ * Detect the file type from a wikilink target
+ */
+function detectFileType(target: string): "note" | "canvas" | "file" {
+  if (IMAGE_EXTENSIONS.test(target) || PDF_EXTENSION.test(target)) {
+    return "file";
+  }
+  if (CANVAS_EXTENSION.test(target)) {
+    return "canvas";
+  }
+  return "note";
+}
+
 /**
  * Convert wikilink target to URL path
  */
 export function wikilinkToPath(target: string): string {
-  // Clean the target: remove .md extension, trailing backslashes, and heading anchors
-  const cleanTarget = target
-    .replace(/\.md$/, "")
+  // Remove heading anchors first (like #🎯 Vue d'Ensemble)
+  const withoutAnchor = target.replace(/#.*$/, "");
+
+  // Clean backslashes
+  const cleanTarget = withoutAnchor
     .replace(/\\+$/, "")        // Remove trailing backslashes
-    .replace(/\\+/g, "")        // Remove any remaining backslashes
-    .replace(/#.*$/, "");       // Remove heading anchors like #🎯 Vue d'Ensemble
+    .replace(/\\+/g, "");       // Remove any remaining backslashes
 
   // Skip empty paths
   if (!cleanTarget.trim()) {
     return "/";
   }
 
+  // Detect file type based on extension
+  const fileType = detectFileType(cleanTarget);
+
+  // Remove extension for path building
+  let pathWithoutExt = cleanTarget;
+  if (MARKDOWN_EXTENSION.test(cleanTarget)) {
+    pathWithoutExt = cleanTarget.replace(MARKDOWN_EXTENSION, "");
+  } else if (CANVAS_EXTENSION.test(cleanTarget)) {
+    pathWithoutExt = cleanTarget.replace(CANVAS_EXTENSION, "");
+  } else if (PDF_EXTENSION.test(cleanTarget)) {
+    pathWithoutExt = cleanTarget.replace(PDF_EXTENSION, "");
+  } else if (IMAGE_EXTENSIONS.test(cleanTarget)) {
+    pathWithoutExt = cleanTarget.replace(IMAGE_EXTENSIONS, "");
+  }
+
   // Encode each segment separately to preserve slashes
-  const encodedPath = cleanTarget
+  const encodedPath = pathWithoutExt
     .split("/")
     .map((segment) => encodeURIComponent(segment.trim()))
     .filter(Boolean)  // Remove empty segments
     .join("/");
-  return `/note/${encodedPath}`;
+
+  // Return appropriate route based on file type
+  switch (fileType) {
+    case "canvas":
+      return `/canvas/${encodedPath}`;
+    case "file":
+      return `/file/${encodedPath}`;
+    default:
+      return `/note/${encodedPath}`;
+  }
 }
 
 /**

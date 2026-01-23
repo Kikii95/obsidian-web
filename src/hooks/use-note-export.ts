@@ -170,6 +170,7 @@ export function useNoteExport({
               // This overrides any lab/oklch/oklab colors that html2canvas can't parse
               const style = clonedDoc.createElement("style");
               style.textContent = `
+                /* Reset all colors to RGB for PDF compatibility */
                 * {
                   color: #1a1a1a !important;
                   background-color: transparent !important;
@@ -178,13 +179,59 @@ export function useNoteExport({
                 body, .prose, article, main, div {
                   background-color: #ffffff !important;
                 }
-                pre, code {
-                  background-color: #f5f5f5 !important;
+                pre {
+                  background-color: #f8f8f8 !important;
+                  border: 1px solid #e0e0e0 !important;
+                  border-radius: 6px !important;
+                  padding: 12px !important;
+                  overflow: visible !important;
+                  white-space: pre-wrap !important;
+                  word-break: break-word !important;
+                  page-break-inside: avoid !important;
+                }
+                code {
+                  background-color: #f0f0f0 !important;
                   color: #1a1a1a !important;
                 }
-                a { color: #1a1a1a !important; }
-                blockquote { color: #555 !important; border-color: #ddd !important; }
+                pre code {
+                  background-color: transparent !important;
+                  padding: 0 !important;
+                }
+                a { color: #0066cc !important; text-decoration: underline !important; }
+                blockquote {
+                  color: #555 !important;
+                  border-left: 4px solid #0066cc !important;
+                  background-color: #f8f8f8 !important;
+                  padding: 8px 16px !important;
+                }
                 th { background-color: #f5f5f5 !important; }
+
+                /* Page break handling */
+                h1, h2, h3, h4, h5, h6 {
+                  page-break-after: avoid !important;
+                  page-break-inside: avoid !important;
+                }
+                table, figure, img {
+                  page-break-inside: avoid !important;
+                }
+
+                /* Syntax highlighting colors (hljs/rehype-highlight) */
+                .hljs-comment, .hljs-quote { color: #6a737d !important; font-style: italic; }
+                .hljs-keyword, .hljs-selector-tag, .hljs-addition { color: #d73a49 !important; }
+                .hljs-string, .hljs-meta .hljs-string, .hljs-regexp, .hljs-attr { color: #22863a !important; }
+                .hljs-number, .hljs-literal, .hljs-variable, .hljs-template-variable, .hljs-tag .hljs-attr { color: #005cc5 !important; }
+                .hljs-doctag { color: #22863a !important; }
+                .hljs-title, .hljs-section, .hljs-selector-id { color: #6f42c1 !important; font-weight: bold; }
+                .hljs-subst { color: #24292e !important; }
+                .hljs-type, .hljs-class .hljs-title { color: #6f42c1 !important; }
+                .hljs-name, .hljs-tag { color: #22863a !important; }
+                .hljs-attribute { color: #005cc5 !important; }
+                .hljs-symbol, .hljs-bullet, .hljs-link, .hljs-meta, .hljs-selector-attr, .hljs-selector-pseudo { color: #e36209 !important; }
+                .hljs-built_in, .hljs-builtin-name { color: #005cc5 !important; }
+                .hljs-deletion { color: #b31d28 !important; background-color: #ffeef0 !important; }
+                .hljs-addition { color: #22863a !important; background-color: #f0fff4 !important; }
+                .hljs-emphasis { font-style: italic; }
+                .hljs-strong { font-weight: bold; }
               `;
               clonedDoc.head.appendChild(style);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, memo, useMemo } from "react";
+import { useState, useCallback, memo, useMemo, isValidElement, ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
@@ -247,12 +247,29 @@ export const MarkdownRenderer = memo(function MarkdownRenderer({
           ),
           // Custom list items for tasks
           li: ({ children, className, ...props }) => {
-            const content = String(children);
+            // Extract text content from children safely
+            const extractText = (node: ReactNode): string => {
+              if (typeof node === "string") return node;
+              if (typeof node === "number") return String(node);
+              if (Array.isArray(node)) return node.map(extractText).join("");
+              if (isValidElement(node)) {
+                const props = node.props as { children?: ReactNode };
+                if (props.children) {
+                  return extractText(props.children);
+                }
+              }
+              return "";
+            };
 
-            // Check for task list items
-            if (content.startsWith("[ ] ") || content.startsWith("[x] ")) {
-              const isChecked = content.startsWith("[x] ");
-              const text = content.slice(4);
+            const textContent = extractText(children);
+
+            // Only match real task lists: [ ] or [x] followed by space and text
+            // This regex ensures we only capture valid checkbox syntax
+            const taskMatch = textContent.match(/^\[([ x])\] ([\s\S]*)$/);
+
+            if (taskMatch) {
+              const isChecked = taskMatch[1] === "x";
+              const taskText = taskMatch[2];
 
               return (
                 <li className="flex items-start gap-2 list-none" {...props}>
@@ -263,12 +280,13 @@ export const MarkdownRenderer = memo(function MarkdownRenderer({
                     className="mt-1 accent-primary"
                   />
                   <span className={isChecked ? "line-through text-muted-foreground" : ""}>
-                    {text}
+                    {taskText}
                   </span>
                 </li>
               );
             }
 
+            // Regular list item - render children as-is (preserves [item] text)
             return (
               <li className="text-foreground/90" {...props}>
                 {children}

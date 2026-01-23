@@ -29,6 +29,7 @@ import { DailyNoteButton } from "@/components/navigation/daily-note-button";
 import { ScrollRestoration } from "@/components/navigation/scroll-restoration";
 import { RateLimitIndicator } from "@/components/ui/rate-limit-indicator";
 import { ScrollProgress } from "@/components/ui/scroll-progress";
+import { ScrollToTop } from "@/components/ui/scroll-to-top";
 import { DynamicPwaMeta } from "@/components/pwa/dynamic-pwa-meta";
 import { useSettingsSync } from "@/hooks/use-settings-sync";
 import { useVaultConfig } from "@/hooks/use-vault-config";
@@ -295,6 +296,9 @@ export default function DashboardLayout({
 
       {/* Scroll Restoration */}
       <ScrollRestoration />
+
+      {/* Scroll to Top Button */}
+      <ScrollToTop />
 
       {/* Dynamic PWA Meta Tags (updates on theme change) */}
       <DynamicPwaMeta />

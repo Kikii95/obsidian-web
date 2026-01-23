@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
+import { usePathname } from "next/navigation";
 import { VirtualFileTree } from "./virtual-file-tree";
 import { useVaultStore } from "@/lib/store";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -189,6 +190,7 @@ function getSubTree(files: VaultFile[], rootPath: string): VaultFile[] {
 
 export function VaultSidebar() {
   const { data: session } = useSession();
+  const pathname = usePathname();
   const { settings } = useSettingsStore();
   const { isSelectionMode, toggleSelectionMode, selectedCount } = useSelectionStore();
   const {
@@ -207,6 +209,22 @@ export function VaultSidebar() {
   const [manageFolderMode, setManageFolderMode] = useState<"rename" | "delete" | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [reorderDialogOpen, setReorderDialogOpen] = useState(false);
+
+  // Deduce current folder from pathname for import/create dialogs
+  const currentFolderFromPath = useMemo(() => {
+    if (!pathname) return undefined;
+    // /folder/path/to/folder → path/to/folder
+    if (pathname.startsWith("/folder/")) {
+      return decodeURIComponent(pathname.slice(8));
+    }
+    // /note/path/to/note → path/to (parent folder)
+    if (pathname.startsWith("/note/")) {
+      const notePath = decodeURIComponent(pathname.slice(6));
+      const lastSlash = notePath.lastIndexOf("/");
+      return lastSlash > 0 ? notePath.slice(0, lastSlash) : undefined;
+    }
+    return undefined;
+  }, [pathname]);
 
   // Get settings
   const sortBy = settings.sidebarSortBy ?? "name";
@@ -421,6 +439,7 @@ export function VaultSidebar() {
             </DropdownMenu>
 
             <CreateNoteDialog
+              currentFolder={currentFolderFromPath}
               trigger={
                 <Button
                   variant="ghost"
@@ -433,6 +452,7 @@ export function VaultSidebar() {
               }
             />
             <CreateFolderDialog
+              defaultParent={currentFolderFromPath}
               trigger={
                 <Button
                   variant="ghost"
@@ -445,6 +465,7 @@ export function VaultSidebar() {
               }
             />
             <ImportNoteDialog
+              defaultTargetFolder={currentFolderFromPath}
               trigger={
                 <Button
                   variant="ghost"

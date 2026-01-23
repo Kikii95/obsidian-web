@@ -86,6 +86,12 @@ export function CreateFolderDialog({
           id="folderName"
           value={folderName}
           onChange={(e) => setFolderName(e.target.value)}
+          onKeyDown={(e) => {
+            // Prevent arrow keys from being captured by dialog
+            if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+              e.stopPropagation();
+            }
+          }}
           autoFocus
           placeholder="Mon nouveau dossier"
         />

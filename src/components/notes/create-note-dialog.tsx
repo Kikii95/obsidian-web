@@ -173,6 +173,12 @@ export function CreateNoteDialog({
           placeholder="Ma nouvelle note"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
+          onKeyDown={(e) => {
+            // Prevent arrow keys from being captured by dialog
+            if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+              e.stopPropagation();
+            }
+          }}
           autoFocus
         />
       </div>

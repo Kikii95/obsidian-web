@@ -269,7 +269,8 @@ export default function NotePage() {
           <MarkdownEditor content={editor.editContent} onChange={editor.setEditContent} />
         ) : (
           <div ref={contentRef}>
-            <MarkdownRenderer content={note.content} />
+            {/* Key forces re-render when tree loads (fixes wikilink resolution timing) */}
+            <MarkdownRenderer key={`md-${tree.length}`} content={note.content} />
           </div>
         )}
       </article>

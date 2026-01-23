@@ -31,6 +31,7 @@ import { RateLimitIndicator } from "@/components/ui/rate-limit-indicator";
 import { ScrollProgress } from "@/components/ui/scroll-progress";
 import { ScrollToTop } from "@/components/ui/scroll-to-top";
 import { DynamicPwaMeta } from "@/components/pwa/dynamic-pwa-meta";
+import { IosPwaPrompt } from "@/components/pwa/ios-pwa-prompt";
 import { useSettingsSync } from "@/hooks/use-settings-sync";
 import { useVaultConfig } from "@/hooks/use-vault-config";
 
@@ -302,6 +303,9 @@ export default function DashboardLayout({
 
       {/* Dynamic PWA Meta Tags (updates on theme change) */}
       <DynamicPwaMeta />
+
+      {/* iOS Add to Home Screen Prompt */}
+      <IosPwaPrompt />
     </div>
   );
 }

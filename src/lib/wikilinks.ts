@@ -1,7 +1,10 @@
-import type { WikiLink } from "@/types";
+import type { WikiLink, VaultFile } from "@/types";
 
 // Regex for wikilinks: [[target]] or [[target|display]] or ![[embed]]
 const WIKILINK_REGEX = /(!?)\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
+
+// Map of note name (lowercase, without extension) -> full path
+export type NoteLookupMap = Map<string, string>;
 
 /**
  * Parse wikilinks from markdown content
@@ -29,6 +32,40 @@ const CANVAS_EXTENSION = /\.canvas$/i;
 const MARKDOWN_EXTENSION = /\.md$/i;
 
 /**
+ * Build a lookup map from the vault tree
+ * Maps note name (lowercase, no extension) -> full path (without extension)
+ */
+export function buildNoteLookupMap(tree: VaultFile[]): NoteLookupMap {
+  const map: NoteLookupMap = new Map();
+
+  function traverse(files: VaultFile[], parentPath: string = "") {
+    for (const file of files) {
+      const fullPath = parentPath ? `${parentPath}/${file.name}` : file.name;
+
+      if (file.type === "dir" && file.children) {
+        traverse(file.children, fullPath);
+      } else if (file.type === "file") {
+        // Get name without extension for lookup key
+        const nameWithoutExt = file.name
+          .replace(/\.(md|canvas|pdf|png|jpg|jpeg|gif|svg|webp|bmp|ico|avif)$/i, "");
+        const pathWithoutExt = fullPath
+          .replace(/\.(md|canvas|pdf|png|jpg|jpeg|gif|svg|webp|bmp|ico|avif)$/i, "");
+
+        // Store with lowercase key for case-insensitive lookup
+        // If multiple notes have the same name, prefer the one at shorter path (closer to root)
+        const key = nameWithoutExt.toLowerCase();
+        if (!map.has(key) || pathWithoutExt.length < (map.get(key)?.length ?? Infinity)) {
+          map.set(key, pathWithoutExt);
+        }
+      }
+    }
+  }
+
+  traverse(tree);
+  return map;
+}
+
+/**
  * Detect the file type from a wikilink target
  */
 function detectFileType(target: string): "note" | "canvas" | "file" {
@@ -43,8 +80,10 @@ function detectFileType(target: string): "note" | "canvas" | "file" {
 
 /**
  * Convert wikilink target to URL path
+ * @param target The wikilink target (e.g., "My Note" or "folder/My Note")
+ * @param lookupMap Optional map to resolve note names to full paths
  */
-export function wikilinkToPath(target: string): string {
+export function wikilinkToPath(target: string, lookupMap?: NoteLookupMap): string {
   // Remove heading anchors first (like #🎯 Vue d'Ensemble)
   const withoutAnchor = target.replace(/#.*$/, "");
 
@@ -71,6 +110,16 @@ export function wikilinkToPath(target: string): string {
     pathWithoutExt = cleanTarget.replace(PDF_EXTENSION, "");
   } else if (IMAGE_EXTENSIONS.test(cleanTarget)) {
     pathWithoutExt = cleanTarget.replace(IMAGE_EXTENSIONS, "");
+  }
+
+  // If lookupMap is provided and target doesn't already have a path (no "/"),
+  // try to resolve it to the full path
+  if (lookupMap && !pathWithoutExt.includes("/")) {
+    const lookupKey = pathWithoutExt.toLowerCase();
+    const resolvedPath = lookupMap.get(lookupKey);
+    if (resolvedPath) {
+      pathWithoutExt = resolvedPath;
+    }
   }
 
   // Encode each segment separately to preserve slashes

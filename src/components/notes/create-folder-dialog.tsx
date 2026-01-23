@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,6 +31,14 @@ export function CreateFolderDialog({
 
   const [folderName, setFolderName] = useState("");
   const [selectedParent, setSelectedParent] = useState(defaultParent || ROOT_VALUE);
+
+  // Sync selectedParent when dialog opens in controlled mode
+  useEffect(() => {
+    if (controlledOpen) {
+      setFolderName("");
+      setSelectedParent(defaultParent || ROOT_VALUE);
+    }
+  }, [controlledOpen, defaultParent]);
 
   const actualParent = selectedParent === ROOT_VALUE ? "" : selectedParent;
 

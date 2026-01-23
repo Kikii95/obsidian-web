@@ -7,7 +7,8 @@ import remarkBreaks from "remark-breaks";
 import rehypeRaw from "rehype-raw";
 import rehypeHighlight from "rehype-highlight";
 import { PrefetchLink } from "@/components/ui/prefetch-link";
-import { wikilinkToPath } from "@/lib/wikilinks";
+import { wikilinkToPath, buildNoteLookupMap, type NoteLookupMap } from "@/lib/wikilinks";
+import { useVaultStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { Copy, Check } from "lucide-react";
 
@@ -58,11 +59,17 @@ export const MarkdownRenderer = memo(function MarkdownRenderer({
   currentPath,
   isShareViewer = false,
 }: MarkdownRendererProps) {
+  // Get vault tree for wikilink resolution
+  const { tree } = useVaultStore();
+
+  // Build lookup map for resolving wikilinks to full paths
+  const lookupMap = useMemo(() => buildNoteLookupMap(tree), [tree]);
+
   // Pre-process content to convert wikilinks to markdown links
   // In share viewer mode, wikilinks are displayed as plain text (no navigation)
   const processedContent = useMemo(
-    () => (isShareViewer ? processWikilinksForShare(content) : processWikilinks(content)),
-    [content, isShareViewer]
+    () => (isShareViewer ? processWikilinksForShare(content) : processWikilinks(content, lookupMap)),
+    [content, isShareViewer, lookupMap]
   );
 
   return (
@@ -245,6 +252,18 @@ export const MarkdownRenderer = memo(function MarkdownRenderer({
               {children}
             </td>
           ),
+          // Custom unordered list
+          ul: ({ children, ...props }) => (
+            <ul className="list-disc pl-6 my-3 space-y-1 text-foreground/90" {...props}>
+              {children}
+            </ul>
+          ),
+          // Custom ordered list
+          ol: ({ children, ...props }) => (
+            <ol className="list-decimal pl-6 my-3 space-y-1 text-foreground/90" {...props}>
+              {children}
+            </ol>
+          ),
           // Custom list items for tasks
           li: ({ children, className, ...props }) => {
             // Extract text content from children safely
@@ -313,14 +332,16 @@ export const MarkdownRenderer = memo(function MarkdownRenderer({
 
 /**
  * Convert Obsidian wikilinks to standard markdown links
+ * @param content The markdown content
+ * @param lookupMap Optional map to resolve note names to full paths
  */
-function processWikilinks(content: string): string {
+function processWikilinks(content: string, lookupMap?: NoteLookupMap): string {
   // Match [[target]] or [[target|display]]
   const wikilinkRegex = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
 
   return content.replace(wikilinkRegex, (match, target, display) => {
     const text = display || target;
-    const path = wikilinkToPath(target);
+    const path = wikilinkToPath(target, lookupMap);
     return `[${text}](${path})`;
   });
 }

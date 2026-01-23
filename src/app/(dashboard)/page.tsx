@@ -225,7 +225,13 @@ export default function HomePage() {
   }, [tree, settings.recentNotesCount]);
 
   // Build file URL based on type
-  const getFileUrl = (path: string) => {
+  const getFileUrl = (path: string, itemType?: "note" | "folder") => {
+    // Folders go to folder explorer
+    if (itemType === "folder") {
+      const encodedPath = path.split("/").map(encodeURIComponent).join("/");
+      return `/folder/${encodedPath}`;
+    }
+
     const fileType = getFileType(path);
     const cleanPath = path
       .replace(/\.md$/, "")
@@ -244,7 +250,12 @@ export default function HomePage() {
   };
 
   // Get icon component based on file type
-  const getFileIcon = (path: string) => {
+  const getFileIcon = (path: string, itemType?: "note" | "folder") => {
+    // Folders get folder icon
+    if (itemType === "folder") {
+      return <FolderOpen className="h-4 w-4 text-primary/70 shrink-0" />;
+    }
+
     const fileType = getFileType(path);
     switch (fileType) {
       case "image":
@@ -395,31 +406,32 @@ export default function HomePage() {
 
       {/* Second Row */}
       <div className={`grid lg:grid-cols-2 ${gapClass} ${mbClass}`}>
-        {/* Pinned Notes */}
+        {/* Pinned Items */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Pin className="h-4 w-4 text-primary" />
-              Notes Épinglées
+              Épinglés
             </CardTitle>
             <CardDescription>
               {pinnedNotes.length === 0
-                ? "Épinglez des notes pour un accès rapide"
-                : `${pinnedNotes.length} note${pinnedNotes.length > 1 ? "s" : ""} épinglée${pinnedNotes.length > 1 ? "s" : ""}`}
+                ? "Épinglez des notes ou dossiers pour un accès rapide"
+                : `${pinnedNotes.length} élément${pinnedNotes.length > 1 ? "s" : ""} épinglé${pinnedNotes.length > 1 ? "s" : ""}`}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {pinnedNotes.length === 0 ? (
               <div className="text-center py-6 text-muted-foreground text-sm">
                 <Pin className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p>Aucune note épinglée</p>
+                <p>Aucun élément épinglé</p>
                 <p className="text-xs mt-1">
-                  Utilisez le bouton 📌 dans une note pour l'épingler
+                  Utilisez 📌 sur une note ou un dossier
                 </p>
               </div>
             ) : (
               <div className="space-y-1">
                 {pinnedNotes.map((note) => {
+                  const isFolder = note.type === "folder";
                   const folder = note.path.includes("/")
                     ? note.path.substring(0, note.path.lastIndexOf("/"))
                     : "";
@@ -428,13 +440,13 @@ export default function HomePage() {
                       key={note.path}
                       className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50 group"
                     >
-                      {getFileIcon(note.path)}
+                      {getFileIcon(note.path, note.type)}
                       <Link
-                        href={getFileUrl(note.path)}
+                        href={getFileUrl(note.path, note.type)}
                         className="flex-1 min-w-0 hover:text-primary"
                       >
                         <span className="text-sm block truncate">{note.name}</span>
-                        {folder && (
+                        {folder && !isFolder && (
                           <span className="text-xs text-muted-foreground truncate block">
                             {folder}
                           </span>

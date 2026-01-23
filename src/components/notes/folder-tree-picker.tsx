@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ChevronRight, Folder, FolderOpen, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,24 @@ export function FolderTreePicker({
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
     new Set()
   );
+
+  // Auto-expand parent folders when selectedPath changes
+  useEffect(() => {
+    if (selectedPath && selectedPath !== ROOT_VALUE) {
+      const parts = selectedPath.split("/");
+      const parentsToExpand: string[] = [];
+      for (let i = 1; i < parts.length; i++) {
+        parentsToExpand.push(parts.slice(0, i).join("/"));
+      }
+      if (parentsToExpand.length > 0) {
+        setExpandedFolders((prev) => {
+          const newSet = new Set(prev);
+          parentsToExpand.forEach((p) => newSet.add(p));
+          return newSet;
+        });
+      }
+    }
+  }, [selectedPath]);
 
   const toggleFolder = (path: string) => {
     const newExpanded = new Set(expandedFolders);

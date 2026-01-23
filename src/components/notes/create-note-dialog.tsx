@@ -52,6 +52,16 @@ export function CreateNoteDialog({
   const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [loadingContent, setLoadingContent] = useState(false);
 
+  // Sync selectedFolder when dialog opens in controlled mode
+  useEffect(() => {
+    if (controlledOpen) {
+      setTitle("");
+      setSelectedFolder(currentFolder || ROOT_VALUE);
+      setSelectedTemplate(NO_TEMPLATE);
+      setTemplateContent(null);
+    }
+  }, [controlledOpen, currentFolder]);
+
   const actualFolder = selectedFolder === ROOT_VALUE ? "" : selectedFolder;
 
   // Fetch templates on mount

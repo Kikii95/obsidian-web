@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { FolderOpen, ChevronRight, Home, FileText } from "lucide-react";
+import { useSession, signIn } from "next-auth/react";
+import { FolderOpen, ChevronRight, Home, FileText, LogIn, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { ThemeSwitcher } from "@/components/theme/theme-switcher";
 
 interface ShareViewerHeaderProps {
@@ -22,6 +24,8 @@ export function ShareViewerHeader({
   expiresAt,
   isNote = false,
 }: ShareViewerHeaderProps) {
+  const { data: session, status } = useSession();
+
   // Build breadcrumbs
   const breadcrumbs = buildBreadcrumbs(token, folderPath, currentPath);
   const expiresDate = new Date(expiresAt);
@@ -57,8 +61,30 @@ export function ShareViewerHeader({
             </div>
           </div>
 
-          {/* Theme switcher */}
-          <ThemeSwitcher />
+          {/* Actions: Login + Theme */}
+          <div className="flex items-center gap-2">
+            {status === "loading" ? (
+              <div className="h-9 w-20 animate-pulse bg-muted rounded" />
+            ) : session ? (
+              <Link
+                href="/"
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <User className="h-4 w-4" />
+                <span className="hidden sm:inline">{session.user?.name || "Mon vault"}</span>
+              </Link>
+            ) : (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => signIn("github", { callbackUrl: "/" })}
+              >
+                <LogIn className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Se connecter</span>
+              </Button>
+            )}
+            <ThemeSwitcher />
+          </div>
         </div>
 
         {/* Breadcrumb */}

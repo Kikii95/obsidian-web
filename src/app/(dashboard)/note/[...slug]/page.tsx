@@ -36,6 +36,7 @@ import { useNoteLock } from "@/hooks/use-note-lock";
 import { useBreadcrumb, useSlugName } from "@/hooks/use-breadcrumb";
 import { decodeSlugSegments, buildFilePath } from "@/lib/path-utils";
 import { useSettingsStore } from "@/lib/settings-store";
+import { useSessionStateStore } from "@/lib/session-state-store";
 
 // Count markdown files recursively
 function countMdFiles(files: { type: string; name: string; children?: unknown[] }[]): number {
@@ -56,6 +57,7 @@ export default function NotePage() {
   const { isUnlocked, initializeLockState } = useLockStore();
   const { settings } = useSettingsStore();
   const { tree } = useVaultStore();
+  const { setLastNote } = useSessionStateStore();
 
   // Editor style settings
   const editorMaxWidth = settings.editorMaxWidth ?? 800;
@@ -115,6 +117,13 @@ export default function NotePage() {
     note,
     onNoteUpdate: updateNote,
   });
+
+  // Track last opened note for session persistence
+  useEffect(() => {
+    if (filePath && note) {
+      setLastNote(filePath);
+    }
+  }, [filePath, note, setLastNote]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -269,7 +278,8 @@ export default function NotePage() {
           <MarkdownEditor content={editor.editContent} onChange={editor.setEditContent} />
         ) : (
           <div ref={contentRef}>
-            <MarkdownRenderer content={note.content} />
+            {/* Key forces re-render when tree loads (fixes wikilink resolution timing) */}
+            <MarkdownRenderer key={`md-${tree.length}`} content={note.content} />
           </div>
         )}
       </article>

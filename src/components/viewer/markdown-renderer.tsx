@@ -7,6 +7,7 @@ import remarkBreaks from "remark-breaks";
 import rehypeRaw from "rehype-raw";
 import rehypeHighlight from "rehype-highlight";
 import { PrefetchLink } from "@/components/ui/prefetch-link";
+import { CollapsibleContent } from "@/components/viewer/collapsible-content";
 import { wikilinkToPath, buildNoteLookupMap, type NoteLookupMap } from "@/lib/wikilinks";
 import { useVaultStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
@@ -61,12 +62,16 @@ function MarkdownRendererInner({
   isShareViewer = false,
   lookupMap,
 }: MarkdownRendererProps & { lookupMap: NoteLookupMap }) {
-  // Pre-process content to convert wikilinks to markdown links
+  // Pre-process content to convert wikilinks to markdown links and handle collapsible syntax
   // In share viewer mode, wikilinks are displayed as plain text (no navigation)
-  const processedContent = useMemo(
-    () => (isShareViewer ? processWikilinksForShare(content) : processWikilinks(content, lookupMap)),
-    [content, isShareViewer, lookupMap]
-  );
+  const processedContent = useMemo(() => {
+    let processed = content;
+    // Process collapsible (hidden::visible) syntax first
+    processed = processCollapsible(processed);
+    // Then process wikilinks
+    processed = isShareViewer ? processWikilinksForShare(processed) : processWikilinks(processed, lookupMap);
+    return processed;
+  }, [content, isShareViewer, lookupMap]);
 
   return (
     <div className={cn("prose prose-invert max-w-none", className)}>
@@ -318,6 +323,17 @@ function MarkdownRendererInner({
               {children}
             </p>
           ),
+          // Custom span for collapsible content (hidden::visible) syntax
+          span: ({ className, node, ...props }) => {
+            // Check if this is a collapsible toggle span
+            if (className === "collapsible-toggle") {
+              const hidden = (node?.properties?.dataHidden as string) || "";
+              const visible = (node?.properties?.dataVisible as string) || "";
+              return <CollapsibleContent hidden={hidden} visible={visible} />;
+            }
+            // Regular span
+            return <span className={className} {...props} />;
+          },
         }}
       >
         {processedContent}
@@ -352,6 +368,28 @@ export function MarkdownRenderer({
       lookupMap={lookupMap}
     />
   );
+}
+
+/**
+ * Convert (hidden::visible) syntax to HTML spans for collapsible content
+ * @param content The markdown content
+ */
+function processCollapsible(content: string): string {
+  // Match (hidden::visible) syntax - non-greedy to handle multiple on same line
+  // Supports multiline hidden content with [\s\S] instead of .
+  const collapsibleRegex = /\(([^:)]+?)::([^)]+?)\)/g;
+
+  return content.replace(collapsibleRegex, (match, hidden, visible) => {
+    // Escape HTML entities to prevent XSS and rendering issues
+    const escapeHtml = (str: string) =>
+      str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+
+    return `<span class="collapsible-toggle" data-hidden="${escapeHtml(hidden.trim())}" data-visible="${escapeHtml(visible.trim())}"></span>`;
+  });
 }
 
 /**

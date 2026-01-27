@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { ShareViewerHeader } from "@/components/shares/share-viewer-header";
 import { ShareExportToolbar } from "@/components/shares/share-export-toolbar";
+import { ShareSidebar } from "@/components/shares/share-sidebar";
 import { MarkdownRenderer } from "@/components/viewer/markdown-renderer";
 import { getFileType, isViewableFile } from "@/lib/file-types";
 import { cn } from "@/lib/utils";
@@ -238,6 +239,13 @@ export default function ShareViewerPage() {
 
   return (
     <>
+      {/* Collapsible sidebar for folder navigation */}
+      <ShareSidebar
+        token={token}
+        shareFolderPath={metadata.folderPath}
+        tree={tree}
+      />
+
       <ShareViewerHeader
         token={token}
         folderName={metadata.folderName}

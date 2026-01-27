@@ -7,12 +7,15 @@ import { ArrowLeft, AlertCircle, Loader2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ShareViewerHeader } from "@/components/shares/share-viewer-header";
 import { ShareExportToolbar } from "@/components/shares/share-export-toolbar";
+import { ShareSidebar } from "@/components/shares/share-sidebar";
 import { MarkdownRenderer } from "@/components/viewer/markdown-renderer";
+import type { VaultFile } from "@/types";
 
 interface ShareMetadata {
   folderPath: string;
   folderName: string;
   expiresAt: string;
+  shareType: "folder" | "note";
 }
 
 interface NoteData {
@@ -29,6 +32,7 @@ export default function ShareNotePage() {
 
   const [metadata, setMetadata] = useState<ShareMetadata | null>(null);
   const [note, setNote] = useState<NoteData | null>(null);
+  const [tree, setTree] = useState<VaultFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expired, setExpired] = useState(false);
@@ -55,6 +59,19 @@ export default function ShareNotePage() {
         }
         const metaData = await metaRes.json();
         setMetadata(metaData.share);
+
+        // Fetch tree for folder shares (enables sidebar navigation)
+        if (metaData.share.shareType === "folder") {
+          try {
+            const treeRes = await fetch(`/api/shares/${token}/tree`);
+            if (treeRes.ok) {
+              const treeData = await treeRes.json();
+              setTree(treeData.tree || []);
+            }
+          } catch {
+            // Tree fetch failure is non-critical
+          }
+        }
 
         // Build full path
         const fullPath = `${metaData.share.folderPath}/${relativePath}.md`;
@@ -127,6 +144,15 @@ export default function ShareNotePage() {
 
   return (
     <>
+      {/* Sidebar for folder shares */}
+      {metadata.shareType === "folder" && tree.length > 0 && (
+        <ShareSidebar
+          token={token}
+          shareFolderPath={metadata.folderPath}
+          tree={tree}
+        />
+      )}
+
       <ShareViewerHeader
         token={token}
         folderName={metadata.folderName}

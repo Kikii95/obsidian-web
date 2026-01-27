@@ -33,11 +33,13 @@ import {
   PinOff,
   ChevronRight,
   Settings,
+  History,
 } from "lucide-react";
 import { githubClient } from "@/services/github-client";
 import { useVaultStore } from "@/lib/store";
 import { usePinnedStore } from "@/lib/pinned-store";
 import { useSettingsStore } from "@/lib/settings-store";
+import { useSessionStateStore } from "@/lib/session-state-store";
 import { CreateNoteDialog } from "@/components/notes/create-note-dialog";
 import { getFileType } from "@/lib/file-types";
 import type { VaultFile } from "@/types";
@@ -164,6 +166,7 @@ export default function HomePage() {
   const { tree } = useVaultStore();
   const { pinnedNotes, unpinNote } = usePinnedStore();
   const { settings } = useSettingsStore();
+  const { lastOpenedNotePath } = useSessionStateStore();
 
   const [stats, setStats] = useState<VaultStats>({
     notes: 0,
@@ -290,6 +293,29 @@ export default function HomePage() {
           </p>
         )}
       </div>
+
+      {/* Continue where you left off */}
+      {lastOpenedNotePath && (
+        <Card className={`${mbClass} border-primary/30 bg-primary/5`}>
+          <CardContent className="py-3 px-4">
+            <Link
+              href={getFileUrl(lastOpenedNotePath + ".md")}
+              className="flex items-center gap-3 group"
+            >
+              <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                <History className="h-4 w-4 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-muted-foreground">Reprendre où vous en étiez</p>
+                <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
+                  {lastOpenedNotePath.split("/").pop() || lastOpenedNotePath}
+                </p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary shrink-0 transition-colors" />
+            </Link>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Main Grid */}
       <div className={`grid lg:grid-cols-3 ${gapClass} ${mbClass}`}>

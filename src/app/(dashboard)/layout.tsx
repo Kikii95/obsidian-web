@@ -34,6 +34,7 @@ import { DynamicPwaMeta } from "@/components/pwa/dynamic-pwa-meta";
 import { IosPwaPrompt } from "@/components/pwa/ios-pwa-prompt";
 import { useSettingsSync } from "@/hooks/use-settings-sync";
 import { useVaultConfig } from "@/hooks/use-vault-config";
+import { usePinsSync } from "@/hooks/use-pins-sync";
 
 export default function DashboardLayout({
   children,
@@ -52,6 +53,9 @@ export default function DashboardLayout({
 
   // Sync settings with GitHub cloud
   useSettingsSync();
+
+  // Sync pins from database
+  usePinsSync();
 
   useEffect(() => {
     if (status === "unauthenticated") {

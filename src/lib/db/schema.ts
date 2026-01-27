@@ -49,3 +49,28 @@ export const shares = pgTable(
 
 export type Share = typeof shares.$inferSelect;
 export type NewShare = typeof shares.$inferInsert;
+
+// Pins table for cross-device pin persistence
+export const pins = pgTable(
+  "pins",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: varchar("user_id", { length: 255 }).notNull(),
+
+    // Pin info
+    path: varchar("path", { length: 1024 }).notNull(), // File or folder path
+    name: varchar("name", { length: 255 }).notNull(), // Display name
+    type: varchar("type", { length: 10 }).notNull(), // 'note' | 'folder'
+    order: integer("order").notNull(), // Position in the list
+
+    // Timestamps
+    pinnedAt: timestamp("pinned_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("idx_pins_user_id").on(table.userId),
+    index("idx_pins_user_path").on(table.userId, table.path),
+  ]
+);
+
+export type Pin = typeof pins.$inferSelect;
+export type NewPin = typeof pins.$inferInsert;

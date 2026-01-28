@@ -86,6 +86,13 @@ export default function ShareViewerPage() {
           return;
         }
         const metaData = await metaRes.json();
+
+        // Redirect to deposit page if mode is deposit
+        if (metaData.share.mode === "deposit") {
+          window.location.href = `/s/${token}/deposit`;
+          return;
+        }
+
         setMetadata(metaData.share);
 
         // Always fetch tree (API handles both folder and note shares now)

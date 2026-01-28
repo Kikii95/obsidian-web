@@ -65,15 +65,29 @@ export async function getShareMetadata(token: string) {
 
   const folderName = share.folderPath.split("/").pop() || share.folderPath;
 
-  return {
+  // Base metadata
+  const metadata: Record<string, unknown> = {
     token: share.token,
     shareType: share.shareType as "folder" | "note",
     folderPath: share.folderPath,
     folderName,
     includeSubfolders: share.includeSubfolders,
-    mode: share.mode as "reader" | "writer",
+    mode: share.mode as "reader" | "writer" | "deposit",
     createdAt: share.createdAt.toISOString(),
     expiresAt: share.expiresAt.toISOString(),
     isExpired: share.expiresAt < new Date(),
   };
+
+  // Add deposit config if in deposit mode
+  if (share.mode === "deposit") {
+    metadata.depositConfig = {
+      maxFileSize: share.depositMaxFileSize || 10 * 1024 * 1024, // 10MB default
+      allowedTypes: share.depositAllowedTypes
+        ? JSON.parse(share.depositAllowedTypes)
+        : null,
+      depositFolder: share.depositFolder || null,
+    };
+  }
+
+  return metadata;
 }

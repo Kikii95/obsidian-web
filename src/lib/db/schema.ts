@@ -33,7 +33,12 @@ export const shares = pgTable(
     folderPath: varchar("folder_path", { length: 1024 }).notNull(), // folder path OR note path (without .md)
     name: varchar("name", { length: 255 }), // optional custom name for the share link
     includeSubfolders: boolean("include_subfolders").default(true).notNull(),
-    mode: varchar("mode", { length: 10 }).default("reader").notNull(), // 'reader' | 'writer'
+    mode: varchar("mode", { length: 10 }).default("reader").notNull(), // 'reader' | 'writer' | 'deposit'
+
+    // Deposit-specific configuration (null for reader/writer modes)
+    depositMaxFileSize: integer("deposit_max_file_size"), // bytes, null = 10MB default
+    depositAllowedTypes: text("deposit_allowed_types"), // JSON array of extensions, null = all types
+    depositFolder: varchar("deposit_folder", { length: 1024 }), // subfolder for uploads, null = share root
 
     // Lifecycle
     createdAt: timestamp("created_at").defaultNow().notNull(),

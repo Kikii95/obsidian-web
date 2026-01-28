@@ -2,7 +2,7 @@ import { eq, and, gt, lt } from "drizzle-orm";
 import { db, shares, type Share, type NewShare } from "@/lib/db";
 import { nanoid } from "nanoid";
 import { encryptToken } from "./encryption";
-import { getExpirationMs, type ExpirationValue, type ShareType, type ShareMode } from "@/types/shares";
+import { getExpirationMs, type ExpirationValue, type ShareType, type ShareMode, type DepositConfig } from "@/types/shares";
 
 /**
  * Create a new share
@@ -21,6 +21,7 @@ export async function createShare(params: {
   includeSubfolders?: boolean;
   expiresIn: ExpirationValue;
   mode?: ShareMode;
+  depositConfig?: DepositConfig;
 }): Promise<Share> {
   const encryptedToken = await encryptToken(params.accessToken);
   const expiresAt = new Date(Date.now() + getExpirationMs(params.expiresIn));
@@ -40,6 +41,16 @@ export async function createShare(params: {
     includeSubfolders: params.shareType === "note" ? false : (params.includeSubfolders ?? true),
     mode: params.mode ?? "reader",
     expiresAt,
+    // Deposit-specific configuration
+    depositMaxFileSize: params.mode === "deposit" && params.depositConfig
+      ? params.depositConfig.maxFileSize
+      : null,
+    depositAllowedTypes: params.mode === "deposit" && params.depositConfig?.allowedTypes
+      ? JSON.stringify(params.depositConfig.allowedTypes)
+      : null,
+    depositFolder: params.mode === "deposit" && params.depositConfig
+      ? params.depositConfig.depositFolder
+      : null,
   };
 
   const [share] = await db.insert(shares).values(newShare).returning();

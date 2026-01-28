@@ -26,6 +26,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const { share, octokit, vaultConfig } = context;
 
+    // Block access for deposit mode shares (deposit = upload only, no read)
+    if (share.mode === "deposit") {
+      return NextResponse.json(
+        { error: "Ce partage est en mode dépôt uniquement" },
+        { status: 403 }
+      );
+    }
+
     // Get requested path
     const url = new URL(request.url);
     const path = url.searchParams.get("path");

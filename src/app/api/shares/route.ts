@@ -40,6 +40,7 @@ export async function POST(request: NextRequest) {
       includeSubfolders: body.shareType === "note" ? false : (body.includeSubfolders ?? true),
       expiresIn: body.expiresIn,
       mode: body.mode ?? "reader",
+      depositConfig: body.depositConfig,
     });
 
     // Return share info (without encrypted token)

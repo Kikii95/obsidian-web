@@ -58,7 +58,7 @@ Current sprint planning and bug tracking.
 |----|---------|--------|------------|-------|
 | F9 | Collapsible sidebar on shared pages | ✅ | 🟡 Medium | ShareSidebar + useFolderExpansion |
 | F10 | Reader/Writer mode on shares | ✅ | 🔴 Hard | Mode selector, save API, edit UI |
-| F11 | Collaborative import (deposit drive) | ⬜ | 🔴 Hard | Upload for non-auth users |
+| F11 | Collaborative import (deposit drive) | ✅ | 🔴 Hard | Upload for non-auth users |
 | F12 | Login button on shared pages | ✅ | 🟡 Medium | NextAuth signIn button |
 | F13 | Integrate shared link to own repo | ⬜ | 🔴 Hard | Fork/copy mechanism |
 | F18 | Unified explorer view + create in shares | ✅ | 🔴 Hard | All shares open explorer, create note/folder in writer mode |
@@ -136,9 +136,9 @@ Current sprint planning and bug tracking.
 | Category | Total | Done | Remaining |
 |----------|-------|------|-----------|
 | Bugs | 6 | 6 | 0 |
-| Features | 19 | 15 | 4 |
+| Features | 19 | 16 | 3 |
 | PWA | 3 | 3 | 0 |
-| **Total** | **28** | **24** | **4** |
+| **Total** | **28** | **25** | **3** |
 
 ### By Complexity
 
@@ -146,7 +146,7 @@ Current sprint planning and bug tracking.
 |-------|-------|------|
 | 🟢 Easy | 10 | 10 |
 | 🟡 Medium | 11 | 10 |
-| 🔴 Hard | 7 | 4 |
+| 🔴 Hard | 7 | 5 |
 
 ---
 

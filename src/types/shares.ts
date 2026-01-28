@@ -3,7 +3,20 @@ import type { Share } from "@/lib/db/schema";
 export type { Share };
 
 export type ShareType = "folder" | "note";
-export type ShareMode = "reader" | "writer";
+export type ShareMode = "reader" | "writer" | "deposit";
+
+// Deposit mode configuration
+export interface DepositConfig {
+  maxFileSize: number; // bytes (default 10MB = 10485760)
+  allowedTypes: string[] | null; // null = all types, otherwise array of extensions like [".pdf", ".md"]
+  depositFolder: string | null; // subfolder for uploads, null = share root
+}
+
+export const DEFAULT_DEPOSIT_CONFIG: DepositConfig = {
+  maxFileSize: 10 * 1024 * 1024, // 10MB
+  allowedTypes: null, // all types
+  depositFolder: null, // share root
+};
 
 export interface CreateShareInput {
   shareType?: ShareType;
@@ -12,6 +25,7 @@ export interface CreateShareInput {
   includeSubfolders?: boolean; // only used for folders
   expiresIn: ExpirationValue;
   mode?: ShareMode; // default: reader
+  depositConfig?: DepositConfig; // only used when mode === "deposit"
 }
 
 export type ExpirationValue = "1h" | "1d" | "1w" | "1m";
@@ -45,6 +59,8 @@ export interface ShareMetadata {
   createdAt: string;
   expiresAt: string;
   isExpired: boolean;
+  // Deposit config (only present when mode === "deposit")
+  depositConfig?: DepositConfig;
 }
 
 export interface ShareContext {

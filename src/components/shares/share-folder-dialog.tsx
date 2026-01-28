@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Share2, Eye, Pencil } from "lucide-react";
+import { Share2, Eye, Pencil, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,7 +22,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ShareLinkResult } from "./share-link-result";
-import { EXPIRATION_OPTIONS, type ExpirationValue, type ShareMode } from "@/types/shares";
+import { DepositConfigSection } from "./deposit-config-section";
+import { EXPIRATION_OPTIONS, DEFAULT_DEPOSIT_CONFIG, type ExpirationValue, type ShareMode, type DepositConfig } from "@/types/shares";
 import { Loader2 } from "lucide-react";
 
 interface ShareFolderDialogProps {
@@ -45,11 +46,25 @@ export function ShareFolderDialog({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Deposit configuration
+  const [depositMaxFileSize, setDepositMaxFileSize] = useState(DEFAULT_DEPOSIT_CONFIG.maxFileSize);
+  const [depositAllowedTypes, setDepositAllowedTypes] = useState<string[] | null>(DEFAULT_DEPOSIT_CONFIG.allowedTypes);
+  const [depositFolder, setDepositFolder] = useState<string | null>(DEFAULT_DEPOSIT_CONFIG.depositFolder);
+
   const handleSubmit = async () => {
     setIsLoading(true);
     setError(null);
 
     try {
+      // Build deposit config if in deposit mode
+      const depositConfig: DepositConfig | undefined = mode === "deposit"
+        ? {
+            maxFileSize: depositMaxFileSize,
+            allowedTypes: depositAllowedTypes,
+            depositFolder: depositFolder,
+          }
+        : undefined;
+
       const response = await fetch("/api/shares", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -59,6 +74,7 @@ export function ShareFolderDialog({
           includeSubfolders,
           expiresIn,
           mode,
+          depositConfig,
         }),
       });
 
@@ -87,6 +103,10 @@ export function ShareFolderDialog({
         setExpiresIn("1w");
         setMode("reader");
         setError(null);
+        // Reset deposit config
+        setDepositMaxFileSize(DEFAULT_DEPOSIT_CONFIG.maxFileSize);
+        setDepositAllowedTypes(DEFAULT_DEPOSIT_CONFIG.allowedTypes);
+        setDepositFolder(DEFAULT_DEPOSIT_CONFIG.depositFolder);
       }, 200);
     }
   };
@@ -193,14 +213,34 @@ export function ShareFolderDialog({
                     Lecture + écriture
                   </span>
                 </SelectItem>
+                <SelectItem value="deposit">
+                  <span className="flex items-center gap-2">
+                    <Upload className="h-4 w-4" />
+                    Dépôt uniquement
+                  </span>
+                </SelectItem>
               </SelectContent>
             </Select>
             <p className="text-sm text-muted-foreground">
               {mode === "writer"
                 ? "Les visiteurs pourront modifier les notes"
+                : mode === "deposit"
+                ? "Les visiteurs pourront déposer des fichiers sans voir le contenu"
                 : "Les visiteurs pourront uniquement lire"}
             </p>
           </div>
+
+          {/* Deposit configuration (only shown in deposit mode) */}
+          {mode === "deposit" && (
+            <DepositConfigSection
+              maxFileSize={depositMaxFileSize}
+              setMaxFileSize={setDepositMaxFileSize}
+              allowedTypes={depositAllowedTypes}
+              setAllowedTypes={setDepositAllowedTypes}
+              depositFolder={depositFolder}
+              setDepositFolder={setDepositFolder}
+            />
+          )}
 
           {error && (
             <p className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">

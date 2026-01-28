@@ -64,14 +64,15 @@ export function ShareSidebar({
 
   return (
     <>
-      {/* Toggle button - fixed position */}
+      {/* Toggle button - fixed position below header */}
       <Button
         variant="outline"
         size="icon"
         className={cn(
-          "fixed left-4 top-20 z-50 h-9 w-9 rounded-full shadow-md",
+          "fixed left-4 z-40 h-9 w-9 rounded-full shadow-md",
           "bg-background/95 backdrop-blur border-border/50",
           "hover:bg-muted transition-all",
+          "top-[4.5rem]", // Below header
           isOpen && "left-[260px]"
         )}
         onClick={() => setIsOpen(!isOpen)}
@@ -83,15 +84,15 @@ export function ShareSidebar({
       {/* Sidebar overlay (mobile) */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
           onClick={() => setIsOpen(false)}
         />
       )}
 
-      {/* Sidebar panel */}
+      {/* Sidebar panel - starts below header */}
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 h-full w-64",
+          "fixed left-0 top-[3.5rem] z-30 h-[calc(100vh-3.5rem)] w-64",
           "bg-background border-r border-border",
           "transform transition-transform duration-200 ease-in-out",
           isOpen ? "translate-x-0" : "-translate-x-full"
@@ -140,7 +141,7 @@ export function ShareSidebar({
         </div>
 
         {/* Tree */}
-        <ScrollArea className="h-[calc(100vh-4rem)]">
+        <ScrollArea className="h-[calc(100vh-7.5rem)]">
           <div className="p-2">
             <ShareFileTree
               files={tree}

@@ -38,11 +38,23 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // Validate path is within share boundaries
-    if (!validateSharePath(path, share.folderPath, share.includeSubfolders)) {
-      return NextResponse.json(
-        { error: "Accès non autorisé à ce fichier" },
-        { status: 403 }
-      );
+    // For note shares, only the exact note file is accessible
+    if (share.shareType === "note") {
+      const allowedPath = share.folderPath + ".md";
+      if (path !== allowedPath) {
+        return NextResponse.json(
+          { error: "Accès non autorisé à ce fichier" },
+          { status: 403 }
+        );
+      }
+    } else {
+      // For folder shares, use standard path validation
+      if (!validateSharePath(path, share.folderPath, share.includeSubfolders)) {
+        return NextResponse.json(
+          { error: "Accès non autorisé à ce fichier" },
+          { status: 403 }
+        );
+      }
     }
 
     // Get file content

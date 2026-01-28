@@ -57,6 +57,7 @@ interface Share {
   folderName: string;
   name: string; // custom name or defaults to folderName
   includeSubfolders: boolean;
+  mode: "reader" | "writer";
   createdAt: string;
   expiresAt: string;
   accessCount: number;
@@ -452,6 +453,15 @@ function ShareCard({
           <Badge variant="secondary">
             {isNote ? "Note" : "Dossier"}
             {!isNote && share.includeSubfolders && " + sous-dossiers"}
+          </Badge>
+
+          {/* Mode badge */}
+          <Badge variant={share.mode === "writer" ? "default" : "outline"}>
+            {share.mode === "writer" ? (
+              <><Pencil className="h-3 w-3 mr-1" />Écriture</>
+            ) : (
+              <><Eye className="h-3 w-3 mr-1" />Lecture</>
+            )}
           </Badge>
 
           {/* Expiration */}

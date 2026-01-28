@@ -3,24 +3,28 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, AlertCircle, Loader2, Clock } from "lucide-react";
+import { ArrowLeft, AlertCircle, Loader2, Clock, Pencil, Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ShareViewerHeader } from "@/components/shares/share-viewer-header";
 import { ShareExportToolbar } from "@/components/shares/share-export-toolbar";
 import { ShareSidebar } from "@/components/shares/share-sidebar";
 import { MarkdownRenderer } from "@/components/viewer/markdown-renderer";
+import { MarkdownEditor } from "@/components/editor/markdown-editor";
 import type { VaultFile } from "@/types";
+import type { ShareMode } from "@/types/shares";
 
 interface ShareMetadata {
   folderPath: string;
   folderName: string;
   expiresAt: string;
   shareType: "folder" | "note";
+  mode: ShareMode;
 }
 
 interface NoteData {
   path: string;
   content: string;
+  sha: string;
   frontmatter: Record<string, unknown>;
 }
 
@@ -37,6 +41,12 @@ export default function ShareNotePage() {
   const [error, setError] = useState<string | null>(null);
   const [expired, setExpired] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
+
+  // Edit mode states
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -88,6 +98,7 @@ export default function ShareNotePage() {
         setNote({
           path: noteData.path,
           content: noteData.content,
+          sha: noteData.sha,
           frontmatter: noteData.frontmatter || {},
         });
       } catch (err) {
@@ -99,6 +110,49 @@ export default function ShareNotePage() {
 
     fetchData();
   }, [token, relativePath]);
+
+  // Edit functions
+  const startEdit = () => {
+    setEditContent(note?.content || "");
+    setSaveError(null);
+    setIsEditing(true);
+  };
+
+  const cancelEdit = () => {
+    setIsEditing(false);
+    setSaveError(null);
+  };
+
+  const handleSave = async () => {
+    if (!note) return;
+    setIsSaving(true);
+    setSaveError(null);
+
+    try {
+      const res = await fetch(`/api/shares/${token}/save`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          path: note.path,
+          content: editContent,
+          sha: note.sha,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Erreur de sauvegarde");
+      }
+
+      const data = await res.json();
+      setNote({ ...note, content: editContent, sha: data.sha });
+      setIsEditing(false);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Erreur");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // Loading state
   if (loading) {
@@ -172,14 +226,41 @@ export default function ShareNotePage() {
           </Button>
         </div>
 
-        {/* Note header with title and export */}
+        {/* Note header with title and actions */}
         <div className="flex items-start justify-between gap-4 mb-6">
           <h1 className="text-3xl font-bold">{noteName}</h1>
-          <ShareExportToolbar
-            content={note.content}
-            fileName={noteName}
-            contentRef={contentRef}
-          />
+          <div className="flex items-center gap-2">
+            {metadata.mode === "writer" && (
+              isEditing ? (
+                <>
+                  <Button variant="ghost" size="sm" onClick={cancelEdit} disabled={isSaving}>
+                    <X className="h-4 w-4 mr-1" />
+                    Annuler
+                  </Button>
+                  <Button size="sm" onClick={handleSave} disabled={isSaving}>
+                    {isSaving ? (
+                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                    ) : (
+                      <Save className="h-4 w-4 mr-1" />
+                    )}
+                    {isSaving ? "Sauvegarde..." : "Sauvegarder"}
+                  </Button>
+                </>
+              ) : (
+                <Button variant="outline" size="sm" onClick={startEdit}>
+                  <Pencil className="h-4 w-4 mr-1" />
+                  Modifier
+                </Button>
+              )
+            )}
+            {!isEditing && (
+              <ShareExportToolbar
+                content={note.content}
+                fileName={noteName}
+                contentRef={contentRef}
+              />
+            )}
+          </div>
         </div>
 
         {/* Frontmatter tags if present */}
@@ -196,13 +277,29 @@ export default function ShareNotePage() {
           </div>
         )}
 
+        {/* Save error */}
+        {saveError && (
+          <div className="mb-4 p-3 bg-destructive/10 text-destructive rounded-md text-sm">
+            {saveError}
+          </div>
+        )}
+
         {/* Note content */}
         <div ref={contentRef} className="prose prose-neutral dark:prose-invert max-w-none">
-          <MarkdownRenderer
-            content={note.content}
-            currentPath={note.path}
-            isShareViewer={true}
-          />
+          {isEditing ? (
+            <div className="not-prose">
+              <MarkdownEditor
+                content={editContent}
+                onChange={setEditContent}
+              />
+            </div>
+          ) : (
+            <MarkdownRenderer
+              content={note.content}
+              currentPath={note.path}
+              isShareViewer={true}
+            />
+          )}
         </div>
       </main>
     </>

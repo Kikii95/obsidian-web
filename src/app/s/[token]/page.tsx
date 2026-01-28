@@ -13,18 +13,25 @@ import {
   AlertCircle,
   Clock,
   Loader2,
+  Pencil,
+  Save,
+  X,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { ShareViewerHeader } from "@/components/shares/share-viewer-header";
 import { ShareExportToolbar } from "@/components/shares/share-export-toolbar";
 import { ShareSidebar } from "@/components/shares/share-sidebar";
 import { MarkdownRenderer } from "@/components/viewer/markdown-renderer";
+import { MarkdownEditor } from "@/components/editor/markdown-editor";
 import { getFileType, isViewableFile } from "@/lib/file-types";
 import { cn } from "@/lib/utils";
 import type { VaultFile } from "@/types";
+import type { ShareMode } from "@/types/shares";
 
 interface NoteData {
   path: string;
   content: string;
+  sha: string;
   frontmatter: Record<string, unknown>;
 }
 
@@ -34,6 +41,7 @@ interface ShareMetadata {
   folderPath: string;
   folderName: string;
   includeSubfolders: boolean;
+  mode: ShareMode;
   createdAt: string;
   expiresAt: string;
   isExpired: boolean;
@@ -59,6 +67,12 @@ export default function ShareViewerPage() {
   const [error, setError] = useState<string | null>(null);
   const [expired, setExpired] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
+
+  // Edit mode states (for note shares)
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Fetch share data
   useEffect(() => {
@@ -96,6 +110,7 @@ export default function ShareViewerPage() {
           setNote({
             path: noteData.path,
             content: noteData.content,
+            sha: noteData.sha,
             frontmatter: noteData.frontmatter || {},
           });
         } else {
@@ -116,6 +131,49 @@ export default function ShareViewerPage() {
 
     fetchData();
   }, [token]);
+
+  // Edit functions (for note shares)
+  const startEdit = () => {
+    setEditContent(note?.content || "");
+    setSaveError(null);
+    setIsEditing(true);
+  };
+
+  const cancelEdit = () => {
+    setIsEditing(false);
+    setSaveError(null);
+  };
+
+  const handleSave = async () => {
+    if (!note) return;
+    setIsSaving(true);
+    setSaveError(null);
+
+    try {
+      const res = await fetch(`/api/shares/${token}/save`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          path: note.path,
+          content: editContent,
+          sha: note.sha,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Erreur de sauvegarde");
+      }
+
+      const data = await res.json();
+      setNote({ ...note, content: editContent, sha: data.sha });
+      setIsEditing(false);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Erreur");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // Get current folder content based on subPath
   const currentContent = useMemo(() => {
@@ -195,15 +253,49 @@ export default function ShareViewerPage() {
         />
 
         <main className="max-w-4xl mx-auto p-4 md:p-8">
-          {/* Note header with title and export */}
+          {/* Note header with title and actions */}
           <div className="flex items-start justify-between gap-4 mb-6">
             <h1 className="text-3xl font-bold">{metadata.folderName}</h1>
-            <ShareExportToolbar
-              content={note.content}
-              fileName={metadata.folderName}
-              contentRef={contentRef}
-            />
+            <div className="flex items-center gap-2">
+              {metadata.mode === "writer" && (
+                isEditing ? (
+                  <>
+                    <Button variant="ghost" size="sm" onClick={cancelEdit} disabled={isSaving}>
+                      <X className="h-4 w-4 mr-1" />
+                      Annuler
+                    </Button>
+                    <Button size="sm" onClick={handleSave} disabled={isSaving}>
+                      {isSaving ? (
+                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                      ) : (
+                        <Save className="h-4 w-4 mr-1" />
+                      )}
+                      {isSaving ? "Sauvegarde..." : "Sauvegarder"}
+                    </Button>
+                  </>
+                ) : (
+                  <Button variant="outline" size="sm" onClick={startEdit}>
+                    <Pencil className="h-4 w-4 mr-1" />
+                    Modifier
+                  </Button>
+                )
+              )}
+              {!isEditing && (
+                <ShareExportToolbar
+                  content={note.content}
+                  fileName={metadata.folderName}
+                  contentRef={contentRef}
+                />
+              )}
+            </div>
           </div>
+
+          {/* Save error */}
+          {saveError && (
+            <div className="mb-4 p-3 bg-destructive/10 text-destructive rounded-md text-sm">
+              {saveError}
+            </div>
+          )}
 
           {/* Frontmatter tags if present */}
           {Array.isArray(note.frontmatter.tags) && note.frontmatter.tags.length > 0 && (
@@ -221,11 +313,20 @@ export default function ShareViewerPage() {
 
           {/* Note content */}
           <div ref={contentRef} className="prose prose-neutral dark:prose-invert max-w-none">
-            <MarkdownRenderer
-              content={note.content}
-              currentPath={note.path}
-              isShareViewer={true}
-            />
+            {isEditing ? (
+              <div className="not-prose">
+                <MarkdownEditor
+                  content={editContent}
+                  onChange={setEditContent}
+                />
+              </div>
+            ) : (
+              <MarkdownRenderer
+                content={note.content}
+                currentPath={note.path}
+                isShareViewer={true}
+              />
+            )}
           </div>
         </main>
       </>

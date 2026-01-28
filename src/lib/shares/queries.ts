@@ -2,7 +2,7 @@ import { eq, and, gt, lt } from "drizzle-orm";
 import { db, shares, type Share, type NewShare } from "@/lib/db";
 import { nanoid } from "nanoid";
 import { encryptToken } from "./encryption";
-import { getExpirationMs, type ExpirationValue, type ShareType } from "@/types/shares";
+import { getExpirationMs, type ExpirationValue, type ShareType, type ShareMode } from "@/types/shares";
 
 /**
  * Create a new share
@@ -20,6 +20,7 @@ export async function createShare(params: {
   name?: string;
   includeSubfolders?: boolean;
   expiresIn: ExpirationValue;
+  mode?: ShareMode;
 }): Promise<Share> {
   const encryptedToken = await encryptToken(params.accessToken);
   const expiresAt = new Date(Date.now() + getExpirationMs(params.expiresIn));
@@ -37,6 +38,7 @@ export async function createShare(params: {
     folderPath: params.folderPath,
     name: params.name || null,
     includeSubfolders: params.shareType === "note" ? false : (params.includeSubfolders ?? true),
+    mode: params.mode ?? "reader",
     expiresAt,
   };
 

@@ -33,6 +33,7 @@ export const shares = pgTable(
     folderPath: varchar("folder_path", { length: 1024 }).notNull(), // folder path OR note path (without .md)
     name: varchar("name", { length: 255 }), // optional custom name for the share link
     includeSubfolders: boolean("include_subfolders").default(true).notNull(),
+    mode: varchar("mode", { length: 10 }).default("reader").notNull(), // 'reader' | 'writer'
 
     // Lifecycle
     createdAt: timestamp("created_at").defaultNow().notNull(),

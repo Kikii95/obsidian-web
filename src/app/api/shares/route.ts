@@ -39,6 +39,7 @@ export async function POST(request: NextRequest) {
       name: body.name,
       includeSubfolders: body.shareType === "note" ? false : (body.includeSubfolders ?? true),
       expiresIn: body.expiresIn,
+      mode: body.mode ?? "reader",
     });
 
     // Return share info (without encrypted token)
@@ -49,6 +50,7 @@ export async function POST(request: NextRequest) {
         shareType: share.shareType,
         folderPath: share.folderPath,
         includeSubfolders: share.includeSubfolders,
+        mode: share.mode,
         expiresAt: share.expiresAt.toISOString(),
         createdAt: share.createdAt.toISOString(),
       },
@@ -86,6 +88,7 @@ export async function GET() {
         folderName,
         name: share.name || folderName, // Use custom name or default to folder/note name
         includeSubfolders: share.includeSubfolders,
+        mode: share.mode,
         expiresAt: share.expiresAt.toISOString(),
         createdAt: share.createdAt.toISOString(),
         accessCount: share.accessCount,

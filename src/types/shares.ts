@@ -3,6 +3,7 @@ import type { Share } from "@/lib/db/schema";
 export type { Share };
 
 export type ShareType = "folder" | "note";
+export type ShareMode = "reader" | "writer";
 
 export interface CreateShareInput {
   shareType?: ShareType;
@@ -10,6 +11,7 @@ export interface CreateShareInput {
   name?: string; // optional custom name (defaults to folder/note name)
   includeSubfolders?: boolean; // only used for folders
   expiresIn: ExpirationValue;
+  mode?: ShareMode; // default: reader
 }
 
 export type ExpirationValue = "1h" | "1d" | "1w" | "1m";
@@ -39,6 +41,7 @@ export interface ShareMetadata {
   folderName: string;
   name: string | null; // custom name or null
   includeSubfolders: boolean;
+  mode: ShareMode;
   createdAt: string;
   expiresAt: string;
   isExpired: boolean;

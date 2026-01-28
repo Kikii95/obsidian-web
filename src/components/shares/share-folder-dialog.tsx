@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Share2 } from "lucide-react";
+import { Share2, Eye, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ShareLinkResult } from "./share-link-result";
-import { EXPIRATION_OPTIONS, type ExpirationValue } from "@/types/shares";
+import { EXPIRATION_OPTIONS, type ExpirationValue, type ShareMode } from "@/types/shares";
 import { Loader2 } from "lucide-react";
 
 interface ShareFolderDialogProps {
@@ -40,6 +40,7 @@ export function ShareFolderDialog({
   const [name, setName] = useState(folderName);
   const [includeSubfolders, setIncludeSubfolders] = useState(true);
   const [expiresIn, setExpiresIn] = useState<ExpirationValue>("1w");
+  const [mode, setMode] = useState<ShareMode>("reader");
   const [shareToken, setShareToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,6 +58,7 @@ export function ShareFolderDialog({
           name: name !== folderName ? name : undefined,
           includeSubfolders,
           expiresIn,
+          mode,
         }),
       });
 
@@ -83,6 +85,7 @@ export function ShareFolderDialog({
         setName(folderName);
         setIncludeSubfolders(true);
         setExpiresIn("1w");
+        setMode("reader");
         setError(null);
       }, 200);
     }
@@ -167,6 +170,35 @@ export function ShareFolderDialog({
             </Select>
             <p className="text-sm text-muted-foreground">
               Le lien cessera de fonctionner après cette période
+            </p>
+          </div>
+
+          {/* Mode select */}
+          <div className="space-y-2">
+            <Label htmlFor="mode">Mode d&apos;accès</Label>
+            <Select value={mode} onValueChange={(v) => setMode(v as ShareMode)}>
+              <SelectTrigger id="mode">
+                <SelectValue placeholder="Choisir un mode" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="reader">
+                  <span className="flex items-center gap-2">
+                    <Eye className="h-4 w-4" />
+                    Lecture seule
+                  </span>
+                </SelectItem>
+                <SelectItem value="writer">
+                  <span className="flex items-center gap-2">
+                    <Pencil className="h-4 w-4" />
+                    Lecture + écriture
+                  </span>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-sm text-muted-foreground">
+              {mode === "writer"
+                ? "Les visiteurs pourront modifier les notes"
+                : "Les visiteurs pourront uniquement lire"}
             </p>
           </div>
 

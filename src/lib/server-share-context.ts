@@ -71,6 +71,7 @@ export async function getShareMetadata(token: string) {
     folderPath: share.folderPath,
     folderName,
     includeSubfolders: share.includeSubfolders,
+    mode: share.mode as "reader" | "writer",
     createdAt: share.createdAt.toISOString(),
     expiresAt: share.expiresAt.toISOString(),
     isExpired: share.expiresAt < new Date(),

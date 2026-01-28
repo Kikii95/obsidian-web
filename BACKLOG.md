@@ -62,6 +62,7 @@ Current sprint planning and bug tracking.
 | F12 | Login button on shared pages | ✅ | 🟡 Medium | NextAuth signIn button |
 | F13 | Integrate shared link to own repo | ⬜ | 🔴 Hard | Fork/copy mechanism |
 | F18 | Unified explorer view + create in shares | ✅ | 🔴 Hard | All shares open explorer, create note/folder in writer mode |
+| F19 | Refactor: Unified sidebar component | ⬜ | 🟡 Medium | Extract FileTree base component from VaultSidebar, use in ShareSidebar |
 
 ### 🧪 Advanced
 
@@ -135,17 +136,17 @@ Current sprint planning and bug tracking.
 | Category | Total | Done | Remaining |
 |----------|-------|------|-----------|
 | Bugs | 6 | 6 | 0 |
-| Features | 18 | 14 | 4 |
+| Features | 19 | 15 | 4 |
 | PWA | 3 | 3 | 0 |
-| **Total** | **27** | **23** | **4** |
+| **Total** | **28** | **24** | **4** |
 
 ### By Complexity
 
 | Level | Count | Done |
 |-------|-------|------|
 | 🟢 Easy | 10 | 10 |
-| 🟡 Medium | 10 | 10 |
-| 🔴 Hard | 7 | 3 |
+| 🟡 Medium | 11 | 10 |
+| 🔴 Hard | 7 | 4 |
 
 ---
 

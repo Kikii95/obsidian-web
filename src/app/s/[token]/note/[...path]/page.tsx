@@ -37,6 +37,8 @@ export default function ShareNotePage() {
   const [metadata, setMetadata] = useState<ShareMetadata | null>(null);
   const [note, setNote] = useState<NoteData | null>(null);
   const [tree, setTree] = useState<VaultFile[]>([]);
+  const [shareFolderPath, setShareFolderPath] = useState<string>("");
+  const [shareFolderName, setShareFolderName] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expired, setExpired] = useState(false);
@@ -70,21 +72,27 @@ export default function ShareNotePage() {
         const metaData = await metaRes.json();
         setMetadata(metaData.share);
 
-        // Fetch tree for folder shares (enables sidebar navigation)
-        if (metaData.share.shareType === "folder") {
-          try {
-            const treeRes = await fetch(`/api/shares/${token}/tree`);
-            if (treeRes.ok) {
-              const treeData = await treeRes.json();
-              setTree(treeData.tree || []);
-            }
-          } catch {
-            // Tree fetch failure is non-critical
+        // Fetch tree (enables sidebar navigation and gives us correct folderPath)
+        let effectiveFolderPath = metaData.share.folderPath;
+        let effectiveFolderName = metaData.share.folderName;
+        try {
+          const treeRes = await fetch(`/api/shares/${token}/tree`);
+          if (treeRes.ok) {
+            const treeData = await treeRes.json();
+            setTree(treeData.tree || []);
+            // For note shares, tree API returns parent folder as folderPath/folderName
+            effectiveFolderPath = treeData.folderPath || metaData.share.folderPath;
+            effectiveFolderName = treeData.folderName || metaData.share.folderName;
           }
+        } catch {
+          // Tree fetch failure is non-critical
         }
+        // Store the effective folder path/name for sidebar and header
+        setShareFolderPath(effectiveFolderPath);
+        setShareFolderName(effectiveFolderName);
 
-        // Build full path
-        const fullPath = `${metaData.share.folderPath}/${relativePath}.md`;
+        // Build full path using tree's folderPath (handles note shares correctly)
+        const fullPath = `${effectiveFolderPath}/${relativePath}.md`;
 
         // Fetch note
         const noteRes = await fetch(
@@ -194,23 +202,26 @@ export default function ShareNotePage() {
   if (!metadata || !note) return null;
 
   const noteName = relativePath.split("/").pop() || relativePath;
-  const fullPath = `${metadata.folderPath}/${relativePath}`;
+  // Use shareFolderPath (from tree API) for correct path construction
+  const displayFolderPath = shareFolderPath || metadata.folderPath;
+  const fullPath = `${displayFolderPath}/${relativePath}`;
 
   return (
     <>
-      {/* Sidebar for folder shares */}
-      {metadata.shareType === "folder" && tree.length > 0 && (
+      {/* Sidebar for navigation */}
+      {tree.length > 0 && shareFolderPath && (
         <ShareSidebar
           token={token}
-          shareFolderPath={metadata.folderPath}
+          shareFolderPath={shareFolderPath}
           tree={tree}
+          mode={metadata.mode}
         />
       )}
 
       <ShareViewerHeader
         token={token}
-        folderName={metadata.folderName}
-        folderPath={metadata.folderPath}
+        folderName={shareFolderName || metadata.folderName}
+        folderPath={displayFolderPath}
         currentPath={fullPath}
         expiresAt={metadata.expiresAt}
       />

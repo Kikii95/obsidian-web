@@ -75,14 +75,23 @@ export default function ShareNotePage() {
         // Fetch tree (enables sidebar navigation and gives us correct folderPath)
         let effectiveFolderPath = metaData.share.folderPath;
         let effectiveFolderName = metaData.share.folderName;
+        let isNoteShare = metaData.share.shareType === "note";
         try {
           const treeRes = await fetch(`/api/shares/${token}/tree`);
           if (treeRes.ok) {
             const treeData = await treeRes.json();
             setTree(treeData.tree || []);
             // For note shares, tree API returns parent folder as folderPath/folderName
-            effectiveFolderPath = treeData.folderPath || metaData.share.folderPath;
-            effectiveFolderName = treeData.folderName || metaData.share.folderName;
+            // IMPORTANT: folderPath can be "" for root-level notes, so check explicitly
+            if (treeData.folderPath !== undefined) {
+              effectiveFolderPath = treeData.folderPath;
+            }
+            if (treeData.folderName) {
+              effectiveFolderName = treeData.folderName;
+            }
+            if (treeData.shareType === "note") {
+              isNoteShare = true;
+            }
           }
         } catch {
           // Tree fetch failure is non-critical
@@ -91,8 +100,11 @@ export default function ShareNotePage() {
         setShareFolderPath(effectiveFolderPath);
         setShareFolderName(effectiveFolderName);
 
-        // Build full path using tree's folderPath (handles note shares correctly)
-        const fullPath = `${effectiveFolderPath}/${relativePath}.md`;
+        // Build full path
+        // For root-level notes (effectiveFolderPath is ""), don't add leading slash
+        const fullPath = effectiveFolderPath
+          ? `${effectiveFolderPath}/${relativePath}.md`
+          : `${relativePath}.md`;
 
         // Fetch note
         const noteRes = await fetch(

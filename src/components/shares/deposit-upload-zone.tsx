@@ -317,7 +317,7 @@ export function DepositUploadZone({
 
       {/* Constraints info */}
       <div className="flex flex-wrap gap-4 justify-center text-sm text-muted-foreground">
-        <span>Taille max : {formatSize(maxFileSize)}</span>
+        <span>Taille max par fichier : {formatSize(maxFileSize)}</span>
         {allowedTypes && allowedTypes.length > 0 && (
           <span>Types : {allowedTypes.join(", ")}</span>
         )}

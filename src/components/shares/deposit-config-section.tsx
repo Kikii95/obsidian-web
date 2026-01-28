@@ -8,8 +8,9 @@ import { DEFAULT_DEPOSIT_CONFIG } from "@/types/shares";
 
 // File type presets
 const FILE_TYPE_PRESETS = {
-  images: [".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"],
-  documents: [".pdf", ".md", ".txt", ".docx", ".doc"],
+  images: [".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".bmp", ".ico"],
+  videos: [".mp4", ".webm", ".mov", ".avi", ".mkv"],
+  documents: [".pdf", ".md", ".txt", ".docx", ".doc", ".odt", ".rtf", ".pptx", ".ppt", ".odp", ".xlsx", ".xls", ".ods", ".csv"],
   all: null as string[] | null,
 };
 
@@ -36,10 +37,11 @@ export function DepositConfigSection({
   // Check which presets are active
   const isAllTypes = allowedTypes === null;
   const hasImages = allowedTypes?.some((t) => FILE_TYPE_PRESETS.images.includes(t)) ?? false;
+  const hasVideos = allowedTypes?.some((t) => FILE_TYPE_PRESETS.videos.includes(t)) ?? false;
   const hasDocs = allowedTypes?.some((t) => FILE_TYPE_PRESETS.documents.includes(t)) ?? false;
 
   // Handle preset toggle
-  const togglePreset = (preset: "all" | "images" | "documents") => {
+  const togglePreset = (preset: "all" | "images" | "videos" | "documents") => {
     if (preset === "all") {
       setAllowedTypes(null);
       return;
@@ -47,25 +49,16 @@ export function DepositConfigSection({
 
     const presetTypes = FILE_TYPE_PRESETS[preset];
     const currentTypes = allowedTypes || [];
+    const isActive = preset === "images" ? hasImages : preset === "videos" ? hasVideos : hasDocs;
 
-    if (preset === "images") {
-      if (hasImages) {
-        // Remove images
-        setAllowedTypes(currentTypes.filter((t) => !FILE_TYPE_PRESETS.images.includes(t)));
-      } else {
-        // Add images
-        const newTypes = [...new Set([...currentTypes, ...FILE_TYPE_PRESETS.images])];
-        setAllowedTypes(newTypes.length > 0 ? newTypes : null);
-      }
-    } else if (preset === "documents") {
-      if (hasDocs) {
-        // Remove documents
-        setAllowedTypes(currentTypes.filter((t) => !FILE_TYPE_PRESETS.documents.includes(t)));
-      } else {
-        // Add documents
-        const newTypes = [...new Set([...currentTypes, ...FILE_TYPE_PRESETS.documents])];
-        setAllowedTypes(newTypes.length > 0 ? newTypes : null);
-      }
+    if (isActive) {
+      // Remove preset types
+      const filtered = currentTypes.filter((t) => !presetTypes?.includes(t));
+      setAllowedTypes(filtered.length > 0 ? filtered : null);
+    } else {
+      // Add preset types
+      const newTypes = [...new Set([...currentTypes, ...(presetTypes || [])])];
+      setAllowedTypes(newTypes.length > 0 ? newTypes : null);
     }
   };
 
@@ -115,6 +108,14 @@ export function DepositConfigSection({
           </label>
           <label className="flex items-center gap-2 text-sm cursor-pointer">
             <Checkbox
+              checked={hasVideos && !isAllTypes}
+              disabled={isAllTypes}
+              onCheckedChange={() => togglePreset("videos")}
+            />
+            <span>Vidéos</span>
+          </label>
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <Checkbox
               checked={hasDocs && !isAllTypes}
               disabled={isAllTypes}
               onCheckedChange={() => togglePreset("documents")}
@@ -127,6 +128,9 @@ export function DepositConfigSection({
             Extensions : {allowedTypes.join(", ")}
           </p>
         )}
+        <p className="text-xs text-muted-foreground">
+          Les fichiers sont stockés tels quels (pas de conversion)
+        </p>
       </div>
 
       {/* Deposit folder */}

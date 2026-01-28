@@ -57,7 +57,6 @@ export function DepositUploadZone({
   // Already uploaded files (this session)
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [uploadErrors, setUploadErrors] = useState<UploadError[]>([]);
-  const [remaining, setRemaining] = useState<number | null>(null);
   const [globalError, setGlobalError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -164,11 +163,6 @@ export function DepositUploadZone({
       // Handle server-side errors
       if (data.errors && data.errors.length > 0) {
         setUploadErrors(data.errors);
-      }
-
-      // Update remaining
-      if (data.remaining !== undefined) {
-        setRemaining(data.remaining);
       }
 
       // Clear staging and show success
@@ -320,11 +314,6 @@ export function DepositUploadZone({
         <span>Taille max par fichier : {formatSize(maxFileSize)}</span>
         {allowedTypes && allowedTypes.length > 0 && (
           <span>Types : {allowedTypes.join(", ")}</span>
-        )}
-        {remaining !== null && (
-          <span className={remaining < 3 ? "text-amber-500" : ""}>
-            {remaining} upload{remaining > 1 ? "s" : ""} restant{remaining > 1 ? "s" : ""}
-          </span>
         )}
       </div>
 

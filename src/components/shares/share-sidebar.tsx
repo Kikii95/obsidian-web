@@ -72,7 +72,7 @@ export function ShareSidebar({
           "fixed left-4 z-40 h-9 w-9 rounded-full shadow-md",
           "bg-background/95 backdrop-blur border-border/50",
           "hover:bg-muted transition-all",
-          "top-[4.5rem]", // Below header
+          "top-[5.5rem]", // Below header (~88px)
           isOpen && "left-[260px]"
         )}
         onClick={() => setIsOpen(!isOpen)}
@@ -92,7 +92,7 @@ export function ShareSidebar({
       {/* Sidebar panel - starts below header */}
       <aside
         className={cn(
-          "fixed left-0 top-[3.5rem] z-30 h-[calc(100vh-3.5rem)] w-64",
+          "fixed left-0 top-[5rem] z-30 h-[calc(100vh-5rem)] w-64",
           "bg-background border-r border-border",
           "transform transition-transform duration-200 ease-in-out",
           isOpen ? "translate-x-0" : "-translate-x-full"
@@ -141,7 +141,7 @@ export function ShareSidebar({
         </div>
 
         {/* Tree */}
-        <ScrollArea className="h-[calc(100vh-7.5rem)]">
+        <ScrollArea className="h-[calc(100vh-9rem)]">
           <div className="p-2">
             <ShareFileTree
               files={tree}

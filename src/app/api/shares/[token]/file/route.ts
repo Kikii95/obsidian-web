@@ -40,8 +40,20 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     // Validate path is within share boundaries
     // For note shares, only the exact note file is accessible
     if (share.shareType === "note") {
-      const allowedPath = share.folderPath + ".md";
-      if (path !== allowedPath) {
+      // Normalize paths for comparison (handle encoding, slashes, etc.)
+      const normalizePath = (p: string) =>
+        decodeURIComponent(p).replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+
+      const normalizedPath = normalizePath(path);
+      const allowedPath = normalizePath(share.folderPath + ".md");
+
+      if (normalizedPath !== allowedPath) {
+        console.error("Note share path mismatch:", {
+          requestedPath: normalizedPath,
+          allowedPath,
+          originalPath: path,
+          shareFolderPath: share.folderPath
+        });
         return NextResponse.json(
           { error: "Accès non autorisé à ce fichier" },
           { status: 403 }

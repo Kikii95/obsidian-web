@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getShareContext } from "@/lib/server-share-context";
-import { getFullVaultTree, getLastRateLimit } from "@/lib/github";
+import { getFullVaultTree, getLastRateLimit, getFileContent } from "@/lib/github";
 import { validateSharePath } from "@/lib/shares/validation";
 import type { VaultFile } from "@/types";
 
@@ -25,7 +25,36 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 
     const { share, octokit, vaultConfig } = context;
 
-    // Get full vault tree
+    // Handle note shares: return single-file tree
+    if (share.shareType === "note") {
+      const notePath = share.folderPath + ".md";
+      const noteName = share.folderPath.split("/").pop() || share.folderPath;
+      const parentFolder = share.folderPath.split("/").slice(0, -1).join("/");
+      const parentName = parentFolder.split("/").pop() || parentFolder || "Root";
+
+      // Build a tree with just the shared note
+      const tree: VaultFile[] = [
+        {
+          name: noteName + ".md",
+          path: notePath,
+          type: "file",
+        },
+      ];
+
+      const rateLimit = getLastRateLimit();
+
+      return NextResponse.json({
+        tree,
+        folderPath: parentFolder,
+        folderName: parentName,
+        shareType: "note",
+        notePath: notePath,
+        includeSubfolders: false,
+        rateLimit,
+      });
+    }
+
+    // Handle folder shares: full tree filtering
     const allFiles = await getFullVaultTree(octokit, false, vaultConfig);
 
     // Filter to only files within the shared folder
@@ -46,6 +75,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       tree,
       folderPath: share.folderPath,
       folderName: share.folderPath.split("/").pop() || share.folderPath,
+      shareType: "folder",
       includeSubfolders: share.includeSubfolders,
       rateLimit,
     });

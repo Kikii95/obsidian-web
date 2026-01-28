@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -13,27 +13,13 @@ import {
   AlertCircle,
   Clock,
   Loader2,
-  Pencil,
-  Save,
-  X,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { ShareViewerHeader } from "@/components/shares/share-viewer-header";
-import { ShareExportToolbar } from "@/components/shares/share-export-toolbar";
 import { ShareSidebar } from "@/components/shares/share-sidebar";
-import { MarkdownRenderer } from "@/components/viewer/markdown-renderer";
-import { MarkdownEditor } from "@/components/editor/markdown-editor";
 import { getFileType, isViewableFile } from "@/lib/file-types";
 import { cn } from "@/lib/utils";
 import type { VaultFile } from "@/types";
 import type { ShareMode } from "@/types/shares";
-
-interface NoteData {
-  path: string;
-  content: string;
-  sha: string;
-  frontmatter: Record<string, unknown>;
-}
 
 interface ShareMetadata {
   token: string;
@@ -51,6 +37,8 @@ interface TreeResponse {
   tree: VaultFile[];
   folderPath: string;
   folderName: string;
+  shareType: "folder" | "note";
+  notePath?: string; // For note shares, the full path to the note
   includeSubfolders: boolean;
 }
 
@@ -62,17 +50,15 @@ export default function ShareViewerPage() {
 
   const [metadata, setMetadata] = useState<ShareMetadata | null>(null);
   const [tree, setTree] = useState<VaultFile[]>([]);
-  const [note, setNote] = useState<NoteData | null>(null);
+  const [treeFolderPath, setTreeFolderPath] = useState<string>("");
+  const [treeFolderName, setTreeFolderName] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expired, setExpired] = useState(false);
-  const contentRef = useRef<HTMLDivElement>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  // Edit mode states (for note shares)
-  const [isEditing, setIsEditing] = useState(false);
-  const [editContent, setEditContent] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
+  // Refresh tree function (called after create operations)
+  const refreshTree = () => setRefreshKey((k) => k + 1);
 
   // Fetch share data
   useEffect(() => {
@@ -97,31 +83,15 @@ export default function ShareViewerPage() {
         const metaData = await metaRes.json();
         setMetadata(metaData.share);
 
-        // If it's a note share, fetch the note directly
-        if (metaData.share.shareType === "note") {
-          const notePath = `${metaData.share.folderPath}.md`;
-          const noteRes = await fetch(
-            `/api/shares/${token}/file?path=${encodeURIComponent(notePath)}`
-          );
-          if (!noteRes.ok) {
-            throw new Error("Erreur lors du chargement de la note");
-          }
-          const noteData = await noteRes.json();
-          setNote({
-            path: noteData.path,
-            content: noteData.content,
-            sha: noteData.sha,
-            frontmatter: noteData.frontmatter || {},
-          });
-        } else {
-          // Fetch tree for folder shares
-          const treeRes = await fetch(`/api/shares/${token}/tree`);
-          if (!treeRes.ok) {
-            throw new Error("Erreur lors du chargement du contenu");
-          }
-          const treeData: TreeResponse = await treeRes.json();
-          setTree(treeData.tree);
+        // Always fetch tree (API handles both folder and note shares now)
+        const treeRes = await fetch(`/api/shares/${token}/tree`);
+        if (!treeRes.ok) {
+          throw new Error("Erreur lors du chargement du contenu");
         }
+        const treeData: TreeResponse = await treeRes.json();
+        setTree(treeData.tree);
+        setTreeFolderPath(treeData.folderPath);
+        setTreeFolderName(treeData.folderName);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Erreur inconnue");
       } finally {
@@ -130,50 +100,7 @@ export default function ShareViewerPage() {
     };
 
     fetchData();
-  }, [token]);
-
-  // Edit functions (for note shares)
-  const startEdit = () => {
-    setEditContent(note?.content || "");
-    setSaveError(null);
-    setIsEditing(true);
-  };
-
-  const cancelEdit = () => {
-    setIsEditing(false);
-    setSaveError(null);
-  };
-
-  const handleSave = async () => {
-    if (!note) return;
-    setIsSaving(true);
-    setSaveError(null);
-
-    try {
-      const res = await fetch(`/api/shares/${token}/save`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          path: note.path,
-          content: editContent,
-          sha: note.sha,
-        }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Erreur de sauvegarde");
-      }
-
-      const data = await res.json();
-      setNote({ ...note, content: editContent, sha: data.sha });
-      setIsEditing(false);
-    } catch (err) {
-      setSaveError(err instanceof Error ? err.message : "Erreur");
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  }, [token, refreshKey]);
 
   // Get current folder content based on subPath
   const currentContent = useMemo(() => {
@@ -240,119 +167,34 @@ export default function ShareViewerPage() {
 
   if (!metadata) return null;
 
-  // Note share: render note directly
-  if (metadata.shareType === "note" && note) {
-    return (
-      <>
-        <ShareViewerHeader
-          token={token}
-          folderName={metadata.folderName}
-          folderPath={metadata.folderPath}
-          expiresAt={metadata.expiresAt}
-          isNote={true}
-        />
-
-        <main className="max-w-4xl mx-auto p-4 md:p-8">
-          {/* Note header with title and actions */}
-          <div className="flex items-start justify-between gap-4 mb-6">
-            <h1 className="text-3xl font-bold">{metadata.folderName}</h1>
-            <div className="flex items-center gap-2">
-              {metadata.mode === "writer" && (
-                isEditing ? (
-                  <>
-                    <Button variant="ghost" size="sm" onClick={cancelEdit} disabled={isSaving}>
-                      <X className="h-4 w-4 mr-1" />
-                      Annuler
-                    </Button>
-                    <Button size="sm" onClick={handleSave} disabled={isSaving}>
-                      {isSaving ? (
-                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                      ) : (
-                        <Save className="h-4 w-4 mr-1" />
-                      )}
-                      {isSaving ? "Sauvegarde..." : "Sauvegarder"}
-                    </Button>
-                  </>
-                ) : (
-                  <Button variant="outline" size="sm" onClick={startEdit}>
-                    <Pencil className="h-4 w-4 mr-1" />
-                    Modifier
-                  </Button>
-                )
-              )}
-              {!isEditing && (
-                <ShareExportToolbar
-                  content={note.content}
-                  fileName={metadata.folderName}
-                  contentRef={contentRef}
-                />
-              )}
-            </div>
-          </div>
-
-          {/* Save error */}
-          {saveError && (
-            <div className="mb-4 p-3 bg-destructive/10 text-destructive rounded-md text-sm">
-              {saveError}
-            </div>
-          )}
-
-          {/* Frontmatter tags if present */}
-          {Array.isArray(note.frontmatter.tags) && note.frontmatter.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-6">
-              {(note.frontmatter.tags as string[]).map((tag) => (
-                <span
-                  key={tag}
-                  className="px-2 py-1 bg-primary/10 text-primary text-sm rounded-full"
-                >
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          )}
-
-          {/* Note content */}
-          <div ref={contentRef} className="prose prose-neutral dark:prose-invert max-w-none">
-            {isEditing ? (
-              <div className="not-prose">
-                <MarkdownEditor
-                  content={editContent}
-                  onChange={setEditContent}
-                />
-              </div>
-            ) : (
-              <MarkdownRenderer
-                content={note.content}
-                currentPath={note.path}
-                isShareViewer={true}
-              />
-            )}
-          </div>
-        </main>
-      </>
-    );
-  }
-
-  // Folder share: render tree
+  // Unified explorer view for both folder and note shares
+  // For note shares, treeFolderPath is the parent folder
+  const displayFolderPath = treeFolderPath || metadata.folderPath;
+  const displayFolderName = treeFolderName || metadata.folderName;
   const currentFolderPath = subPath
-    ? `${metadata.folderPath}/${subPath}`
-    : metadata.folderPath;
+    ? `${displayFolderPath}/${subPath}`
+    : displayFolderPath;
 
   return (
     <>
-      {/* Collapsible sidebar for folder navigation */}
+      {/* Collapsible sidebar for navigation */}
       <ShareSidebar
         token={token}
-        shareFolderPath={metadata.folderPath}
+        shareFolderPath={displayFolderPath}
         tree={tree}
+        mode={metadata.mode}
+        includeSubfolders={metadata.includeSubfolders}
+        currentPath={currentFolderPath}
+        onTreeRefresh={refreshTree}
       />
 
       <ShareViewerHeader
         token={token}
-        folderName={metadata.folderName}
-        folderPath={metadata.folderPath}
+        folderName={displayFolderName}
+        folderPath={displayFolderPath}
         currentPath={subPath ? currentFolderPath : undefined}
         expiresAt={metadata.expiresAt}
+        isNote={metadata.shareType === "note"}
       />
 
       <main className="max-w-4xl mx-auto p-4 md:p-8">
@@ -377,7 +219,7 @@ export default function ShareViewerPage() {
                 key={item.path}
                 item={item}
                 token={token}
-                shareFolderPath={metadata.folderPath}
+                shareFolderPath={displayFolderPath}
               />
             ))}
           </div>

@@ -13,28 +13,46 @@ import {
   Menu,
   X,
   LayoutDashboard,
+  FilePlus,
+  FolderPlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useFolderExpansion } from "@/hooks/use-folder-expansion";
 import { getFileType, isViewableFile } from "@/lib/file-types";
+import { ShareCreateNoteDialog } from "./share-create-note-dialog";
+import { ShareCreateFolderDialog } from "./share-create-folder-dialog";
 import type { VaultFile } from "@/types";
+import type { ShareMode } from "@/types/shares";
 
 interface ShareSidebarProps {
   token: string;
   shareFolderPath: string;
   tree: VaultFile[];
+  mode?: ShareMode;
+  includeSubfolders?: boolean;
+  currentPath?: string;
+  onTreeRefresh?: () => void;
 }
 
 /**
  * Collapsible sidebar for share viewer pages
  * Shows file tree for folder shares
  */
-export function ShareSidebar({ token, shareFolderPath, tree }: ShareSidebarProps) {
+export function ShareSidebar({
+  token,
+  shareFolderPath,
+  tree,
+  mode = "reader",
+  includeSubfolders = true,
+  currentPath,
+  onTreeRefresh,
+}: ShareSidebarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
   const { expandedFolders, toggleFolder } = useFolderExpansion();
+  const isWriter = mode === "writer";
 
   // Close sidebar on navigation (mobile)
   useEffect(() => {
@@ -80,11 +98,45 @@ export function ShareSidebar({ token, shareFolderPath, tree }: ShareSidebarProps
         )}
       >
         {/* Header */}
-        <div className="h-16 flex items-center px-4 border-b border-border">
-          <FolderOpen className="h-5 w-5 text-primary mr-2" />
-          <span className="font-medium text-sm truncate">
-            {shareFolderPath.split("/").pop() || "Dossier"}
-          </span>
+        <div className="border-b border-border">
+          <div className="h-16 flex items-center px-4">
+            <FolderOpen className="h-5 w-5 text-primary mr-2" />
+            <span className="font-medium text-sm truncate">
+              {shareFolderPath.split("/").pop() || "Dossier"}
+            </span>
+          </div>
+
+          {/* Creation buttons (writer mode only) */}
+          {isWriter && (
+            <div className="flex items-center gap-1 px-4 pb-3">
+              <ShareCreateNoteDialog
+                token={token}
+                currentPath={currentPath || shareFolderPath}
+                shareFolderPath={shareFolderPath}
+                onCreated={onTreeRefresh}
+                trigger={
+                  <Button variant="outline" size="sm" className="flex-1">
+                    <FilePlus className="h-4 w-4 mr-1" />
+                    Note
+                  </Button>
+                }
+              />
+              {includeSubfolders && (
+                <ShareCreateFolderDialog
+                  token={token}
+                  currentPath={currentPath || shareFolderPath}
+                  shareFolderPath={shareFolderPath}
+                  onCreated={onTreeRefresh}
+                  trigger={
+                    <Button variant="outline" size="sm" className="flex-1">
+                      <FolderPlus className="h-4 w-4 mr-1" />
+                      Dossier
+                    </Button>
+                  }
+                />
+              )}
+            </div>
+          )}
         </div>
 
         {/* Tree */}

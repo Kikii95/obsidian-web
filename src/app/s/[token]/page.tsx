@@ -13,9 +13,14 @@ import {
   AlertCircle,
   Clock,
   Loader2,
+  FilePlus,
+  FolderPlus,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { ShareViewerHeader } from "@/components/shares/share-viewer-header";
 import { ShareSidebar } from "@/components/shares/share-sidebar";
+import { ShareCreateNoteDialog } from "@/components/shares/share-create-note-dialog";
+import { ShareCreateFolderDialog } from "@/components/shares/share-create-folder-dialog";
 import { getFileType, isViewableFile } from "@/lib/file-types";
 import { cn } from "@/lib/utils";
 import type { VaultFile } from "@/types";
@@ -198,12 +203,44 @@ export default function ShareViewerPage() {
       />
 
       <main className="max-w-4xl mx-auto p-4 md:p-8">
-        {/* Stats */}
-        <div className="mb-6">
+        {/* Stats and actions */}
+        <div className="flex items-center justify-between mb-6">
           <p className="text-sm text-muted-foreground">
             {sortedContent.filter((f) => f.type === "dir").length} dossier(s) ·{" "}
             {sortedContent.filter((f) => f.type === "file").length} fichier(s)
           </p>
+
+          {/* Creation buttons (writer mode only) */}
+          {metadata.mode === "writer" && (
+            <div className="flex items-center gap-2">
+              <ShareCreateNoteDialog
+                token={token}
+                currentPath={currentFolderPath}
+                shareFolderPath={displayFolderPath}
+                onCreated={refreshTree}
+                trigger={
+                  <Button variant="outline" size="sm">
+                    <FilePlus className="h-4 w-4 mr-2" />
+                    Nouvelle note
+                  </Button>
+                }
+              />
+              {metadata.includeSubfolders && (
+                <ShareCreateFolderDialog
+                  token={token}
+                  currentPath={currentFolderPath}
+                  shareFolderPath={displayFolderPath}
+                  onCreated={refreshTree}
+                  trigger={
+                    <Button variant="outline" size="sm">
+                      <FolderPlus className="h-4 w-4 mr-2" />
+                      Nouveau dossier
+                    </Button>
+                  }
+                />
+              )}
+            </div>
+          )}
         </div>
 
         {/* Content Grid */}

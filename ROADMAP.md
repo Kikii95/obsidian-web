@@ -268,8 +268,7 @@ Normal mode → Click "Select" button → Selection mode enabled
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| v1.7.0 | 2026-01 | **Unified Layout**: Refactored architecture with UniversalLayout component for dashboard/share/temp modes. Org shortcuts in explore dialog, proper org OAuth restriction handling, improved Temp Vault UX |
-| v1.6.0 | 2026-01 | **Auto-format**: Format markdown button in editor (tables, lists, spacing) using remark/unified, preserves wikilinks and collapsibles |
+| v1.7.0 | 2026-01 | **Unified Layout**: Refactored architecture with UniversalLayout component for dashboard/share/temp modes. Org shortcuts in explore dialog, proper org OAuth restriction handling, improved Temp Vault UX. Removed auto-format button (remark only normalized style) |
 | v1.5.0 | 2026-01 | **Temp Vault Reader**: Browse any public GitHub repo as Obsidian vault (`/t/owner/repo`), rate limit indicator, 60 req/hr unauthenticated |
 | v1.4.0 | 2026-01 | Copy to Vault from shares, share permission toggles (allow/block copy & export), sidebar refactoring with shared utilities |
 | v1.3.0 | 2026-01 | Share links Reader/Writer/Deposit mode, unified explorer for shares, create notes/folders in writer shares, deposit dropbox for anonymous uploads |

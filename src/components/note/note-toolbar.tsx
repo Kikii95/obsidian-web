@@ -29,7 +29,6 @@ import {
   PinOff,
   History,
   Share2,
-  Wand2,
 } from "lucide-react";
 import { usePinnedStore } from "@/lib/pinned-store";
 import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
@@ -48,12 +47,10 @@ interface NoteToolbarProps {
   // Editor state
   isEditing: boolean;
   isSaving: boolean;
-  isFormatting: boolean;
   hasChanges: boolean;
   onStartEdit: () => void;
   onCancelEdit: () => void;
   onSave: () => void;
-  onFormat: () => void;
   // Lock state
   isTogglingLock: boolean;
   onToggleLock: () => void;
@@ -73,12 +70,10 @@ export const NoteToolbar = memo(function NoteToolbar({
   isPathPrivate,
   isEditing,
   isSaving,
-  isFormatting,
   hasChanges,
   onStartEdit,
   onCancelEdit,
   onSave,
-  onFormat,
   isTogglingLock,
   onToggleLock,
   onExportMd,
@@ -105,22 +100,8 @@ export const NoteToolbar = memo(function NoteToolbar({
         <Button
           variant="ghost"
           size="sm"
-          onClick={onFormat}
-          disabled={isFormatting || isSaving}
-          title="Formater le markdown"
-        >
-          {isFormatting ? (
-            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-          ) : (
-            <Wand2 className="h-4 w-4 mr-1" />
-          )}
-          <span className="hidden sm:inline">Formater</span>
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
           onClick={onCancelEdit}
-          disabled={isSaving || isFormatting}
+          disabled={isSaving}
         >
           <X className="h-4 w-4 mr-1" />
           Annuler
@@ -129,7 +110,7 @@ export const NoteToolbar = memo(function NoteToolbar({
           variant="default"
           size="sm"
           onClick={onSave}
-          disabled={!hasChanges || isSaving || isFormatting || !isOnline}
+          disabled={!hasChanges || isSaving || !isOnline}
           className="glow-soft"
           title={!isOnline ? "Édition désactivée hors ligne" : undefined}
         >

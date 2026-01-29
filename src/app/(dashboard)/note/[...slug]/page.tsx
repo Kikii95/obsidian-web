@@ -229,12 +229,10 @@ export default function NotePage() {
           isPathPrivate={isPathPrivate}
           isEditing={editor.isEditing}
           isSaving={editor.isSaving}
-          isFormatting={editor.isFormatting}
           hasChanges={editor.hasChanges}
           onStartEdit={editor.startEdit}
           onCancelEdit={editor.cancelEdit}
           onSave={editor.save}
-          onFormat={editor.format}
           isTogglingLock={lock.isTogglingLock}
           onToggleLock={lock.toggleLock}
           onExportMd={exportFns.exportMd}

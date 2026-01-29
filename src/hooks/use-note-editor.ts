@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { githubClient, type NoteData } from "@/services/github-client";
-import { formatMarkdown } from "@/lib/markdown-formatter";
 
 interface UseNoteEditorOptions {
   note: NoteData | null;
@@ -13,13 +12,11 @@ interface UseNoteEditorReturn {
   isEditing: boolean;
   editContent: string;
   isSaving: boolean;
-  isFormatting: boolean;
   hasChanges: boolean;
   setEditContent: (content: string) => void;
   startEdit: () => void;
   cancelEdit: () => void;
   save: () => Promise<void>;
-  format: () => Promise<void>;
   error: string | null;
 }
 
@@ -33,7 +30,6 @@ export function useNoteEditor({
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-  const [isFormatting, setIsFormatting] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -103,32 +99,15 @@ export function useNoteEditor({
     }
   }, [note, editContent, hasChanges, onNoteUpdate]);
 
-  const format = useCallback(async () => {
-    if (!editContent) return;
-
-    setIsFormatting(true);
-    try {
-      const formatted = await formatMarkdown(editContent);
-      setEditContent(formatted);
-    } catch (err) {
-      console.error("Format error:", err);
-      setError(err instanceof Error ? err.message : "Erreur de formatage");
-    } finally {
-      setIsFormatting(false);
-    }
-  }, [editContent]);
-
   return {
     isEditing,
     editContent,
     isSaving,
-    isFormatting,
     hasChanges,
     setEditContent,
     startEdit,
     cancelEdit,
     save,
-    format,
     error,
   };
 }

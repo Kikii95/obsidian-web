@@ -3,26 +3,26 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import {
   ChevronRight,
-  Folder,
   FolderOpen,
-  FileText,
-  Image,
-  File,
   Menu,
   X,
-  LayoutDashboard,
   FilePlus,
   FolderPlus,
+  Copy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useFolderExpansion } from "@/hooks/use-folder-expansion";
 import { getFileType, isViewableFile } from "@/lib/file-types";
+import { sortTreeItems } from "@/lib/tree-utils";
+import { FileTreeIcon } from "@/components/tree";
 import { ShareCreateNoteDialog } from "./share-create-note-dialog";
 import { ShareCreateFolderDialog } from "./share-create-folder-dialog";
+import { CopyToVaultDialog } from "./copy-to-vault-dialog";
 import type { VaultFile } from "@/types";
 import type { ShareMode } from "@/types/shares";
 
@@ -50,6 +50,8 @@ export function ShareSidebar({
   onTreeRefresh,
 }: ShareSidebarProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [copyDialogOpen, setCopyDialogOpen] = useState(false);
+  const { data: session } = useSession();
   const pathname = usePathname();
   const { expandedFolders, toggleFolder } = useFolderExpansion();
   const isWriter = mode === "writer";
@@ -100,11 +102,25 @@ export function ShareSidebar({
       >
         {/* Header */}
         <div className="border-b border-border">
-          <div className="h-16 flex items-center px-4">
-            <FolderOpen className="h-5 w-5 text-primary mr-2" />
-            <span className="font-medium text-sm truncate">
-              {shareFolderPath.split("/").pop() || "Dossier"}
-            </span>
+          <div className="h-16 flex items-center justify-between px-4">
+            <div className="flex items-center min-w-0">
+              <FolderOpen className="h-5 w-5 text-primary mr-2 shrink-0" />
+              <span className="font-medium text-sm truncate">
+                {shareFolderPath.split("/").pop() || "Dossier"}
+              </span>
+            </div>
+            {/* Copy button (visible if logged in) */}
+            {session && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCopyDialogOpen(true)}
+                className="shrink-0 ml-2"
+                title="Copier vers mon vault"
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            )}
           </div>
 
           {/* Creation buttons (writer mode only) */}
@@ -154,6 +170,15 @@ export function ShareSidebar({
           </div>
         </ScrollArea>
       </aside>
+
+      {/* Copy to vault dialog */}
+      <CopyToVaultDialog
+        open={copyDialogOpen}
+        onOpenChange={setCopyDialogOpen}
+        token={token}
+        paths={[shareFolderPath]}
+        shareFolderPath={shareFolderPath}
+      />
     </>
   );
 }
@@ -176,12 +201,8 @@ function ShareFileTree({
   level,
 }: ShareFileTreeProps) {
   // Filter and sort files
-  const sortedFiles = [...files]
-    .filter((f) => f.type === "dir" || isViewableFile(f.name))
-    .sort((a, b) => {
-      if (a.type !== b.type) return a.type === "dir" ? -1 : 1;
-      return a.name.localeCompare(b.name);
-    });
+  const filteredFiles = files.filter((f) => f.type === "dir" || isViewableFile(f.name));
+  const sortedFiles = sortTreeItems(filteredFiles);
 
   return (
     <div className="space-y-0.5">
@@ -252,28 +273,8 @@ function ShareFileTreeItem({
   const href = getHref();
   const isActive = pathname === href || pathname?.includes(encodeURIComponent(file.name.replace(/\.md$/, "")));
 
-  // Get icon
-  const getIcon = () => {
-    if (isDirectory) {
-      return isExpanded ? (
-        <FolderOpen className="h-4 w-4 text-primary/70 shrink-0" />
-      ) : (
-        <Folder className="h-4 w-4 text-muted-foreground shrink-0" />
-      );
-    }
-    switch (fileType) {
-      case "image":
-        return <Image className="h-4 w-4 text-emerald-500 shrink-0" />;
-      case "pdf":
-        return <FileText className="h-4 w-4 text-red-500 shrink-0" />;
-      case "canvas":
-        return <LayoutDashboard className="h-4 w-4 text-purple-500 shrink-0" />;
-      case "markdown":
-        return <FileText className="h-4 w-4 text-blue-500 shrink-0" />;
-      default:
-        return <File className="h-4 w-4 text-muted-foreground shrink-0" />;
-    }
-  };
+  // Icon component
+  const icon = <FileTreeIcon file={file} isExpanded={isExpanded} />;
 
   // Display name
   const displayName = isDirectory
@@ -317,7 +318,7 @@ function ShareFileTreeItem({
             onClick={() => toggleFolder(file.path)}
             className="flex items-center gap-2 flex-1 min-w-0 text-left"
           >
-            {getIcon()}
+            {icon}
             <span className="truncate">{displayName}</span>
           </button>
         ) : (
@@ -325,7 +326,7 @@ function ShareFileTreeItem({
             href={href}
             className="flex items-center gap-2 flex-1 min-w-0"
           >
-            {getIcon()}
+            {icon}
             <span className="truncate">{displayName}</span>
           </Link>
         )}

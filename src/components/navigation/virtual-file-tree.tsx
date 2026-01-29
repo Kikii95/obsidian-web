@@ -6,13 +6,7 @@ import { usePathname } from "next/navigation";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   ChevronRight,
-  File,
-  Folder,
-  FolderOpen,
   Lock,
-  Image,
-  FileText,
-  LayoutDashboard,
   ExternalLink,
   Pin,
   PinOff,
@@ -21,6 +15,7 @@ import {
   FilePlus,
   FolderPlus,
 } from "lucide-react";
+import { FileTreeIcon } from "@/components/tree";
 import { CreateNoteDialog } from "@/components/notes/create-note-dialog";
 import { CreateFolderDialog } from "@/components/notes/create-folder-dialog";
 import { cn } from "@/lib/utils";
@@ -178,33 +173,14 @@ const VirtualTreeItem = memo(function VirtualTreeItem({
   const isActive = pathname === filePath;
 
   // Get icon based on file type
-  const icon = (() => {
-    if (isDirectory) {
-      // Private folder with hidden children shows lock icon
-      if (isPrivateFolder) {
-        return <Lock className="h-4 w-4 text-amber-500" />;
-      }
-      return isExpanded ? (
-        <FolderOpen className="h-4 w-4 text-primary/70" />
-      ) : (
-        <Folder className="h-4 w-4 text-muted-foreground" />
-      );
-    }
-    // If icons disabled, show generic file icon
-    if (!showFileIcons) {
-      return <File className="h-4 w-4 text-muted-foreground" />;
-    }
-    switch (fileType) {
-      case "image":
-        return <Image className="h-4 w-4 text-emerald-500" />;
-      case "pdf":
-        return <FileText className="h-4 w-4 text-red-500" />;
-      case "canvas":
-        return <LayoutDashboard className="h-4 w-4 text-purple-500" />;
-      default:
-        return <File className="h-4 w-4 text-muted-foreground" />;
-    }
-  })();
+  const icon = (
+    <FileTreeIcon
+      file={file}
+      isExpanded={isExpanded}
+      isPrivate={isPrivateFolder}
+      showFileIcons={showFileIcons}
+    />
+  );
 
   // Get display name
   const displayName = (() => {

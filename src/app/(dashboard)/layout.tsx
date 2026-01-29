@@ -26,6 +26,7 @@ import { GlobalLockStatus } from "@/components/lock/global-lock-status";
 import { HeaderDateTime } from "@/components/ui/header-date-time";
 import { QuickSwitcher } from "@/components/navigation/quick-switcher";
 import { DailyNoteButton } from "@/components/navigation/daily-note-button";
+import { ExploreRepoDialog } from "@/components/navigation/explore-repo-dialog";
 import { ScrollRestoration } from "@/components/navigation/scroll-restoration";
 import { RateLimitIndicator } from "@/components/ui/rate-limit-indicator";
 import { ScrollProgress } from "@/components/ui/scroll-progress";
@@ -137,6 +138,7 @@ export default function DashboardLayout({
                       <Tag className="h-5 w-5" />
                     </Link>
                   </Button>
+                  <ExploreRepoDialog />
                 </div>
                 <div className="flex-1 overflow-auto">
                   <VaultSidebar />
@@ -202,6 +204,11 @@ export default function DashboardLayout({
                 <Tag className="h-5 w-5" />
               </Link>
             </Button>
+
+            {/* Explore public repos */}
+            <div className="hidden sm:block">
+              <ExploreRepoDialog />
+            </div>
 
             {/* Theme Switcher */}
             <ThemeSwitcher />

@@ -227,15 +227,14 @@ export function ExploreRepoDialog() {
             </p>
           )}
 
-          {/* Organization shortcuts */}
-          {session && (
+          {/* Organization shortcuts (only if orgs available) */}
+          {session && userOrgs.length > 0 && (
             <div className="space-y-2">
               <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Building2 className="h-3.5 w-3.5" />
-                Accès rapide
+                Organisations
               </div>
               <div className="flex flex-wrap gap-2">
-                {/* Dynamic orgs from API */}
                 {userOrgs.map((org) => (
                   <Button
                     key={org.login}
@@ -255,17 +254,6 @@ export function ExploreRepoDialog() {
                     {org.login}/
                   </Button>
                 ))}
-                {/* Hardcoded org shortcut (OAuth restricted) */}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSearch("Quest-Education-Group/")}
-                  className="text-xs gap-1.5"
-                >
-                  <Building2 className="h-4 w-4" />
-                  Quest-Education-Group/
-                </Button>
               </div>
             </div>
           )}

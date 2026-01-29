@@ -59,7 +59,8 @@ export default function TempVaultPage() {
         if (rootPath) params.set("root", rootPath);
 
         const res = await fetch(
-          `/api/temp/${owner}/${repo}/tree${params.toString() ? `?${params}` : ""}`
+          `/api/temp/${owner}/${repo}/tree${params.toString() ? `?${params}` : ""}`,
+          { credentials: "include" }
         );
 
         if (!res.ok) {

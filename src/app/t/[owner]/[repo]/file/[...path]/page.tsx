@@ -58,7 +58,8 @@ export default function TempVaultFilePage() {
 
         // Fetch tree for sidebar
         const treeRes = await fetch(
-          `/api/temp/${owner}/${repo}/tree${queryString}`
+          `/api/temp/${owner}/${repo}/tree${queryString}`,
+          { credentials: "include" }
         );
         if (treeRes.ok) {
           const treeData = await treeRes.json();
@@ -77,7 +78,8 @@ export default function TempVaultFilePage() {
           queryParams.set("path", filePath);
 
           const fileRes = await fetch(
-            `/api/temp/${owner}/${repo}/file?${queryParams}`
+            `/api/temp/${owner}/${repo}/file?${queryParams}`,
+            { credentials: "include" }
           );
 
           if (fileRes.ok) {

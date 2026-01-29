@@ -87,6 +87,29 @@ export function createOctokit(accessToken: string) {
   return octokit;
 }
 
+/**
+ * Create unauthenticated Octokit for public repos
+ * Rate limit: 60 req/hour per IP (vs 5000 authenticated)
+ */
+export function createPublicOctokit() {
+  const octokit = new Octokit();
+
+  // Hook into all responses to track rate limits
+  octokit.hook.after("request", async (response) => {
+    const headers = response.headers;
+    if (headers["x-ratelimit-limit"]) {
+      lastRateLimit = {
+        limit: parseInt(headers["x-ratelimit-limit"] as string, 10),
+        remaining: parseInt(headers["x-ratelimit-remaining"] as string, 10),
+        reset: parseInt(headers["x-ratelimit-reset"] as string, 10),
+        used: parseInt(headers["x-ratelimit-used"] as string || "0", 10),
+      };
+    }
+  });
+
+  return octokit;
+}
+
 // Get the last captured rate limit
 export function getLastRateLimit(): RateLimitInfo | null {
   return lastRateLimit;

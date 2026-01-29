@@ -70,7 +70,7 @@ Current sprint planning and bug tracking.
 | ID | Feature | Status | Complexity | Notes |
 |----|---------|--------|------------|-------|
 | F14 | Hidden content syntax `(hidden::visible)` | ✅ | 🟡 Medium | CollapsibleContent + processCollapsible |
-| F15 | Temp vault (any GitHub repo) | ⬜ | 🔴 Hard | Major feature |
+| F15 | Temp vault (any GitHub repo) | ✅ | 🔴 Hard | `/t/owner/repo` — browse any public repo as vault |
 | F16 | Cross-platform settings sync | ✅ | 🟡 Medium | GitHub API sync |
 | F17 | Auto-format button | ⬜ | 🔴 Hard | AI/heuristics |
 
@@ -137,15 +137,14 @@ Current sprint planning and bug tracking.
 | Category | Total | Done | Remaining |
 |----------|-------|------|-----------|
 | Bugs | 6 | 6 | 0 |
-| Features | 21 | 19 | 2 |
+| Features | 21 | 20 | 1 |
 | PWA | 3 | 3 | 0 |
-| **Total** | **30** | **28** | **2** |
+| **Total** | **30** | **29** | **1** |
 
 ### Remaining Features
 
 | ID | Feature | Complexity |
 |----|---------|------------|
-| F15 | Temp vault (any GitHub repo) | 🔴 Hard |
 | F17 | Auto-format button (AI/heuristics) | 🔴 Hard |
 
 ---

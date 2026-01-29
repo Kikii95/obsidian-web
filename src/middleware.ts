@@ -20,6 +20,9 @@ export default withAuth(
           path.startsWith("/s/") ||
           // Public share API endpoints (GET only, token-based)
           (path.startsWith("/api/shares/") && path !== "/api/shares") ||
+          // Temp vault reader (public repos, no auth required)
+          path.startsWith("/t/") ||
+          path.startsWith("/api/temp/") ||
           path === "/offline"
         ) {
           return true;

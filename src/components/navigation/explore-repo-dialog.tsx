@@ -22,6 +22,7 @@ import {
   Lock,
   ExternalLink,
   X,
+  Building2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -37,12 +38,18 @@ interface GitHubRepo {
   };
 }
 
+interface GitHubOrg {
+  login: string;
+  avatar_url: string;
+}
+
 export function ExploreRepoDialog() {
   const router = useRouter();
   const { data: session } = useSession();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [userRepos, setUserRepos] = useState<GitHubRepo[]>([]);
+  const [userOrgs, setUserOrgs] = useState<GitHubOrg[]>([]);
   const [isLoadingRepos, setIsLoadingRepos] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -62,6 +69,7 @@ export function ExploreRepoDialog() {
       const data = await res.json();
       console.log("[ExploreDialog] Repos API response:", data.debug);
       setUserRepos(data.repos || []);
+      setUserOrgs(data.organizations || []);
     } catch (err) {
       console.error("Failed to fetch repos:", err);
       setError("Impossible de charger vos repos");
@@ -216,6 +224,40 @@ export function ExploreRepoDialog() {
             <p className="text-sm text-muted-foreground text-center">
               Connectez-vous pour voir vos repos GitHub
             </p>
+          )}
+
+          {/* Organization shortcuts (for restricted orgs) */}
+          {session && userOrgs.length > 0 && (
+            <div className="space-y-2">
+              <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Building2 className="h-3.5 w-3.5" />
+                Accès rapide organisations
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Orgs avec restrictions OAuth — tapez le nom du repo après le préfixe
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {userOrgs.map((org) => (
+                  <Button
+                    key={org.login}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSearch(`${org.login}/`)}
+                    className="text-xs gap-1.5"
+                  >
+                    {org.avatar_url && (
+                      <img
+                        src={org.avatar_url}
+                        alt={org.login}
+                        className="h-4 w-4 rounded-sm"
+                      />
+                    )}
+                    {org.login}/
+                  </Button>
+                ))}
+              </div>
+            </div>
           )}
 
           {/* Popular repos suggestions */}

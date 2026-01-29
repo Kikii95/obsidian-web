@@ -52,6 +52,10 @@ interface MarkdownRendererProps {
   className?: string;
   currentPath?: string;
   isShareViewer?: boolean;
+  /** Allow toggling checkboxes directly in reader mode */
+  canToggleCheckbox?: boolean;
+  /** Callback when a checkbox is toggled */
+  onCheckboxToggle?: (taskText: string, newChecked: boolean) => void;
 }
 
 // Inner component that handles the actual rendering
@@ -60,6 +64,8 @@ function MarkdownRendererInner({
   className,
   currentPath,
   isShareViewer = false,
+  canToggleCheckbox = false,
+  onCheckboxToggle,
   lookupMap,
 }: MarkdownRendererProps & { lookupMap: NoteLookupMap }) {
   // Pre-process content to convert wikilinks to markdown links and handle collapsible syntax
@@ -291,15 +297,31 @@ function MarkdownRendererInner({
               const isChecked = taskMatch[1] === "x";
               const taskText = taskMatch[2];
 
+              const handleToggle = () => {
+                if (canToggleCheckbox && onCheckboxToggle) {
+                  onCheckboxToggle(taskText.trim(), !isChecked);
+                }
+              };
+
               return (
                 <li className="flex items-start gap-2 list-none" {...props}>
                   <input
                     type="checkbox"
                     checked={isChecked}
-                    readOnly
-                    className="mt-1 accent-primary"
+                    onChange={handleToggle}
+                    readOnly={!canToggleCheckbox}
+                    className={cn(
+                      "mt-1 accent-primary",
+                      canToggleCheckbox && "cursor-pointer"
+                    )}
                   />
-                  <span className={isChecked ? "line-through text-muted-foreground" : ""}>
+                  <span
+                    className={cn(
+                      isChecked ? "line-through text-muted-foreground" : "",
+                      canToggleCheckbox && "cursor-pointer"
+                    )}
+                    onClick={handleToggle}
+                  >
                     {taskText}
                   </span>
                 </li>
@@ -352,6 +374,8 @@ export function MarkdownRenderer({
   className,
   currentPath,
   isShareViewer = false,
+  canToggleCheckbox = false,
+  onCheckboxToggle,
 }: MarkdownRendererProps) {
   // Get vault tree for wikilink resolution
   const { tree } = useVaultStore();
@@ -365,6 +389,8 @@ export function MarkdownRenderer({
       className={className}
       currentPath={currentPath}
       isShareViewer={isShareViewer}
+      canToggleCheckbox={canToggleCheckbox}
+      onCheckboxToggle={onCheckboxToggle}
       lookupMap={lookupMap}
     />
   );

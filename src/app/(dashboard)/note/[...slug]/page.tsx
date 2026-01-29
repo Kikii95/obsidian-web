@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { MarkdownRenderer } from "@/components/viewer/markdown-renderer";
 import { Skeleton } from "@/components/ui/skeleton";
+import { githubClient } from "@/services/github-client";
 
 // Lazy load CodeMirror editor (~500kb) - only loaded when editing
 const MarkdownEditor = dynamic(
@@ -144,6 +145,39 @@ export default function NotePage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [editor, enableKeyboardShortcuts]);
 
+  // Handle checkbox toggle in reader mode
+  const handleCheckboxToggle = useCallback(
+    async (taskText: string, newChecked: boolean) => {
+      if (!note || !isOnline) return;
+
+      // Build the regex to find this specific task
+      // Match both - [ ] and - [x] followed by the task text
+      const escapedText = taskText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const oldPattern = newChecked
+        ? `- \\[ \\] ${escapedText}`
+        : `- \\[x\\] ${escapedText}`;
+      const newPattern = newChecked
+        ? `- [x] ${taskText}`
+        : `- [ ] ${taskText}`;
+
+      const regex = new RegExp(oldPattern);
+      if (!regex.test(note.content)) {
+        console.warn("Checkbox pattern not found:", oldPattern);
+        return;
+      }
+
+      const newContent = note.content.replace(regex, newPattern);
+
+      try {
+        const result = await githubClient.saveNote(note.path, newContent, note.sha);
+        updateNote({ content: newContent, sha: result.sha });
+      } catch (err) {
+        console.error("Failed to toggle checkbox:", err);
+      }
+    },
+    [note, isOnline, updateNote]
+  );
+
   // Show locked view for private notes
   if (isNoteLocked && !canViewNote) {
     return <LockedNoteView noteName={noteName || "Note"} />;
@@ -279,7 +313,12 @@ export default function NotePage() {
         ) : (
           <div ref={contentRef}>
             {/* Key forces re-render when tree loads (fixes wikilink resolution timing) */}
-            <MarkdownRenderer key={`md-${tree.length}`} content={note.content} />
+            <MarkdownRenderer
+              key={`md-${tree.length}`}
+              content={note.content}
+              canToggleCheckbox={isOnline && !isFromCache}
+              onCheckboxToggle={handleCheckboxToggle}
+            />
           </div>
         )}
       </article>

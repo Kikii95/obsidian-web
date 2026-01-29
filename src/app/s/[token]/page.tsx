@@ -36,6 +36,8 @@ interface ShareMetadata {
   createdAt: string;
   expiresAt: string;
   isExpired: boolean;
+  allowCopy: boolean;
+  allowExport: boolean;
 }
 
 interface TreeResponse {
@@ -198,6 +200,8 @@ export default function ShareViewerPage() {
         includeSubfolders={metadata.includeSubfolders}
         currentPath={currentFolderPath}
         onTreeRefresh={refreshTree}
+        allowCopy={metadata.allowCopy}
+        allowExport={metadata.allowExport}
       />
 
       <ShareViewerHeader

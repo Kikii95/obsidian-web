@@ -50,6 +50,14 @@ export async function POST(
       );
     }
 
+    // Block if copy is not allowed
+    if (!ctx.share.allowCopy) {
+      return NextResponse.json(
+        { error: "La copie n'est pas autorisée pour ce partage" },
+        { status: 403 }
+      );
+    }
+
     const sharePath = ctx.share.folderPath;
     const { octokit, vaultConfig } = ctx;
     const rootPath = vaultConfig.rootPath || "";

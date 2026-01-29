@@ -51,6 +51,10 @@ export function ShareFolderDialog({
   const [depositAllowedTypes, setDepositAllowedTypes] = useState<string[] | null>(DEFAULT_DEPOSIT_CONFIG.allowedTypes);
   const [depositFolder, setDepositFolder] = useState<string | null>(DEFAULT_DEPOSIT_CONFIG.depositFolder);
 
+  // Permission flags (for reader/writer modes)
+  const [allowCopy, setAllowCopy] = useState(true);
+  const [allowExport, setAllowExport] = useState(true);
+
   const handleSubmit = async () => {
     setIsLoading(true);
     setError(null);
@@ -75,6 +79,9 @@ export function ShareFolderDialog({
           expiresIn,
           mode,
           depositConfig,
+          // Permission flags (only relevant for reader/writer modes)
+          allowCopy: mode !== "deposit" ? allowCopy : undefined,
+          allowExport: mode !== "deposit" ? allowExport : undefined,
         }),
       });
 
@@ -107,6 +114,9 @@ export function ShareFolderDialog({
         setDepositMaxFileSize(DEFAULT_DEPOSIT_CONFIG.maxFileSize);
         setDepositAllowedTypes(DEFAULT_DEPOSIT_CONFIG.allowedTypes);
         setDepositFolder(DEFAULT_DEPOSIT_CONFIG.depositFolder);
+        // Reset permission flags
+        setAllowCopy(true);
+        setAllowExport(true);
       }, 200);
     }
   };
@@ -240,6 +250,49 @@ export function ShareFolderDialog({
               depositFolder={depositFolder}
               setDepositFolder={setDepositFolder}
             />
+          )}
+
+          {/* Permission toggles (only shown for reader/writer modes) */}
+          {mode !== "deposit" && (
+            <div className="space-y-4 pt-2 border-t border-border">
+              <p className="text-sm font-medium text-muted-foreground">
+                Permissions pour les visiteurs
+              </p>
+
+              {/* Allow copy to vault */}
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="allow-copy">Copier vers vault</Label>
+                  <p className="text-sm text-muted-foreground">
+                    {allowCopy
+                      ? "Les visiteurs connectés peuvent copier dans leur vault"
+                      : "Copie vers vault désactivée"}
+                  </p>
+                </div>
+                <Switch
+                  id="allow-copy"
+                  checked={allowCopy}
+                  onCheckedChange={setAllowCopy}
+                />
+              </div>
+
+              {/* Allow export */}
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="allow-export">Export PDF/MD</Label>
+                  <p className="text-sm text-muted-foreground">
+                    {allowExport
+                      ? "Les visiteurs peuvent exporter en PDF ou Markdown"
+                      : "Export désactivé"}
+                  </p>
+                </div>
+                <Switch
+                  id="allow-export"
+                  checked={allowExport}
+                  onCheckedChange={setAllowExport}
+                />
+              </div>
+            </div>
           )}
 
           {error && (

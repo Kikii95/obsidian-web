@@ -41,6 +41,8 @@ export async function POST(request: NextRequest) {
       expiresIn: body.expiresIn,
       mode: body.mode ?? "reader",
       depositConfig: body.depositConfig,
+      allowCopy: body.allowCopy,
+      allowExport: body.allowExport,
     });
 
     // Return share info (without encrypted token)

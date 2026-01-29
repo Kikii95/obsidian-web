@@ -34,6 +34,8 @@ interface ShareSidebarProps {
   includeSubfolders?: boolean;
   currentPath?: string;
   onTreeRefresh?: () => void;
+  allowCopy?: boolean;
+  allowExport?: boolean;
 }
 
 /**
@@ -48,6 +50,8 @@ export function ShareSidebar({
   includeSubfolders = true,
   currentPath,
   onTreeRefresh,
+  allowCopy = true,
+  allowExport = true,
 }: ShareSidebarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [copyDialogOpen, setCopyDialogOpen] = useState(false);
@@ -109,8 +113,8 @@ export function ShareSidebar({
                 {shareFolderPath.split("/").pop() || "Dossier"}
               </span>
             </div>
-            {/* Copy button (visible if logged in) */}
-            {session && (
+            {/* Copy button (visible if logged in AND copy is allowed) */}
+            {session && allowCopy && (
               <Button
                 variant="ghost"
                 size="sm"

@@ -26,6 +26,9 @@ export interface CreateShareInput {
   expiresIn: ExpirationValue;
   mode?: ShareMode; // default: reader
   depositConfig?: DepositConfig; // only used when mode === "deposit"
+  // Permission flags (only for reader/writer modes)
+  allowCopy?: boolean; // allow copy to vault (default: true)
+  allowExport?: boolean; // allow export to PDF/MD (default: true)
 }
 
 export type ExpirationValue = "1h" | "1d" | "1w" | "1m";

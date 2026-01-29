@@ -93,18 +93,35 @@ export async function POST(req: NextRequest) {
         }
 
         // Handle conflict
+        let writeWithSha: string | undefined = undefined;
+
         if (exists) {
           if (conflictStrategy === "skip") {
             result.skipped.push(destPath);
             continue;
           } else if (conflictStrategy === "rename") {
+            // Get unique path - file won't exist there, no SHA needed
             destPath = await getUniquePath(
               octokit,
               vaultConfig,
               destPath
             );
+          } else if (conflictStrategy === "overwrite") {
+            // Get fresh SHA right before writing to avoid race conditions
+            try {
+              const { data: freshData } = await octokit.repos.getContent({
+                owner: vaultConfig.owner,
+                repo: vaultConfig.repo,
+                path: destPath,
+                ref: vaultConfig.branch,
+              });
+              if (!Array.isArray(freshData) && freshData.type === "file") {
+                writeWithSha = freshData.sha;
+              }
+            } catch {
+              // File was deleted between checks - create new
+            }
           }
-          // overwrite: continue with existingSha to update
         }
 
         // Prepare content
@@ -122,7 +139,7 @@ export async function POST(req: NextRequest) {
           path: destPath,
           message: `Import ${file.path}`,
           content: base64Content,
-          sha: conflictStrategy === "overwrite" ? existingSha : undefined,
+          sha: writeWithSha,
           branch: vaultConfig.branch,
         });
 

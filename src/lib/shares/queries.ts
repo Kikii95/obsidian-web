@@ -22,6 +22,8 @@ export async function createShare(params: {
   expiresIn: ExpirationValue;
   mode?: ShareMode;
   depositConfig?: DepositConfig;
+  allowCopy?: boolean;
+  allowExport?: boolean;
 }): Promise<Share> {
   const encryptedToken = await encryptToken(params.accessToken);
   const expiresAt = new Date(Date.now() + getExpirationMs(params.expiresIn));
@@ -51,6 +53,9 @@ export async function createShare(params: {
     depositFolder: params.mode === "deposit" && params.depositConfig
       ? params.depositConfig.depositFolder
       : null,
+    // Permission flags (defaults to true if not specified)
+    allowCopy: params.allowCopy ?? true,
+    allowExport: params.allowExport ?? true,
   };
 
   const [share] = await db.insert(shares).values(newShare).returning();

@@ -40,6 +40,10 @@ export const shares = pgTable(
     depositAllowedTypes: text("deposit_allowed_types"), // JSON array of extensions, null = all types
     depositFolder: varchar("deposit_folder", { length: 1024 }), // subfolder for uploads, null = share root
 
+    // Permission flags (for reader/writer modes)
+    allowCopy: boolean("allow_copy").default(true).notNull(), // Allow copying to user's vault
+    allowExport: boolean("allow_export").default(true).notNull(), // Allow export to PDF/MD
+
     // Lifecycle
     createdAt: timestamp("created_at").defaultNow().notNull(),
     expiresAt: timestamp("expires_at").notNull(),

@@ -19,6 +19,8 @@ interface ShareMetadata {
   expiresAt: string;
   shareType: "folder" | "note";
   mode: ShareMode;
+  allowCopy: boolean;
+  allowExport: boolean;
 }
 
 interface NoteData {
@@ -227,6 +229,8 @@ export default function ShareNotePage() {
           shareFolderPath={shareFolderPath}
           tree={tree}
           mode={metadata.mode}
+          allowCopy={metadata.allowCopy}
+          allowExport={metadata.allowExport}
         />
       )}
 

@@ -76,6 +76,9 @@ export async function getShareMetadata(token: string) {
     createdAt: share.createdAt.toISOString(),
     expiresAt: share.expiresAt.toISOString(),
     isExpired: share.expiresAt < new Date(),
+    // Permission flags
+    allowCopy: share.allowCopy,
+    allowExport: share.allowExport,
   };
 
   // Add deposit config if in deposit mode

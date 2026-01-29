@@ -39,6 +39,8 @@ export async function GET() {
       per_page: 100,
     });
 
+    console.log("[GitHub Repos API] Found orgs:", orgs.map(o => o.login));
+
     // Fetch repos from each organization (in parallel)
     const orgReposPromises = orgs.map(async (org) => {
       try {
@@ -48,15 +50,18 @@ export async function GET() {
           per_page: 50,
           type: "all", // Get all repos user has access to
         });
+        console.log(`[GitHub Repos API] Org ${org.login}: found ${repos.length} repos`);
         return repos.map((repo) => ({ ...repo, isOrg: true }));
-      } catch {
+      } catch (err) {
         // Skip orgs where we can't list repos
+        console.log(`[GitHub Repos API] Org ${org.login}: error`, err);
         return [];
       }
     });
 
     const orgReposArrays = await Promise.all(orgReposPromises);
     const orgRepos = orgReposArrays.flat();
+    console.log("[GitHub Repos API] Total org repos:", orgRepos.length);
 
     // Combine and deduplicate by full_name
     const allRepos = [...userRepos, ...orgRepos];
@@ -92,6 +97,13 @@ export async function GET() {
       repos: simplifiedRepos,
       organizations: orgs.map((o) => ({ login: o.login, avatar_url: o.avatar_url })),
       rateLimit: getLastRateLimit(),
+      // Debug info
+      debug: {
+        userReposCount: userRepos.length,
+        orgReposCount: orgRepos.length,
+        totalUniqueCount: simplifiedRepos.length,
+        orgsFound: orgs.map(o => o.login),
+      },
     });
   } catch (error) {
     console.error("Failed to fetch repos:", error);

@@ -57,9 +57,10 @@ export function ExploreRepoDialog() {
     setIsLoadingRepos(true);
     setError(null);
     try {
-      const res = await fetch("/api/github/repos");
+      const res = await fetch("/api/github/repos", { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch repos");
       const data = await res.json();
+      console.log("[ExploreDialog] Repos API response:", data.debug);
       setUserRepos(data.repos || []);
     } catch (err) {
       console.error("Failed to fetch repos:", err);

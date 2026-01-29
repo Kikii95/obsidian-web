@@ -144,8 +144,10 @@ export default function TempVaultPage() {
           <Clock className="h-16 w-16 mx-auto text-amber-500 mb-4" />
           <h1 className="text-2xl font-bold mb-2">Rate Limit Exceeded</h1>
           <p className="text-muted-foreground mb-4">
-            GitHub API rate limit reached. Anonymous access is limited to 60
-            requests per hour.
+            GitHub API rate limit reached.
+            {rateLimit?.limit === 60
+              ? " Anonymous access is limited to 60 requests per hour."
+              : " Please wait for the limit to reset."}
           </p>
           <p className="text-sm text-muted-foreground">
             Rate limit resets at <strong>{resetTime}</strong>

@@ -76,6 +76,7 @@ Current sprint planning and bug tracking.
 | F21 | Unified Layout Architecture | ✅ | 🔴 Hard | UniversalLayout component, shared sidebar/header, 3 modes (dashboard/share/temp) |
 | F22 | Org shortcut in explore dialog | ✅ | 🟢 Easy | Auto-detect accessible orgs, show quick-fill buttons |
 | F23 | Temp Vault org restriction handling | ✅ | 🟡 Medium | Distinguish 403 (org restriction) from 429 (rate limit), proper error UI |
+| F24 | Interactive checkbox toggle in reader | ✅ | 🟡 Medium | Click checkboxes directly without entering edit mode, auto-save to GitHub |
 
 ---
 
@@ -140,9 +141,9 @@ Current sprint planning and bug tracking.
 | Category | Total | Done | Remaining |
 |----------|-------|------|-----------|
 | Bugs | 6 | 6 | 0 |
-| Features | 23 | 23 | 0 |
+| Features | 24 | 24 | 0 |
 | PWA | 3 | 3 | 0 |
-| **Total** | **32** | **32** | **0** |
+| **Total** | **33** | **33** | **0** |
 
 ### 🎉 All Features Complete!
 

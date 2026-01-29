@@ -143,15 +143,15 @@ export function ShareFolderDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
+      <DialogContent className="max-h-[90vh] flex flex-col">
+        <DialogHeader className="shrink-0">
           <DialogTitle>Partager ce dossier</DialogTitle>
           <DialogDescription>
             Créez un lien de partage pour{" "}
             <span className="font-medium text-foreground">{folderName}</span>
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-6 pt-4">
+        <div className="space-y-6 pt-4 overflow-y-auto flex-1 pr-2">
           {/* Name input */}
           <div className="space-y-2">
             <Label htmlFor="share-name">Nom du lien</Label>
@@ -300,26 +300,26 @@ export function ShareFolderDialog({
               {error}
             </p>
           )}
+        </div>
 
-          {/* Actions */}
-          <div className="flex justify-end gap-2 pt-2">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setOpen(false)}
-              disabled={isLoading}
-            >
-              Annuler
-            </Button>
-            <Button onClick={handleSubmit} disabled={isLoading}>
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Share2 className="h-4 w-4 mr-2" />
-              )}
-              {isLoading ? "Création..." : "Créer le lien"}
-            </Button>
-          </div>
+        {/* Actions - fixed at bottom */}
+        <div className="flex justify-end gap-2 pt-4 shrink-0 border-t border-border mt-4">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setOpen(false)}
+            disabled={isLoading}
+          >
+            Annuler
+          </Button>
+          <Button onClick={handleSubmit} disabled={isLoading}>
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Share2 className="h-4 w-4 mr-2" />
+            )}
+            {isLoading ? "Création..." : "Créer le lien"}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

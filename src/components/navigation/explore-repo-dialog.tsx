@@ -68,6 +68,7 @@ export function ExploreRepoDialog() {
       if (!res.ok) throw new Error("Failed to fetch repos");
       const data = await res.json();
       console.log("[ExploreDialog] Repos API response:", data.debug);
+      console.log("[ExploreDialog] Organizations:", data.organizations);
       setUserRepos(data.repos || []);
       setUserOrgs(data.organizations || []);
     } catch (err) {
@@ -234,7 +235,7 @@ export function ExploreRepoDialog() {
                 Accès rapide organisations
               </div>
               <p className="text-xs text-muted-foreground">
-                Orgs avec restrictions OAuth — tapez le nom du repo après le préfixe
+                Tapez le nom du repo après le préfixe
               </p>
               <div className="flex flex-wrap gap-2">
                 {userOrgs.map((org) => (
@@ -260,30 +261,12 @@ export function ExploreRepoDialog() {
             </div>
           )}
 
-          {/* Popular repos suggestions */}
-          <div className="space-y-2">
-            <div className="text-sm font-medium text-muted-foreground">
-              Suggestions
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {[
-                "obsidianmd/obsidian-help",
-                "facebook/react",
-                "vercel/next.js",
-              ].map((repo) => (
-                <Button
-                  key={repo}
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => handleNavigate(repo)}
-                  className="text-xs"
-                >
-                  {repo}
-                </Button>
-              ))}
-            </div>
-          </div>
+          {/* Debug: show if orgs were loaded */}
+          {session && userOrgs.length === 0 && !isLoadingRepos && (
+            <p className="text-xs text-muted-foreground text-center">
+              Aucune organisation détectée
+            </p>
+          )}
         </form>
       </DialogContent>
     </Dialog>

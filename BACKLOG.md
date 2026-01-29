@@ -60,9 +60,10 @@ Current sprint planning and bug tracking.
 | F10 | Reader/Writer mode on shares | ✅ | 🔴 Hard | Mode selector, save API, edit UI |
 | F11 | Collaborative import (deposit drive) | ✅ | 🔴 Hard | Upload for non-auth users |
 | F12 | Login button on shared pages | ✅ | 🟡 Medium | NextAuth signIn button |
-| F13 | Integrate shared link to own repo | ⬜ | 🔴 Hard | Fork/copy mechanism |
+| F13 | Copy to Vault from shares | ✅ | 🔴 Hard | Export/import mechanism with conflict handling |
 | F18 | Unified explorer view + create in shares | ✅ | 🔴 Hard | All shares open explorer, create note/folder in writer mode |
-| F19 | Refactor: Unified sidebar component | ⬜ | 🟡 Medium | Extract FileTree base component from VaultSidebar, use in ShareSidebar |
+| F19 | Refactor: Unified sidebar component | ✅ | 🟡 Medium | Shared tree-utils + FileTreeIcon component |
+| F20 | Share permission toggles | ✅ | 🟡 Medium | Allow/block copy to vault and export per share |
 
 ### 🧪 Advanced
 
@@ -136,18 +137,17 @@ Current sprint planning and bug tracking.
 | Category | Total | Done | Remaining |
 |----------|-------|------|-----------|
 | Bugs | 6 | 6 | 0 |
-| Features | 19 | 16 | 3 |
+| Features | 21 | 19 | 2 |
 | PWA | 3 | 3 | 0 |
-| **Total** | **28** | **25** | **3** |
+| **Total** | **30** | **28** | **2** |
 
-### By Complexity
+### Remaining Features
 
-| Level | Count | Done |
-|-------|-------|------|
-| 🟢 Easy | 10 | 10 |
-| 🟡 Medium | 11 | 10 |
-| 🔴 Hard | 7 | 5 |
+| ID | Feature | Complexity |
+|----|---------|------------|
+| F15 | Temp vault (any GitHub repo) | 🔴 Hard |
+| F17 | Auto-format button (AI/heuristics) | 🔴 Hard |
 
 ---
 
-*Last updated: 2026-01-28*
+*Last updated: 2026-01-29*

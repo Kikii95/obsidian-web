@@ -124,28 +124,26 @@ export const UnifiedSidebar = memo(function UnifiedSidebar({
   // Collapsible variant (share/temp)
   return (
     <>
-      {/* Floating toggle when closed */}
-      <FloatingSidebarToggle
-        isOpen={sidebar.open}
-        onToggle={toggleSidebar}
-        position="top-left"
-      />
-
-      {/* Overlay */}
+      {/* Overlay (mobile only) */}
       {sidebar.open && (
         <div
-          className="fixed inset-0 z-30 bg-black/50 md:bg-black/20"
+          className="fixed inset-0 z-30 bg-black/50 md:hidden"
           onClick={toggleSidebar}
         />
       )}
 
-      {/* Sidebar panel - positioned below header */}
+      {/* Sidebar panel */}
       <aside
         className={cn(
+          // Mobile: fixed overlay
           "fixed left-0 top-14 z-40 h-[calc(100vh-3.5rem)] w-72",
           "bg-background border-r border-border shadow-xl",
           "transform transition-transform duration-200 ease-in-out",
           sidebar.open ? "translate-x-0" : "-translate-x-full",
+          // Desktop: static in flex layout with smooth transition
+          "md:static md:top-0 md:z-0 md:h-full md:shadow-none md:flex-shrink-0",
+          "md:transition-[width] md:duration-200 md:ease-in-out",
+          sidebar.open ? "md:translate-x-0 md:w-72" : "md:translate-x-0 md:w-0 md:overflow-hidden md:border-0",
           className
         )}
         role="navigation"

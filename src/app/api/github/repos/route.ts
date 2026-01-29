@@ -80,8 +80,8 @@ export async function GET() {
       full_name: repo.full_name,
       description: repo.description || null,
       private: repo.private,
-      stargazers_count: repo.stargazers_count,
-      default_branch: repo.default_branch,
+      stargazers_count: repo.stargazers_count ?? 0,
+      default_branch: repo.default_branch ?? "main",
       owner: {
         login: repo.owner.login,
       },

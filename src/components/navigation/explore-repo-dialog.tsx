@@ -101,7 +101,7 @@ export function ExploreRepoDialog() {
           <Globe className="h-5 w-5" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md max-w-[calc(100vw-2rem)] overflow-hidden">
+      <DialogContent className="sm:max-w-md max-w-[calc(100vw-2rem)] overflow-hidden p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Globe className="h-5 w-5" />
@@ -109,7 +109,7 @@ export function ExploreRepoDialog() {
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 overflow-x-hidden">
           {/* Search input */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -127,10 +127,12 @@ export function ExploreRepoDialog() {
             <Button
               type="submit"
               variant="outline"
-              className="w-full justify-start gap-2"
+              className="w-full justify-start gap-2 min-w-0"
             >
-              <ExternalLink className="h-4 w-4" />
-              Ouvrir <span className="font-mono text-primary">{search}</span>
+              <ExternalLink className="h-4 w-4 shrink-0" />
+              <span className="truncate">
+                Ouvrir <span className="font-mono text-primary">{search}</span>
+              </span>
             </Button>
           )}
 

@@ -73,6 +73,9 @@ Current sprint planning and bug tracking.
 | F15 | Temp vault (any GitHub repo) | ✅ | 🔴 Hard | `/t/owner/repo` — browse any public repo as vault |
 | F16 | Cross-platform settings sync | ✅ | 🟡 Medium | GitHub API sync |
 | F17 | Auto-format button | ✅ | 🔴 Hard | remark/unified client-side formatting with wikilink preservation |
+| F21 | Unified Layout Architecture | ✅ | 🔴 Hard | UniversalLayout component, shared sidebar/header, 3 modes (dashboard/share/temp) |
+| F22 | Org shortcut in explore dialog | ✅ | 🟢 Easy | Auto-detect accessible orgs, show quick-fill buttons |
+| F23 | Temp Vault org restriction handling | ✅ | 🟡 Medium | Distinguish 403 (org restriction) from 429 (rate limit), proper error UI |
 
 ---
 
@@ -137,9 +140,9 @@ Current sprint planning and bug tracking.
 | Category | Total | Done | Remaining |
 |----------|-------|------|-----------|
 | Bugs | 6 | 6 | 0 |
-| Features | 21 | 21 | 0 |
+| Features | 24 | 24 | 0 |
 | PWA | 3 | 3 | 0 |
-| **Total** | **30** | **30** | **0** |
+| **Total** | **33** | **33** | **0** |
 
 ### 🎉 All Features Complete!
 

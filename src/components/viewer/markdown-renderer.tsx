@@ -280,10 +280,10 @@ function MarkdownRendererInner({
                   checked={checked}
                   disabled={!canToggleCheckbox}
                   className={cn(
-                    "mr-2 accent-primary align-middle",
+                    "mr-2 accent-primary",
                     canToggleCheckbox && "cursor-pointer"
                   )}
-                  style={{ marginTop: "0.125em" }}
+                  style={{ verticalAlign: "middle" }}
                   {...props}
                 />
               );

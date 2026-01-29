@@ -20,6 +20,8 @@ This document tracks planned features, known issues, and community ideas for Obs
 | **Batch file operations** | 🟢 | Multi-select, batch delete/move/export — Selection mode implemented |
 | **Share links with permissions** | 🟢 | Reader/Writer/Deposit mode, create notes/folders in shares |
 | **Deposit mode (dropbox)** | 🟢 | Anonymous file upload without seeing content, rate limited, configurable |
+| **Copy to Vault** | 🟢 | Copy files/folders from share to own vault with conflict handling |
+| **Share permission toggles** | 🟢 | Allow/block copy to vault and export per share |
 | Audio file support | 🔴 | Play .mp3, .wav, .ogg files in vault |
 | Excalidraw viewer | 🔴 | Render .excalidraw files |
 | Search in file content | 🔴 | Full-text search across all notes |
@@ -266,6 +268,7 @@ Normal mode → Click "Select" button → Selection mode enabled
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v1.4.0 | 2026-01 | Copy to Vault from shares, share permission toggles (allow/block copy & export), sidebar refactoring with shared utilities |
 | v1.3.0 | 2026-01 | Share links Reader/Writer/Deposit mode, unified explorer for shares, create notes/folders in writer shares, deposit dropbox for anonymous uploads |
 | v1.2.0 | 2026-01 | Selection mode, batch operations, cross-device pins sync, settings sync |
 | v1.1.0 | 2025-12 | Multi-user, video viewer, multi-format import |

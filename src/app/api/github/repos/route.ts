@@ -27,11 +27,11 @@ export async function GET() {
   try {
     const octokit = createOctokit(session.accessToken);
 
-    // Get user's repos (owned + collaborated)
+    // Get user's repos (owned + collaborated + org member)
     const { data: userRepos } = await octokit.repos.listForAuthenticatedUser({
       sort: "updated",
       per_page: 100,
-      affiliation: "owner,collaborator",
+      affiliation: "owner,collaborator,organization_member",
     });
 
     // Get user's organizations

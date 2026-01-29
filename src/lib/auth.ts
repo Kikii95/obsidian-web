@@ -14,7 +14,7 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.GITHUB_SECRET || process.env.GITHUB_CLIENT_SECRET!,
       authorization: {
         params: {
-          scope: "repo read:org",
+          scope: "repo",
         },
       },
     }),

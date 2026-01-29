@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createPublicOctokit, getFullVaultTree, getLastRateLimit } from "@/lib/github";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { createPublicOctokit, createOctokit, getFullVaultTree, getLastRateLimit } from "@/lib/github";
 import type { VaultFile } from "@/types";
 
 interface RouteParams {
@@ -122,7 +124,9 @@ function buildTree(files: VaultFile[]): VaultFile[] {
 }
 
 /**
- * GET /api/temp/[owner]/[repo]/tree - Get folder tree for public repo
+ * GET /api/temp/[owner]/[repo]/tree - Get folder tree for repo
+ * Uses authenticated access if user is logged in (allows private repos)
+ * Falls back to public access (60 req/hr) otherwise
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
@@ -131,7 +135,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const branch = searchParams.get("branch") || undefined;
     const rootPath = searchParams.get("root") || "";
 
-    const octokit = createPublicOctokit();
+    // Use authenticated Octokit if user is logged in
+    const session = await getServerSession(authOptions);
+    const octokit = session?.accessToken
+      ? createOctokit(session.accessToken)
+      : createPublicOctokit();
 
     // Get repo info (verifies existence + gets default branch)
     let repoInfo;

@@ -101,7 +101,7 @@ export function ExploreRepoDialog() {
           <Globe className="h-5 w-5" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-w-[calc(100vw-2rem)] overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Globe className="h-5 w-5" />
@@ -162,35 +162,33 @@ export function ExploreRepoDialog() {
                       className={cn(
                         "w-full text-left px-3 py-2 rounded-md text-sm",
                         "hover:bg-muted transition-colors",
-                        "flex items-start gap-3"
+                        "block overflow-hidden"
                       )}
                     >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium truncate">
-                            {repo.name}
-                          </span>
-                          {repo.private && (
-                            <Lock className="h-3 w-3 text-amber-500 shrink-0" />
-                          )}
-                        </div>
-                        {repo.description && (
-                          <p className="text-xs text-muted-foreground truncate mt-0.5">
-                            {repo.description}
-                          </p>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="font-medium truncate flex-1">
+                          {repo.name}
+                        </span>
+                        {repo.private && (
+                          <Lock className="h-3 w-3 text-amber-500 shrink-0" />
                         )}
-                        <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <GitBranch className="h-3 w-3" />
-                            {repo.default_branch}
+                      </div>
+                      {repo.description && (
+                        <p className="text-xs text-muted-foreground truncate mt-0.5">
+                          {repo.description}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1 shrink-0">
+                          <GitBranch className="h-3 w-3" />
+                          {repo.default_branch}
+                        </span>
+                        {repo.stargazers_count > 0 && (
+                          <span className="flex items-center gap-1 shrink-0">
+                            <Star className="h-3 w-3" />
+                            {repo.stargazers_count}
                           </span>
-                          {repo.stargazers_count > 0 && (
-                            <span className="flex items-center gap-1">
-                              <Star className="h-3 w-3" />
-                              {repo.stargazers_count}
-                            </span>
-                          )}
-                        </div>
+                        )}
                       </div>
                     </button>
                   ))}

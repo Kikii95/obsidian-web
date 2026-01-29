@@ -7,6 +7,7 @@ import {
   ChevronRight,
   ChevronDown,
   FileText,
+  FileCode,
   Folder,
   FolderOpen,
   Image,
@@ -138,6 +139,14 @@ export function TempVaultSidebar({
         return `${basePath}/file/${encodeURIComponent(pathWithoutExt)}${query}`;
       }
 
+      // Code files: use code viewer route
+      if (fileType === "code") {
+        if (branch) params.set("branch", branch);
+        if (rootPath) params.set("root", rootPath);
+        const query = params.toString() ? `?${params}` : "";
+        return `${basePath}/code/${encodeURIComponent(itemPath)}${query}`;
+      }
+
       // Other files: just show in explorer
       return "#";
     },
@@ -164,6 +173,8 @@ export function TempVaultSidebar({
       ? Film
       : fileType === "pdf"
       ? FileType
+      : fileType === "code"
+      ? FileCode
       : File;
 
     const iconColor = isDir
@@ -176,6 +187,8 @@ export function TempVaultSidebar({
       ? "text-purple-500"
       : fileType === "pdf"
       ? "text-red-500"
+      : fileType === "code"
+      ? "text-orange-500"
       : "text-muted-foreground";
 
     // Display name without extension for markdown

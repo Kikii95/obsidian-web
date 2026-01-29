@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createPublicOctokit, getLastRateLimit } from "@/lib/github";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { createPublicOctokit, createOctokit, getLastRateLimit } from "@/lib/github";
 import { getFileType, getMimeType } from "@/lib/file-types";
 import matter from "gray-matter";
 
@@ -25,7 +27,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const octokit = createPublicOctokit();
+    // Use authenticated Octokit if user is logged in (allows private repos)
+    const session = await getServerSession(authOptions);
+    const octokit = session?.accessToken
+      ? createOctokit(session.accessToken)
+      : createPublicOctokit();
 
     // Get repo default branch if not specified
     let effectiveBranch = branch;

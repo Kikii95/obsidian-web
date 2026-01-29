@@ -1,6 +1,6 @@
 // File type detection utilities
 
-export type FileType = 'markdown' | 'image' | 'pdf' | 'canvas' | 'video' | 'other';
+export type FileType = 'markdown' | 'image' | 'pdf' | 'canvas' | 'video' | 'code' | 'other';
 
 const EXTENSIONS: Record<FileType, string[]> = {
   markdown: ['.md'],
@@ -8,6 +8,36 @@ const EXTENSIONS: Record<FileType, string[]> = {
   pdf: ['.pdf'],
   canvas: ['.canvas'],
   video: ['.mp4', '.webm', '.mov', '.avi', '.mkv', '.m4v'],
+  code: [
+    // C/C++
+    '.c', '.cpp', '.cc', '.cxx', '.h', '.hpp', '.hxx',
+    // JavaScript/TypeScript
+    '.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs',
+    // Python
+    '.py', '.pyw', '.pyx',
+    // Java/Kotlin
+    '.java', '.kt', '.kts',
+    // Go/Rust
+    '.go', '.rs',
+    // C#/F#
+    '.cs', '.fs',
+    // Ruby/PHP/Perl
+    '.rb', '.php', '.pl', '.pm',
+    // Swift/Objective-C
+    '.swift', '.m', '.mm',
+    // Shell/Script
+    '.sh', '.bash', '.zsh', '.fish', '.ps1', '.bat', '.cmd',
+    // Web
+    '.html', '.htm', '.css', '.scss', '.sass', '.less',
+    // Config/Data
+    '.json', '.yaml', '.yml', '.toml', '.xml', '.ini', '.conf',
+    // SQL
+    '.sql',
+    // Lua/Dart
+    '.lua', '.dart',
+    // Makefile
+    '.mk', '.cmake',
+  ],
   other: [],
 };
 
@@ -29,6 +59,31 @@ const MIME_TYPES: Record<string, string> = {
   '.avi': 'video/x-msvideo',
   '.mkv': 'video/x-matroska',
   '.m4v': 'video/x-m4v',
+  // Code files
+  '.c': 'text/x-c',
+  '.cpp': 'text/x-c++',
+  '.h': 'text/x-c',
+  '.hpp': 'text/x-c++',
+  '.js': 'text/javascript',
+  '.jsx': 'text/javascript',
+  '.ts': 'text/typescript',
+  '.tsx': 'text/typescript',
+  '.py': 'text/x-python',
+  '.java': 'text/x-java',
+  '.go': 'text/x-go',
+  '.rs': 'text/x-rust',
+  '.cs': 'text/x-csharp',
+  '.rb': 'text/x-ruby',
+  '.php': 'text/x-php',
+  '.swift': 'text/x-swift',
+  '.sh': 'text/x-shellscript',
+  '.html': 'text/html',
+  '.css': 'text/css',
+  '.json': 'application/json',
+  '.yaml': 'text/yaml',
+  '.yml': 'text/yaml',
+  '.xml': 'text/xml',
+  '.sql': 'text/x-sql',
 };
 
 export function getFileExtension(filename: string): string {
@@ -72,6 +127,7 @@ export function getFileIcon(filename: string): string {
     case 'pdf': return 'file-text';
     case 'canvas': return 'layout-dashboard';
     case 'video': return 'film';
+    case 'code': return 'file-code';
     default: return 'file';
   }
 }

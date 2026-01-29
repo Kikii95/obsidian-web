@@ -227,17 +227,15 @@ export function ExploreRepoDialog() {
             </p>
           )}
 
-          {/* Organization shortcuts (for restricted orgs) */}
-          {session && userOrgs.length > 0 && (
+          {/* Organization shortcuts */}
+          {session && (
             <div className="space-y-2">
               <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Building2 className="h-3.5 w-3.5" />
-                Accès rapide organisations
+                Accès rapide
               </div>
-              <p className="text-xs text-muted-foreground">
-                Tapez le nom du repo après le préfixe
-              </p>
               <div className="flex flex-wrap gap-2">
+                {/* Dynamic orgs from API */}
                 {userOrgs.map((org) => (
                   <Button
                     key={org.login}
@@ -257,15 +255,19 @@ export function ExploreRepoDialog() {
                     {org.login}/
                   </Button>
                 ))}
+                {/* Hardcoded org shortcut (OAuth restricted) */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSearch("Quest-Education-Group/")}
+                  className="text-xs gap-1.5"
+                >
+                  <Building2 className="h-4 w-4" />
+                  Quest-Education-Group/
+                </Button>
               </div>
             </div>
-          )}
-
-          {/* Debug: show if orgs were loaded */}
-          {session && userOrgs.length === 0 && !isLoadingRepos && (
-            <p className="text-xs text-muted-foreground text-center">
-              Aucune organisation détectée
-            </p>
           )}
         </form>
       </DialogContent>

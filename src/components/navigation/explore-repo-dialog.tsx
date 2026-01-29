@@ -160,21 +160,20 @@ export function ExploreRepoDialog() {
                       type="button"
                       onClick={() => handleNavigate(repo.full_name)}
                       className={cn(
-                        "w-full text-left px-3 py-2 rounded-md text-sm",
-                        "hover:bg-muted transition-colors",
-                        "block overflow-hidden"
+                        "w-full min-w-0 text-left px-3 py-2 rounded-md text-sm",
+                        "hover:bg-muted transition-colors"
                       )}
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="font-medium truncate flex-1">
-                          {repo.name}
+                        <span className="font-medium truncate min-w-0 flex-1">
+                          {repo.full_name}
                         </span>
                         {repo.private && (
                           <Lock className="h-3 w-3 text-amber-500 shrink-0" />
                         )}
                       </div>
                       {repo.description && (
-                        <p className="text-xs text-muted-foreground truncate mt-0.5">
+                        <p className="text-xs text-muted-foreground truncate min-w-0 mt-0.5">
                           {repo.description}
                         </p>
                       )}

@@ -155,7 +155,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       const { data } = await octokit.repos.get({ owner, repo });
       repoInfo = data;
     } catch (error: unknown) {
-      const err = error as { status?: number };
+      const err = error as { status?: number; message?: string };
       if (err.status === 404) {
         return NextResponse.json(
           { error: "Repository not found or is private" },
@@ -164,14 +164,27 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       }
       if (err.status === 403) {
         const rateLimit = getLastRateLimit();
+        // Check if it's actually rate limit or org access restriction
+        if (rateLimit && rateLimit.remaining === 0) {
+          return NextResponse.json(
+            {
+              error: "Rate limit exceeded. Try again later.",
+              rateLimit,
+              resetAt: rateLimit?.reset ? new Date(rateLimit.reset * 1000).toISOString() : null,
+              isAuthenticated: !!session?.accessToken,
+            },
+            { status: 429 }
+          );
+        }
+        // It's an org access restriction
         return NextResponse.json(
           {
-            error: "Rate limit exceeded. Try again later.",
-            rateLimit,
-            resetAt: rateLimit?.reset ? new Date(rateLimit.reset * 1000).toISOString() : null,
+            error: "Access denied. This organization may require OAuth app approval. Ask an org admin to approve 'Obsidian Web' at: https://github.com/organizations/" + owner + "/settings/oauth_application_policy",
+            isOrgRestriction: true,
             isAuthenticated: !!session?.accessToken,
+            rateLimit,
           },
-          { status: 429 }
+          { status: 403 }
         );
       }
       throw error;

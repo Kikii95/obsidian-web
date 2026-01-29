@@ -14,6 +14,7 @@ import {
   AlertCircle,
   Clock,
   Github,
+  ShieldAlert,
 } from "lucide-react";
 import { UniversalLayout, SidebarHeader } from "@/components/layout/universal-layout";
 import { getFileType, isViewableFile } from "@/lib/file-types";
@@ -47,6 +48,7 @@ export default function TempVaultPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isRateLimited, setIsRateLimited] = useState(false);
+  const [isOrgRestriction, setIsOrgRestriction] = useState(false);
   const [isApiAuthenticated, setIsApiAuthenticated] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -71,6 +73,10 @@ export default function TempVaultPage() {
             setRateLimit(data.rateLimit);
             setIsApiAuthenticated(data.isAuthenticated ?? false);
             console.log("[TempVault] Rate limit error, auth:", data.isAuthenticated);
+          } else if (res.status === 403 && data.isOrgRestriction) {
+            setIsOrgRestriction(true);
+            setIsApiAuthenticated(data.isAuthenticated ?? false);
+            console.log("[TempVault] Org restriction, auth:", data.isAuthenticated);
           }
           throw new Error(data.error || "Failed to fetch repository");
         }
@@ -132,6 +138,33 @@ export default function TempVaultPage() {
     );
   }
 
+  // Org restriction error
+  if (isOrgRestriction) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-center max-w-lg">
+          <ShieldAlert className="h-16 w-16 mx-auto text-amber-500 mb-4" />
+          <h1 className="text-2xl font-bold mb-2">Organization Access Required</h1>
+          <p className="text-muted-foreground mb-4">
+            This organization requires OAuth app approval to access its repositories.
+          </p>
+          <p className="text-sm text-muted-foreground mb-4">
+            An organization admin needs to approve "Obsidian Web" in the org settings.
+          </p>
+          <a
+            href={`https://github.com/organizations/${owner}/settings/oauth_application_policy`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-primary hover:underline text-sm"
+          >
+            <Github className="h-4 w-4" />
+            Open org OAuth settings
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   // Rate limit error
   if (isRateLimited) {
     const resetTime = rateLimit?.reset
@@ -151,9 +184,6 @@ export default function TempVaultPage() {
           </p>
           <p className="text-sm text-muted-foreground">
             Rate limit resets at <strong>{resetTime}</strong>
-          </p>
-          <p className="text-xs text-muted-foreground mt-4 font-mono">
-            Debug: API saw auth = {String(isApiAuthenticated)}, limit = {rateLimit?.limit}
           </p>
         </div>
       </div>

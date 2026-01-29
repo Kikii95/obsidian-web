@@ -137,6 +137,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     // Use authenticated Octokit if user is logged in
     const session = await getServerSession(authOptions);
+
+    // Debug logging
+    console.log("[TempVault API] Session check:", {
+      hasSession: !!session,
+      hasAccessToken: !!session?.accessToken,
+      user: session?.user?.email || "anonymous",
+    });
+
     const octokit = session?.accessToken
       ? createOctokit(session.accessToken)
       : createPublicOctokit();
@@ -161,6 +169,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             error: "Rate limit exceeded. Try again later.",
             rateLimit,
             resetAt: rateLimit?.reset ? new Date(rateLimit.reset * 1000).toISOString() : null,
+            isAuthenticated: !!session?.accessToken,
           },
           { status: 429 }
         );
@@ -195,6 +204,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         isPrivate: repoInfo.private,
       },
       rateLimit,
+      // Debug: include auth status
+      isAuthenticated: !!session?.accessToken,
     });
   } catch (error: unknown) {
     console.error("Error fetching temp vault tree:", error);
@@ -202,10 +213,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     if (err.status === 403) {
       const rateLimit = getLastRateLimit();
+      const session = await getServerSession(authOptions);
       return NextResponse.json(
         {
           error: "Rate limit exceeded",
           rateLimit,
+          isAuthenticated: !!session?.accessToken,
         },
         { status: 429 }
       );

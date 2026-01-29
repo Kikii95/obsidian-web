@@ -47,6 +47,7 @@ export default function TempVaultPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isRateLimited, setIsRateLimited] = useState(false);
+  const [isApiAuthenticated, setIsApiAuthenticated] = useState<boolean | null>(null);
 
   useEffect(() => {
     const fetchTree = async () => {
@@ -68,6 +69,8 @@ export default function TempVaultPage() {
           if (res.status === 429) {
             setIsRateLimited(true);
             setRateLimit(data.rateLimit);
+            setIsApiAuthenticated(data.isAuthenticated ?? false);
+            console.log("[TempVault] Rate limit error, auth:", data.isAuthenticated);
           }
           throw new Error(data.error || "Failed to fetch repository");
         }
@@ -76,6 +79,8 @@ export default function TempVaultPage() {
         setTree(data.tree);
         setRepoInfo(data.repoInfo);
         setRateLimit(data.rateLimit);
+        setIsApiAuthenticated(data.isAuthenticated ?? false);
+        console.log("[TempVault] API Response auth:", data.isAuthenticated, "rateLimit:", data.rateLimit);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Unknown error");
       } finally {
@@ -144,6 +149,9 @@ export default function TempVaultPage() {
           </p>
           <p className="text-sm text-muted-foreground">
             Rate limit resets at <strong>{resetTime}</strong>
+          </p>
+          <p className="text-xs text-muted-foreground mt-4 font-mono">
+            Debug: API saw auth = {String(isApiAuthenticated)}, limit = {rateLimit?.limit}
           </p>
         </div>
       </div>

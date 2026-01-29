@@ -3,11 +3,10 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, AlertCircle, Loader2, Clock, Pencil, Save, X } from "lucide-react";
+import { ArrowLeft, AlertCircle, Loader2, Clock, Pencil, Save, X, FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ShareViewerHeader } from "@/components/shares/share-viewer-header";
+import { UniversalLayout, SidebarHeader } from "@/components/layout";
 import { ShareExportToolbar } from "@/components/shares/share-export-toolbar";
-import { ShareSidebar } from "@/components/shares/share-sidebar";
 import { MarkdownRenderer } from "@/components/viewer/markdown-renderer";
 import { MarkdownEditor } from "@/components/editor/markdown-editor";
 import type { VaultFile } from "@/types";
@@ -77,33 +76,25 @@ export default function ShareNotePage() {
         // Fetch tree (enables sidebar navigation and gives us correct folderPath)
         let effectiveFolderPath = metaData.share.folderPath;
         let effectiveFolderName = metaData.share.folderName;
-        let isNoteShare = metaData.share.shareType === "note";
         try {
           const treeRes = await fetch(`/api/shares/${token}/tree`);
           if (treeRes.ok) {
             const treeData = await treeRes.json();
             setTree(treeData.tree || []);
-            // For note shares, tree API returns parent folder as folderPath/folderName
-            // IMPORTANT: folderPath can be "" for root-level notes, so check explicitly
             if (treeData.folderPath !== undefined) {
               effectiveFolderPath = treeData.folderPath;
             }
             if (treeData.folderName) {
               effectiveFolderName = treeData.folderName;
             }
-            if (treeData.shareType === "note") {
-              isNoteShare = true;
-            }
           }
         } catch {
           // Tree fetch failure is non-critical
         }
-        // Store the effective folder path/name for sidebar and header
         setShareFolderPath(effectiveFolderPath);
         setShareFolderName(effectiveFolderName);
 
         // Build full path
-        // For root-level notes (effectiveFolderPath is ""), don't add leading slash
         const fullPath = effectiveFolderPath
           ? `${effectiveFolderPath}/${relativePath}.md`
           : `${relativePath}.md`;
@@ -216,33 +207,43 @@ export default function ShareNotePage() {
   if (!metadata || !note) return null;
 
   const noteName = relativePath.split("/").pop() || relativePath;
-  // Use shareFolderPath (from tree API) for correct path construction
   const displayFolderPath = shareFolderPath || metadata.folderPath;
+  const displayFolderName = shareFolderName || metadata.folderName;
   const fullPath = `${displayFolderPath}/${relativePath}`;
 
   return (
-    <>
-      {/* Sidebar for navigation */}
-      {tree.length > 0 && shareFolderPath && (
-        <ShareSidebar
-          token={token}
-          shareFolderPath={shareFolderPath}
-          tree={tree}
-          mode={metadata.mode}
-          allowCopy={metadata.allowCopy}
-          allowExport={metadata.allowExport}
+    <UniversalLayout
+      mode="share"
+      tree={tree}
+      currentPath={fullPath}
+      metadata={{
+        token,
+        folderPath: displayFolderPath,
+        folderName: displayFolderName,
+        shareMode: metadata.mode,
+        expiresAt: new Date(metadata.expiresAt),
+        allowCopy: metadata.allowCopy,
+        allowExport: metadata.allowExport,
+        ownerName: "",
+      }}
+      permissions={{
+        canEdit: metadata.mode === "writer",
+        canCreate: metadata.mode === "writer",
+        canDelete: false,
+        canCopy: metadata.allowCopy,
+        canExport: metadata.allowExport,
+        canShare: false,
+        isAuthenticated: false,
+      }}
+      sidebarHeader={
+        <SidebarHeader
+          title={displayFolderName || "Dossier partagé"}
+          icon={<FolderOpen className="h-5 w-5 text-primary" />}
         />
-      )}
-
-      <ShareViewerHeader
-        token={token}
-        folderName={shareFolderName || metadata.folderName}
-        folderPath={displayFolderPath}
-        currentPath={fullPath}
-        expiresAt={metadata.expiresAt}
-      />
-
-      <main className="max-w-4xl mx-auto p-4 md:p-8">
+      }
+      showSidebar={tree.length > 0}
+    >
+      <div className="max-w-4xl mx-auto p-4 md:p-8">
         {/* Back button */}
         <div className="mb-6">
           <Button asChild variant="ghost" size="sm">
@@ -328,7 +329,7 @@ export default function ShareNotePage() {
             />
           )}
         </div>
-      </main>
-    </>
+      </div>
+    </UniversalLayout>
   );
 }

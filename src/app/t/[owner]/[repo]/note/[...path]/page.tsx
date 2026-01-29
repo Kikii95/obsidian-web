@@ -3,10 +3,9 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, AlertCircle, Loader2, Clock } from "lucide-react";
+import { ArrowLeft, AlertCircle, Loader2, Clock, Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { TempVaultHeader } from "@/components/temp/temp-vault-header";
-import { TempVaultSidebar } from "@/components/temp/temp-vault-sidebar";
+import { UniversalLayout, SidebarHeader } from "@/components/layout";
 import { MarkdownRenderer } from "@/components/viewer/markdown-renderer";
 import type { VaultFile } from "@/types";
 import type { RateLimitInfo } from "@/lib/github";
@@ -25,6 +24,7 @@ interface RepoInfo {
   defaultBranch: string;
   description: string | null;
   stars: number;
+  isPrivate: boolean;
 }
 
 export default function TempVaultNotePage() {
@@ -176,28 +176,38 @@ export default function TempVaultNotePage() {
   const noteName = relativePath.split("/").pop() || relativePath;
 
   return (
-    <>
-      {tree.length > 0 && (
-        <TempVaultSidebar
-          owner={owner}
-          repo={repo}
-          tree={tree}
-          branch={repoInfo.branch}
-          rootPath={rootPath}
+    <UniversalLayout
+      mode="temp"
+      tree={tree}
+      currentPath={relativePath}
+      metadata={{
+        owner,
+        repo,
+        branch: repoInfo.branch,
+        defaultBranch: repoInfo.defaultBranch,
+        description: repoInfo.description,
+        stars: repoInfo.stars,
+        isPrivate: repoInfo.isPrivate ?? false,
+        rateLimit,
+      }}
+      permissions={{
+        canEdit: false,
+        canCreate: false,
+        canDelete: false,
+        canCopy: false,
+        canExport: false,
+        canShare: false,
+        isAuthenticated: false,
+      }}
+      sidebarHeader={
+        <SidebarHeader
+          title={`${owner}/${repo}`}
+          icon={<Github className="h-5 w-5" />}
         />
-      )}
-
-      <TempVaultHeader
-        owner={owner}
-        repo={repo}
-        branch={repoInfo.branch}
-        description={repoInfo.description}
-        stars={repoInfo.stars}
-        rateLimit={rateLimit}
-        currentPath={relativePath}
-      />
-
-      <main className="max-w-4xl mx-auto p-4 md:p-8">
+      }
+      showSidebar={tree.length > 0}
+    >
+      <div className="max-w-4xl mx-auto p-4 md:p-8">
         {/* Back button */}
         <div className="mb-6">
           <Button asChild variant="ghost" size="sm">
@@ -237,7 +247,7 @@ export default function TempVaultNotePage() {
             isShareViewer={true}
           />
         </div>
-      </main>
-    </>
+      </div>
+    </UniversalLayout>
   );
 }

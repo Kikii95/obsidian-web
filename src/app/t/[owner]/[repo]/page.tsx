@@ -13,9 +13,9 @@ import {
   Loader2,
   AlertCircle,
   Clock,
+  Github,
 } from "lucide-react";
-import { TempVaultHeader } from "@/components/temp/temp-vault-header";
-import { TempVaultSidebar } from "@/components/temp/temp-vault-sidebar";
+import { UniversalLayout, SidebarHeader } from "@/components/layout/universal-layout";
 import { getFileType, isViewableFile } from "@/lib/file-types";
 import { cn } from "@/lib/utils";
 import type { VaultFile } from "@/types";
@@ -168,26 +168,37 @@ export default function TempVaultPage() {
   if (!repoInfo) return null;
 
   return (
-    <>
-      <TempVaultSidebar
-        owner={owner}
-        repo={repo}
-        tree={tree}
-        branch={repoInfo.branch}
-        rootPath={rootPath}
-      />
-
-      <TempVaultHeader
-        owner={owner}
-        repo={repo}
-        branch={repoInfo.branch}
-        description={repoInfo.description}
-        stars={repoInfo.stars}
-        rateLimit={rateLimit}
-        currentPath={subPath}
-      />
-
-      <main className="max-w-4xl mx-auto p-4 md:p-8">
+    <UniversalLayout
+      mode="temp"
+      tree={tree}
+      currentPath={subPath}
+      metadata={{
+        owner,
+        repo,
+        branch: repoInfo.branch,
+        defaultBranch: repoInfo.defaultBranch,
+        description: repoInfo.description,
+        stars: repoInfo.stars,
+        isPrivate: repoInfo.isPrivate,
+        rateLimit,
+      }}
+      permissions={{
+        canEdit: false,
+        canCreate: false,
+        canDelete: false,
+        canCopy: false,
+        canExport: false,
+        canShare: false,
+        isAuthenticated: false,
+      }}
+      sidebarHeader={
+        <SidebarHeader
+          title={`${owner}/${repo}`}
+          icon={<Github className="h-5 w-5" />}
+        />
+      }
+    >
+      <div className="max-w-4xl mx-auto p-4 md:p-8">
         {/* Stats */}
         <div className="flex items-center justify-between mb-6">
           <p className="text-sm text-muted-foreground">
@@ -216,8 +227,8 @@ export default function TempVaultPage() {
             ))}
           </div>
         )}
-      </main>
-    </>
+      </div>
+    </UniversalLayout>
   );
 }
 
@@ -238,7 +249,6 @@ function TempVaultItem({
   const isDirectory = item.type === "dir";
   const fileType = getFileType(item.name);
 
-  // Build href
   const getHref = () => {
     const basePath = `/t/${owner}/${repo}`;
     const params = new URLSearchParams();
@@ -250,7 +260,6 @@ function TempVaultItem({
       return `${basePath}?${params}`;
     }
 
-    // For files, route to appropriate viewer
     const pathWithoutExt = item.path
       .replace(/\.md$/, "")
       .replace(/\.(png|jpg|jpeg|gif|svg|webp|bmp|ico)$/i, "")
@@ -270,7 +279,6 @@ function TempVaultItem({
     return "#";
   };
 
-  // Get icon
   const getIcon = () => {
     if (isDirectory) {
       return <Folder className="h-5 w-5 text-amber-500" />;
@@ -289,14 +297,12 @@ function TempVaultItem({
     }
   };
 
-  // Display name
   const displayName = (() => {
     if (isDirectory) return item.name;
     if (fileType === "markdown") return item.name.replace(/\.md$/, "");
     return item.name;
   })();
 
-  // Child count for folders
   const childCount =
     isDirectory && item.children
       ? item.children.filter((c) => c.type === "dir" || isViewableFile(c.name))

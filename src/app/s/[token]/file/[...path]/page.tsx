@@ -3,15 +3,19 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, AlertCircle, Loader2, Clock, FileText, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, AlertCircle, Loader2, Clock, FileText, Image as ImageIcon, FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ShareViewerHeader } from "@/components/shares/share-viewer-header";
+import { UniversalLayout, SidebarHeader } from "@/components/layout";
 import { getFileType } from "@/lib/file-types";
+import type { ShareMode } from "@/types/shares";
 
 interface ShareMetadata {
   folderPath: string;
   folderName: string;
   expiresAt: string;
+  mode: ShareMode;
+  allowCopy: boolean;
+  allowExport: boolean;
 }
 
 interface FileData {
@@ -133,16 +137,38 @@ export default function ShareFilePage() {
   const dataUrl = `data:${file.mimeType};base64,${file.content}`;
 
   return (
-    <>
-      <ShareViewerHeader
-        token={token}
-        folderName={metadata.folderName}
-        folderPath={metadata.folderPath}
-        currentPath={file.path}
-        expiresAt={metadata.expiresAt}
-      />
-
-      <main className="max-w-4xl mx-auto p-4 md:p-8">
+    <UniversalLayout
+      mode="share"
+      tree={[]}
+      currentPath={file.path}
+      metadata={{
+        token,
+        folderPath: metadata.folderPath,
+        folderName: metadata.folderName,
+        shareMode: metadata.mode,
+        expiresAt: new Date(metadata.expiresAt),
+        allowCopy: metadata.allowCopy,
+        allowExport: metadata.allowExport,
+        ownerName: "",
+      }}
+      permissions={{
+        canEdit: false,
+        canCreate: false,
+        canDelete: false,
+        canCopy: metadata.allowCopy,
+        canExport: metadata.allowExport,
+        canShare: false,
+        isAuthenticated: false,
+      }}
+      sidebarHeader={
+        <SidebarHeader
+          title={metadata.folderName || "Dossier partagé"}
+          icon={<FolderOpen className="h-5 w-5 text-primary" />}
+        />
+      }
+      showSidebar={false}
+    >
+      <div className="max-w-4xl mx-auto p-4 md:p-8">
         {/* Back button */}
         <div className="mb-6">
           <Button asChild variant="ghost" size="sm">
@@ -186,7 +212,7 @@ export default function ShareFilePage() {
             )}
           </div>
         </div>
-      </main>
-    </>
+      </div>
+    </UniversalLayout>
   );
 }

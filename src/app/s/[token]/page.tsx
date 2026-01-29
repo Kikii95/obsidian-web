@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useParams, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import {
   Folder,
@@ -15,12 +16,14 @@ import {
   Loader2,
   FilePlus,
   FolderPlus,
+  FolderOpen,
+  Copy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ShareViewerHeader } from "@/components/shares/share-viewer-header";
-import { ShareSidebar } from "@/components/shares/share-sidebar";
+import { UniversalLayout, SidebarHeader } from "@/components/layout/universal-layout";
 import { ShareCreateNoteDialog } from "@/components/shares/share-create-note-dialog";
 import { ShareCreateFolderDialog } from "@/components/shares/share-create-folder-dialog";
+import { CopyToVaultDialog } from "@/components/shares/copy-to-vault-dialog";
 import { getFileType, isViewableFile } from "@/lib/file-types";
 import { cn } from "@/lib/utils";
 import type { VaultFile } from "@/types";
@@ -45,13 +48,14 @@ interface TreeResponse {
   folderPath: string;
   folderName: string;
   shareType: "folder" | "note";
-  notePath?: string; // For note shares, the full path to the note
+  notePath?: string;
   includeSubfolders: boolean;
 }
 
 export default function ShareViewerPage() {
   const params = useParams();
   const searchParams = useSearchParams();
+  const { data: session } = useSession();
   const token = params.token as string;
   const subPath = searchParams.get("path") || "";
 
@@ -63,8 +67,8 @@ export default function ShareViewerPage() {
   const [error, setError] = useState<string | null>(null);
   const [expired, setExpired] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [copyDialogOpen, setCopyDialogOpen] = useState(false);
 
-  // Refresh tree function (called after create operations)
   const refreshTree = () => setRefreshKey((k) => k + 1);
 
   // Fetch share data
@@ -74,7 +78,6 @@ export default function ShareViewerPage() {
       setError(null);
 
       try {
-        // Fetch metadata
         const metaRes = await fetch(`/api/shares/${token}`);
         if (!metaRes.ok) {
           const data = await metaRes.json();
@@ -89,7 +92,6 @@ export default function ShareViewerPage() {
         }
         const metaData = await metaRes.json();
 
-        // Redirect to deposit page if mode is deposit
         if (metaData.share.mode === "deposit") {
           window.location.href = `/s/${token}/deposit`;
           return;
@@ -97,7 +99,6 @@ export default function ShareViewerPage() {
 
         setMetadata(metaData.share);
 
-        // Always fetch tree (API handles both folder and note shares now)
         const treeRes = await fetch(`/api/shares/${token}/tree`);
         if (!treeRes.ok) {
           throw new Error("Erreur lors du chargement du contenu");
@@ -181,98 +182,159 @@ export default function ShareViewerPage() {
 
   if (!metadata) return null;
 
-  // Unified explorer view for both folder and note shares
-  // For note shares, treeFolderPath is the parent folder
   const displayFolderPath = treeFolderPath || metadata.folderPath;
   const displayFolderName = treeFolderName || metadata.folderName;
   const currentFolderPath = subPath
     ? `${displayFolderPath}/${subPath}`
     : displayFolderPath;
 
+  const isWriter = metadata.mode === "writer";
+
+  // Sidebar actions for writer mode
+  const sidebarActions = isWriter ? (
+    <div className="flex items-center gap-1">
+      <ShareCreateNoteDialog
+        token={token}
+        currentPath={currentFolderPath}
+        shareFolderPath={displayFolderPath}
+        onCreated={refreshTree}
+        trigger={
+          <Button variant="outline" size="sm" className="flex-1">
+            <FilePlus className="h-4 w-4 mr-1" />
+            Note
+          </Button>
+        }
+      />
+      {metadata.includeSubfolders && (
+        <ShareCreateFolderDialog
+          token={token}
+          currentPath={currentFolderPath}
+          shareFolderPath={displayFolderPath}
+          onCreated={refreshTree}
+          trigger={
+            <Button variant="outline" size="sm" className="flex-1">
+              <FolderPlus className="h-4 w-4 mr-1" />
+              Dossier
+            </Button>
+          }
+        />
+      )}
+    </div>
+  ) : session && metadata.allowCopy ? (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={() => setCopyDialogOpen(true)}
+      className="w-full"
+    >
+      <Copy className="h-4 w-4 mr-2" />
+      Copier vers mon vault
+    </Button>
+  ) : null;
+
   return (
     <>
-      {/* Collapsible sidebar for navigation */}
-      <ShareSidebar
-        token={token}
-        shareFolderPath={displayFolderPath}
+      <UniversalLayout
+        mode="share"
         tree={tree}
-        mode={metadata.mode}
-        includeSubfolders={metadata.includeSubfolders}
         currentPath={currentFolderPath}
-        onTreeRefresh={refreshTree}
-        allowCopy={metadata.allowCopy}
-        allowExport={metadata.allowExport}
-      />
+        metadata={{
+          token,
+          folderPath: displayFolderPath,
+          folderName: displayFolderName,
+          shareMode: metadata.mode,
+          expiresAt: new Date(metadata.expiresAt),
+          allowCopy: metadata.allowCopy,
+          allowExport: metadata.allowExport,
+          ownerName: "", // Not available in this context
+        }}
+        permissions={{
+          canEdit: isWriter,
+          canCreate: isWriter,
+          canDelete: false,
+          canCopy: metadata.allowCopy,
+          canExport: metadata.allowExport,
+          canShare: false,
+          isAuthenticated: !!session,
+        }}
+        sidebarHeader={
+          <SidebarHeader
+            title={displayFolderName}
+            icon={<FolderOpen className="h-5 w-5 text-primary" />}
+          />
+        }
+        sidebarActions={sidebarActions}
+      >
+        <div className="max-w-4xl mx-auto p-4 md:p-8">
+          {/* Stats and actions */}
+          <div className="flex items-center justify-between mb-6">
+            <p className="text-sm text-muted-foreground">
+              {sortedContent.filter((f) => f.type === "dir").length} dossier(s) ·{" "}
+              {sortedContent.filter((f) => f.type === "file").length} fichier(s)
+            </p>
 
-      <ShareViewerHeader
-        token={token}
-        folderName={displayFolderName}
-        folderPath={displayFolderPath}
-        currentPath={subPath ? currentFolderPath : undefined}
-        expiresAt={metadata.expiresAt}
-        isNote={metadata.shareType === "note"}
-      />
-
-      <main className="max-w-4xl mx-auto p-4 md:p-8">
-        {/* Stats and actions */}
-        <div className="flex items-center justify-between mb-6">
-          <p className="text-sm text-muted-foreground">
-            {sortedContent.filter((f) => f.type === "dir").length} dossier(s) ·{" "}
-            {sortedContent.filter((f) => f.type === "file").length} fichier(s)
-          </p>
-
-          {/* Creation buttons (writer mode only) */}
-          {metadata.mode === "writer" && (
-            <div className="flex items-center gap-2">
-              <ShareCreateNoteDialog
-                token={token}
-                currentPath={currentFolderPath}
-                shareFolderPath={displayFolderPath}
-                onCreated={refreshTree}
-                trigger={
-                  <Button variant="outline" size="sm">
-                    <FilePlus className="h-4 w-4 mr-2" />
-                    Nouvelle note
-                  </Button>
-                }
-              />
-              {metadata.includeSubfolders && (
-                <ShareCreateFolderDialog
+            {/* Creation buttons in main area (writer mode only) */}
+            {isWriter && (
+              <div className="flex items-center gap-2">
+                <ShareCreateNoteDialog
                   token={token}
                   currentPath={currentFolderPath}
                   shareFolderPath={displayFolderPath}
                   onCreated={refreshTree}
                   trigger={
                     <Button variant="outline" size="sm">
-                      <FolderPlus className="h-4 w-4 mr-2" />
-                      Nouveau dossier
+                      <FilePlus className="h-4 w-4 mr-2" />
+                      Nouvelle note
                     </Button>
                   }
                 />
-              )}
+                {metadata.includeSubfolders && (
+                  <ShareCreateFolderDialog
+                    token={token}
+                    currentPath={currentFolderPath}
+                    shareFolderPath={displayFolderPath}
+                    onCreated={refreshTree}
+                    trigger={
+                      <Button variant="outline" size="sm">
+                        <FolderPlus className="h-4 w-4 mr-2" />
+                        Nouveau dossier
+                      </Button>
+                    }
+                  />
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Content Grid */}
+          {sortedContent.length === 0 ? (
+            <div className="text-center py-12 border border-dashed border-border rounded-lg">
+              <Folder className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+              <p className="text-muted-foreground">Ce dossier est vide</p>
+            </div>
+          ) : (
+            <div className="grid gap-2">
+              {sortedContent.map((item) => (
+                <ShareItem
+                  key={item.path}
+                  item={item}
+                  token={token}
+                  shareFolderPath={displayFolderPath}
+                />
+              ))}
             </div>
           )}
         </div>
+      </UniversalLayout>
 
-        {/* Content Grid */}
-        {sortedContent.length === 0 ? (
-          <div className="text-center py-12 border border-dashed border-border rounded-lg">
-            <Folder className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-            <p className="text-muted-foreground">Ce dossier est vide</p>
-          </div>
-        ) : (
-          <div className="grid gap-2">
-            {sortedContent.map((item) => (
-              <ShareItem
-                key={item.path}
-                item={item}
-                token={token}
-                shareFolderPath={displayFolderPath}
-              />
-            ))}
-          </div>
-        )}
-      </main>
+      {/* Copy to vault dialog */}
+      <CopyToVaultDialog
+        open={copyDialogOpen}
+        onOpenChange={setCopyDialogOpen}
+        token={token}
+        paths={[displayFolderPath]}
+        shareFolderPath={displayFolderPath}
+      />
     </>
   );
 }
@@ -290,9 +352,7 @@ function ShareItem({
   const isDirectory = item.type === "dir";
   const fileType = getFileType(item.name);
 
-  // Build href
   const getHref = () => {
-    // Get relative path from share folder
     const relativePath = item.path.startsWith(shareFolderPath + "/")
       ? item.path.slice(shareFolderPath.length + 1)
       : item.name;
@@ -301,7 +361,6 @@ function ShareItem({
       return `/s/${token}?path=${encodeURIComponent(relativePath)}`;
     }
 
-    // For files, route to appropriate viewer
     const pathWithoutExt = relativePath
       .replace(/\.md$/, "")
       .replace(/\.canvas$/, "")
@@ -314,13 +373,11 @@ function ShareItem({
       return `/s/${token}/file/${encodedPath}`;
     }
     if (fileType === "canvas") {
-      // Canvas not supported in share viewer yet
       return "#";
     }
     return `/s/${token}/note/${encodedPath}`;
   };
 
-  // Get icon
   const getIcon = () => {
     if (isDirectory) {
       return <Folder className="h-5 w-5 text-primary/70" />;
@@ -339,7 +396,6 @@ function ShareItem({
     }
   };
 
-  // Display name
   const displayName = (() => {
     if (isDirectory) return item.name;
     if (fileType === "markdown") return item.name.replace(/\.md$/, "");
@@ -347,7 +403,6 @@ function ShareItem({
     return item.name;
   })();
 
-  // Child count for folders
   const childCount =
     isDirectory && item.children
       ? item.children.filter((c) => c.type === "dir" || isViewableFile(c.name))

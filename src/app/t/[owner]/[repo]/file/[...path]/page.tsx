@@ -3,17 +3,15 @@
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
-import { ArrowLeft, AlertCircle, Loader2, Clock, Download } from "lucide-react";
+import { ArrowLeft, AlertCircle, Loader2, Clock, Download, Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { TempVaultHeader } from "@/components/temp/temp-vault-header";
-import { TempVaultSidebar } from "@/components/temp/temp-vault-sidebar";
+import { UniversalLayout, SidebarHeader } from "@/components/layout";
 import type { VaultFile } from "@/types";
 import type { RateLimitInfo } from "@/lib/github";
 
 interface FileData {
   path: string;
-  content: string; // base64 for binary
+  content: string;
   mimeType: string;
   fileType: string;
 }
@@ -25,6 +23,7 @@ interface RepoInfo {
   defaultBranch: string;
   description: string | null;
   stars: number;
+  isPrivate: boolean;
 }
 
 export default function TempVaultFilePage() {
@@ -45,16 +44,6 @@ export default function TempVaultFilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isRateLimited, setIsRateLimited] = useState(false);
-
-  // Try to detect file extension
-  const getFileExtension = () => {
-    // Check common image extensions
-    for (const ext of [".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".bmp"]) {
-      const testPath = `${relativePath}${ext}`;
-      return { ext, path: testPath, type: "image" };
-    }
-    return { ext: ".png", path: `${relativePath}.png`, type: "image" };
-  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -208,28 +197,38 @@ export default function TempVaultFilePage() {
   const fileName = file.path.split("/").pop() || "file";
 
   return (
-    <>
-      {tree.length > 0 && (
-        <TempVaultSidebar
-          owner={owner}
-          repo={repo}
-          tree={tree}
-          branch={repoInfo.branch}
-          rootPath={rootPath}
+    <UniversalLayout
+      mode="temp"
+      tree={tree}
+      currentPath={relativePath}
+      metadata={{
+        owner,
+        repo,
+        branch: repoInfo.branch,
+        defaultBranch: repoInfo.defaultBranch,
+        description: repoInfo.description,
+        stars: repoInfo.stars,
+        isPrivate: repoInfo.isPrivate ?? false,
+        rateLimit,
+      }}
+      permissions={{
+        canEdit: false,
+        canCreate: false,
+        canDelete: false,
+        canCopy: false,
+        canExport: false,
+        canShare: false,
+        isAuthenticated: false,
+      }}
+      sidebarHeader={
+        <SidebarHeader
+          title={`${owner}/${repo}`}
+          icon={<Github className="h-5 w-5" />}
         />
-      )}
-
-      <TempVaultHeader
-        owner={owner}
-        repo={repo}
-        branch={repoInfo.branch}
-        description={repoInfo.description}
-        stars={repoInfo.stars}
-        rateLimit={rateLimit}
-        currentPath={relativePath}
-      />
-
-      <main className="max-w-4xl mx-auto p-4 md:p-8">
+      }
+      showSidebar={tree.length > 0}
+    >
+      <div className="max-w-4xl mx-auto p-4 md:p-8">
         {/* Back button + actions */}
         <div className="flex items-center justify-between mb-6">
           <Button asChild variant="ghost" size="sm">
@@ -276,7 +275,7 @@ export default function TempVaultFilePage() {
             />
           )}
         </div>
-      </main>
-    </>
+      </div>
+    </UniversalLayout>
   );
 }

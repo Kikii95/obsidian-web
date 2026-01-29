@@ -83,10 +83,10 @@ export function ShareSidebar({
         {isOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
       </Button>
 
-      {/* Sidebar overlay (mobile) */}
+      {/* Sidebar overlay - visible on all screen sizes */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          className="fixed inset-0 z-30 bg-black/50 md:bg-black/20"
           onClick={() => setIsOpen(false)}
         />
       )}

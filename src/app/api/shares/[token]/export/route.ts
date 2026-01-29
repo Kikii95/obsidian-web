@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getShareContext } from "@/lib/server-share-context";
 import { getFileType } from "@/lib/file-types";
+import { joinPath } from "@/lib/tree-utils";
 
 interface ExportedFile {
   path: string;
@@ -51,6 +52,7 @@ export async function POST(
 
     const sharePath = ctx.share.folderPath;
     const { octokit, vaultConfig } = ctx;
+    const rootPath = vaultConfig.rootPath || "";
 
     // Validate all paths are within share
     for (const path of paths) {
@@ -67,11 +69,14 @@ export async function POST(
 
     for (const path of paths) {
       try {
+        // Build GitHub path (prepend rootPath if configured)
+        const githubPath = joinPath(rootPath, path);
+
         // Get file/directory info
         const { data } = await octokit.repos.getContent({
           owner: vaultConfig.owner,
           repo: vaultConfig.repo,
-          path,
+          path: githubPath,
           ref: vaultConfig.branch,
         });
 
@@ -81,13 +86,14 @@ export async function POST(
             octokit,
             vaultConfig,
             path,
-            sharePath
+            sharePath,
+            rootPath
           );
           files.push(...dirFiles);
         } else if (data.type === "file") {
           // It's a file
           const relativePath = path.slice(sharePath.length + 1);
-          const file = await exportFile(octokit, vaultConfig, path, relativePath);
+          const file = await exportFile(octokit, vaultConfig, path, relativePath, rootPath);
           if (file) files.push(file);
         }
       } catch (error) {
@@ -113,13 +119,17 @@ async function exportFile(
   octokit: ReturnType<typeof import("@/lib/github").createOctokit>,
   vaultConfig: { owner: string; repo: string; branch: string },
   fullPath: string,
-  relativePath: string
+  relativePath: string,
+  rootPath: string
 ): Promise<ExportedFile | null> {
   try {
+    // Build GitHub path with rootPath
+    const githubPath = joinPath(rootPath, fullPath);
+
     const { data } = await octokit.repos.getContent({
       owner: vaultConfig.owner,
       repo: vaultConfig.repo,
-      path: fullPath,
+      path: githubPath,
       ref: vaultConfig.branch,
     });
 
@@ -180,15 +190,19 @@ async function exportDirectory(
   octokit: ReturnType<typeof import("@/lib/github").createOctokit>,
   vaultConfig: { owner: string; repo: string; branch: string },
   dirPath: string,
-  sharePath: string
+  sharePath: string,
+  rootPath: string
 ): Promise<ExportedFile[]> {
   const files: ExportedFile[] = [];
 
   try {
+    // Build GitHub path with rootPath
+    const githubPath = joinPath(rootPath, dirPath);
+
     const { data } = await octokit.repos.getContent({
       owner: vaultConfig.owner,
       repo: vaultConfig.repo,
-      path: dirPath,
+      path: githubPath,
       ref: vaultConfig.branch,
     });
 
@@ -197,17 +211,23 @@ async function exportDirectory(
     }
 
     for (const item of data) {
+      // Convert GitHub path back to vault-relative path
+      const vaultPath = rootPath && item.path.startsWith(rootPath + "/")
+        ? item.path.slice(rootPath.length + 1)
+        : item.path;
+
       if (item.type === "file") {
-        const relativePath = item.path.slice(sharePath.length + 1);
-        const file = await exportFile(octokit, vaultConfig, item.path, relativePath);
+        const relativePath = vaultPath.slice(sharePath.length + 1);
+        const file = await exportFile(octokit, vaultConfig, vaultPath, relativePath, rootPath);
         if (file) files.push(file);
       } else if (item.type === "dir") {
         // Recursively export subdirectory
         const subFiles = await exportDirectory(
           octokit,
           vaultConfig,
-          item.path,
-          sharePath
+          vaultPath,
+          sharePath,
+          rootPath
         );
         files.push(...subFiles);
       }

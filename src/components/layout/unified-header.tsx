@@ -29,6 +29,7 @@ import {
   ExternalLink,
   Clock,
   LogIn,
+  ArrowLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLayoutContext, useLayoutFeatures } from "@/contexts/layout-context";
@@ -166,6 +167,16 @@ function DefaultRightContent({
 }) {
   return (
     <>
+      {/* Exit Explorer button for temp vault */}
+      {mode === "temp" && (
+        <Button variant="ghost" size="sm" asChild title="Exit Explorer">
+          <Link href="/">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            <span className="hidden sm:inline">Exit</span>
+          </Link>
+        </Button>
+      )}
+
       {/* GitHub link for temp vault */}
       {features.header.showGitHubLink && metadata.mode === "temp" && (
         <Button variant="ghost" size="icon" asChild title="View on GitHub">
@@ -315,8 +326,10 @@ function UserMenu({ session }: { session: NonNullable<ReturnType<typeof useSessi
 
 /**
  * Rate limit display for temp vault
+ * Shows auth status based on rate limit (5000 = authenticated, 60 = anonymous)
  */
 function RateLimitDisplay({ rateLimit }: { rateLimit: RateLimitInfo }) {
+  const isAuthenticated = rateLimit.limit > 100; // 5000 for auth, 60 for anon
   const percentage = (rateLimit.remaining / rateLimit.limit) * 100;
   const colorClass =
     percentage > 30
@@ -327,6 +340,12 @@ function RateLimitDisplay({ rateLimit }: { rateLimit: RateLimitInfo }) {
 
   return (
     <div className="flex items-center gap-2 text-sm">
+      <span className={cn(
+        "px-1.5 py-0.5 rounded text-xs",
+        isAuthenticated ? "bg-green-500/10 text-green-500" : "bg-amber-500/10 text-amber-500"
+      )}>
+        {isAuthenticated ? "Auth" : "Anon"}
+      </span>
       <span className="text-muted-foreground">API:</span>
       <span className={colorClass}>
         {rateLimit.remaining}/{rateLimit.limit}

@@ -21,6 +21,7 @@ Current sprint planning and bug tracking.
 | B4 | Move dialog blocks subfolders if file already in parent folder | ✅ | 🟡 Medium | Move dialog, tree navigation |
 | B5 | Share links overflow — buttons pushed off screen if path too long | ✅ | 🟢 Easy | Shares page CSS |
 | B6 | PDF export has no styling | ✅ | 🟡 Medium | PDF export (html2pdf.js, syntax highlighting) |
+| B7 | Sidebar navigation on share pages gives loading error | ✅ | 🟢 Easy | buildHref relative path fix in universal-layout.tsx |
 
 ---
 
@@ -140,13 +141,13 @@ Current sprint planning and bug tracking.
 
 | Category | Total | Done | Remaining |
 |----------|-------|------|-----------|
-| Bugs | 6 | 6 | 0 |
+| Bugs | 7 | 7 | 0 |
 | Features | 24 | 24 | 0 |
 | PWA | 3 | 3 | 0 |
-| **Total** | **33** | **33** | **0** |
+| **Total** | **34** | **34** | **0** |
 
 ### 🎉 All Features Complete!
 
 ---
 
-*Last updated: 2026-01-29*
+*Last updated: 2026-01-31*

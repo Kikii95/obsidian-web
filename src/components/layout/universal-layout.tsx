@@ -137,12 +137,24 @@ function UniversalLayoutContent({
 
     if (mode === "share") {
       const shareMeta = metadata as ShareMetadata;
-      const { token } = shareMeta;
+      const { token, folderPath } = shareMeta;
+
+      // Calculate path relative to share folder (tree contains absolute paths)
+      const relativePath = file.path.startsWith(folderPath + "/")
+        ? file.path.slice(folderPath.length + 1)
+        : file.name;
+
+      // Remove extension for URL
+      const pathWithoutExt = relativePath
+        .replace(/\.md$/, "")
+        .replace(/\.[^.]+$/, "");
+      const encodedPath = encodeURIComponent(pathWithoutExt);
+
       if (ext === "md") {
-        return `/s/${token}/note/${encodeURIComponent(file.path.replace(/\.md$/, ""))}`;
+        return `/s/${token}/note/${encodedPath}`;
       }
       if (["png", "jpg", "jpeg", "gif", "webp", "svg", "pdf", "mp4", "webm"].includes(ext)) {
-        return `/s/${token}/file/${encodeURIComponent(file.path.replace(/\.[^.]+$/, ""))}`;
+        return `/s/${token}/file/${encodedPath}`;
       }
       return null;
     }

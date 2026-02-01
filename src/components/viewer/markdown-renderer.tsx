@@ -110,6 +110,8 @@ function MarkdownRendererInner({
     processed = processCollapsible(processed);
     // Then process wikilinks
     processed = isShareViewer ? processWikilinksForShare(processed) : processWikilinks(processed, lookupMap);
+    // Process tags for styling
+    processed = processTags(processed);
     return processed;
   }, [content, isShareViewer, lookupMap]);
 
@@ -471,16 +473,27 @@ function MarkdownRendererInner({
               {children}
             </p>
           ),
-          // Custom span for collapsible content (hidden::visible) syntax
-          span: ({ className, node, ...props }) => {
+          // Custom span for collapsible content and tags
+          span: ({ className, node, children, ...props }) => {
             // Check if this is a collapsible toggle span
             if (className === "collapsible-toggle") {
               const hidden = (node?.properties?.dataHidden as string) || "";
               const visible = (node?.properties?.dataVisible as string) || "";
               return <CollapsibleContent hidden={hidden} visible={visible} />;
             }
+            // Check if this is a tag span
+            if (className === "obsidian-tag") {
+              return (
+                <span
+                  className="text-violet-400 bg-violet-500/15 px-1.5 py-0.5 rounded font-medium text-[0.9em]"
+                  {...props}
+                >
+                  {children}
+                </span>
+              );
+            }
             // Regular span
-            return <span className={className} {...props} />;
+            return <span className={className} {...props}>{children}</span>;
           },
           // Custom div for callouts (processed by processCallouts)
           div: ({ className, node, children, ...props }) => {
@@ -715,6 +728,45 @@ function processCallouts(content: string): string {
       result.push(line);
       i++;
     }
+  }
+
+  return result.join("\n");
+}
+
+/**
+ * Process tags (#tag) and wrap them in styled spans
+ * Excludes headings (## at line start) and code blocks
+ */
+function processTags(content: string): string {
+  const lines = content.split("\n");
+  const result: string[] = [];
+  let inCodeBlock = false;
+
+  for (const line of lines) {
+    // Track code block state
+    if (line.startsWith("```")) {
+      inCodeBlock = !inCodeBlock;
+      result.push(line);
+      continue;
+    }
+
+    // Skip processing inside code blocks
+    if (inCodeBlock) {
+      result.push(line);
+      continue;
+    }
+
+    // Skip headings (lines starting with #)
+    if (/^#{1,6}\s/.test(line)) {
+      result.push(line);
+      continue;
+    }
+
+    // Replace tags with styled spans
+    // Match # not preceded by # or word char, followed by word chars (and /)
+    const tagRegex = /(?<![#\w])#([\w][\w/]*)/g;
+    const processed = line.replace(tagRegex, '<span class="obsidian-tag">#$1</span>');
+    result.push(processed);
   }
 
   return result.join("\n");

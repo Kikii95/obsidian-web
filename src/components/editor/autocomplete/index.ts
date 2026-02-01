@@ -3,9 +3,11 @@ import { keymap } from "@codemirror/view";
 import { createWikilinkCompletion } from "./wikilink-completion";
 import { createTagCompletion } from "./tag-completion";
 import { autocompleteTheme } from "./styles";
+import { tagHighlighter, tagHighlighterTheme } from "./tag-highlighter";
 import type { AutocompleteOptions, NoteCompletionItem, TagCompletionItem } from "./types";
 
 export type { NoteCompletionItem, TagCompletionItem, AutocompleteOptions };
+export { tagHighlighter, tagHighlighterTheme };
 
 /**
  * Create the Obsidian-style autocomplete extension for CodeMirror
@@ -13,6 +15,7 @@ export type { NoteCompletionItem, TagCompletionItem, AutocompleteOptions };
  * Features:
  * - [[ triggers note suggestions with fuzzy search
  * - # triggers tag suggestions (excluding headings)
+ * - Tags are highlighted with visual styling
  * - Custom styling matching the app theme
  *
  * @param options Notes and tags to use for completion
@@ -30,22 +33,28 @@ export function createObsidianAutocomplete(options: AutocompleteOptions) {
     completionSources.push(createTagCompletion(tags));
   }
 
-  // Return empty array if no data
-  if (completionSources.length === 0) {
-    return [];
+  // Base extensions (always include tag highlighting)
+  const extensions = [
+    tagHighlighter,
+    tagHighlighterTheme,
+  ];
+
+  // Add autocomplete if we have data
+  if (completionSources.length > 0) {
+    extensions.push(
+      autocompleteTheme,
+      autocompletion({
+        override: completionSources,
+        activateOnTyping: true,
+        maxRenderedOptions: 30,
+        defaultKeymap: true,
+        closeOnBlur: true,
+        aboveCursor: false,
+        icons: true,
+      }),
+      keymap.of(completionKeymap),
+    );
   }
 
-  return [
-    autocompleteTheme,
-    autocompletion({
-      override: completionSources,
-      activateOnTyping: true,
-      maxRenderedOptions: 30,
-      defaultKeymap: true,
-      closeOnBlur: true,
-      aboveCursor: false,
-      icons: true,
-    }),
-    keymap.of(completionKeymap),
-  ];
+  return extensions;
 }

@@ -160,10 +160,8 @@ export function MarkdownEditor({
   const editorRef = useRef<ReactCodeMirrorRef>(null);
 
   // Memoize autocomplete extension to prevent re-creation on every render
+  // Always includes tag highlighter, adds autocomplete when notes/tags available
   const autocompleteExtension = useMemo<Extension[]>(() => {
-    if (notes.length === 0 && tags.length === 0) {
-      return [];
-    }
     return createObsidianAutocomplete({ notes, tags });
   }, [notes, tags]);
 

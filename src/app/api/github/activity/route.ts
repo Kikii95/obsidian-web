@@ -33,15 +33,13 @@ export async function GET(request: Request) {
     let page = 1;
     let hasMore = true;
 
-    // Use configured branch (important for correct commit history)
-    const branch = vaultConfig.branch || "main";
-
     while (hasMore && page <= 10) { // Max 10 pages = 1000 commits (conservative for rate limit)
       try {
+        // Note: sha parameter omitted to use repo's default branch (main/master)
+        // This ensures complete commit history regardless of vaultConfig.branch
         const { data } = await octokit.repos.listCommits({
           owner,
           repo,
-          sha: branch,
           since: since.toISOString(),
           per_page: 100,
           page,

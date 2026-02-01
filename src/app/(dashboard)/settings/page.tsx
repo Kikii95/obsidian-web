@@ -1035,6 +1035,44 @@ export default function SettingsPage() {
             <p><strong>Refresh :</strong> Compare les SHA, indexe uniquement les fichiers nouveaux/modifiés (rapide, ~0 appels API si rien n&apos;a changé)</p>
             <p><strong>Rebuild :</strong> Supprime l&apos;index et réindexe tout depuis zéro (lent, utilise des appels API)</p>
           </div>
+
+          {/* Auto-refresh settings */}
+          <div className="pt-4 border-t border-border/50 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Auto-refresh</Label>
+                <p className="text-sm text-muted-foreground">
+                  Actualise l&apos;index automatiquement au chargement
+                </p>
+              </div>
+              <Switch
+                checked={draft.autoRefreshIndex ?? true}
+                onCheckedChange={(checked) => updateDraft("autoRefreshIndex", checked)}
+              />
+            </div>
+
+            {(draft.autoRefreshIndex ?? true) && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm">Intervalle</Label>
+                  <span className="text-sm font-mono text-muted-foreground">
+                    {draft.autoRefreshIntervalDays ?? 7} jour{(draft.autoRefreshIntervalDays ?? 7) > 1 ? "s" : ""}
+                  </span>
+                </div>
+                <Slider
+                  value={[draft.autoRefreshIntervalDays ?? 7]}
+                  onValueChange={([value]) => updateDraft("autoRefreshIntervalDays", value)}
+                  min={1}
+                  max={30}
+                  step={1}
+                  className="flex-1"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Refresh automatique si l&apos;index date de plus de {draft.autoRefreshIntervalDays ?? 7} jour{(draft.autoRefreshIntervalDays ?? 7) > 1 ? "s" : ""}
+                </p>
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
 

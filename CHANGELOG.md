@@ -27,6 +27,9 @@ All notable changes to this project will be documented in this file.
 - **QW12: Code Block Filename** - Affichage nom fichier dans blocs code (` ```js title="app.js" `)
 - **QW13: What's New Modal** - Interface patch notes avec historique complet des versions (11 releases)
 
+### Fixed
+- **Activity Heatmap** - Utilise GitHub Stats API pour afficher 52 semaines d'historique (plus de limite 1000 commits)
+
 ### Changed
 - Markdown renderer supporte maintenant les callouts Obsidian
 - Images dans les notes sont cliquables pour zoom

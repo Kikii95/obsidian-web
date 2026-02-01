@@ -25,6 +25,7 @@ All notable changes to this project will be documented in this file.
 - **QW10: Frontmatter Viewer** - Affichage collapsible avec mode YAML et copie
 - **QW11: Image Zoom Modal** - Zoom images avec navigation, rotation et téléchargement
 - **QW12: Code Block Filename** - Affichage nom fichier dans blocs code (` ```js title="app.js" `)
+- **QW13: What's New Modal** - Interface patch notes avec historique complet des versions (11 releases)
 
 ### Changed
 - Markdown renderer supporte maintenant les callouts Obsidian

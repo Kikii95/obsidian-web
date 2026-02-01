@@ -3,3 +3,7 @@ export { NoteToolbar } from "./note-toolbar";
 export { NoteWikilinks } from "./note-wikilinks";
 export { NoteBacklinks } from "./note-backlinks";
 export { NoteHistory } from "./note-history";
+export { CopyLinkButton } from "./copy-link-button";
+export { TableOfContents } from "./table-of-contents";
+export { NoteStats } from "./note-stats";
+export { FrontmatterViewer } from "./frontmatter-viewer";

@@ -23,7 +23,7 @@ const MarkdownEditor = dynamic(
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, ChevronRight, FileText, RefreshCw } from "lucide-react";
-import { NoteBreadcrumb, NoteToolbar, NoteWikilinks, NoteBacklinks } from "@/components/note";
+import { NoteBreadcrumb, NoteToolbar, NoteWikilinks, NoteBacklinks, TableOfContents, NoteStats, FrontmatterViewer } from "@/components/note";
 import { LockedNoteView } from "@/components/lock/locked-note-view";
 import { PinDialog } from "@/components/lock/pin-dialog";
 import { useOnlineStatus } from "@/hooks/use-online-status";
@@ -251,20 +251,38 @@ export default function NotePage() {
         </div>
       )}
 
-      {/* Frontmatter badges */}
-      {(settings.showFrontmatter ?? true) && note.frontmatter && Object.keys(note.frontmatter).length > 0 && !editor.isEditing && (
-        <div className="flex flex-wrap gap-2 mb-4">
-          {note.frontmatter.status ? (
-            <Badge variant="outline">{String(note.frontmatter.status)}</Badge>
-          ) : null}
-          {Array.isArray(note.frontmatter.tags)
-            ? note.frontmatter.tags.map((tag) => (
-                <Badge key={String(tag)} variant="secondary">
-                  #{String(tag)}
-                </Badge>
-              ))
-            : null}
-        </div>
+      {/* Quick frontmatter badges (status + tags) */}
+      {(settings.showFrontmatter ?? true) && note.frontmatter && !editor.isEditing && (
+        <>
+          {(note.frontmatter.status || Array.isArray(note.frontmatter.tags)) && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {note.frontmatter.status ? (
+                <Badge variant="outline">{String(note.frontmatter.status)}</Badge>
+              ) : null}
+              {Array.isArray(note.frontmatter.tags)
+                ? note.frontmatter.tags.map((tag) => (
+                    <Badge key={String(tag)} variant="secondary">
+                      #{String(tag)}
+                    </Badge>
+                  ))
+                : null}
+            </div>
+          )}
+          {/* Full frontmatter viewer (collapsible) */}
+          {Object.keys(note.frontmatter).length > 0 && (
+            <FrontmatterViewer frontmatter={note.frontmatter} className="mb-4" />
+          )}
+        </>
+      )}
+
+      {/* Note stats (word count, reading time) */}
+      {!editor.isEditing && (
+        <NoteStats content={note.content} className="mb-4" />
+      )}
+
+      {/* Table of Contents */}
+      {!editor.isEditing && (
+        <TableOfContents content={note.content} className="mb-6" />
       )}
 
       {/* Content - Editor or Viewer */}

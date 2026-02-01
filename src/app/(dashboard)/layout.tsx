@@ -25,6 +25,8 @@ import { ResizableSidebar } from "@/components/ui/resizable-sidebar";
 import { GlobalLockStatus } from "@/components/lock/global-lock-status";
 import { HeaderDateTime } from "@/components/ui/header-date-time";
 import { QuickSwitcher } from "@/components/navigation/quick-switcher";
+import { ShortcutsModal } from "@/components/ui/shortcuts-modal";
+import { useShortcutsModal } from "@/hooks/use-shortcuts-modal";
 import { DailyNoteButton } from "@/components/navigation/daily-note-button";
 import { ScrollRestoration } from "@/components/navigation/scroll-restoration";
 import { RateLimitIndicator } from "@/components/ui/rate-limit-indicator";
@@ -47,6 +49,7 @@ export default function DashboardLayout({
   const { sidebarOpen, toggleSidebar } = useVaultStore();
   const { exitSelectionMode } = useSelectionStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { isOpen: shortcutsOpen, setIsOpen: setShortcutsOpen } = useShortcutsModal();
 
   // Load and validate vault config (redirects to /setup if not configured)
   const { isLoading: isVaultConfigLoading, isConfigured } = useVaultConfig();
@@ -298,6 +301,9 @@ export default function DashboardLayout({
 
       {/* Quick Switcher (Ctrl+P) */}
       <QuickSwitcher />
+
+      {/* Keyboard Shortcuts Modal (? or Ctrl+/) */}
+      <ShortcutsModal open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
 
       {/* Scroll Restoration */}
       <ScrollRestoration />

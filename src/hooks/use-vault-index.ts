@@ -46,7 +46,7 @@ export function useVaultIndex() {
     totalFiles: number,
     currentIndex: number,
     signal: AbortSignal
-  ): Promise<{ indexed: number; failed: number }> => {
+  ): Promise<{ indexed: number; failed: number; isComplete: boolean }> => {
     const response = await fetch("/api/vault/index/batch", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

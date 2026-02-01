@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useId, useCallback } from "react";
+import { useState, useEffect, useRef, useId, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { Loader2, AlertTriangle, Copy, Check, ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -51,8 +51,8 @@ export function MermaidDiagram({ code, className }: MermaidDiagramProps) {
   const uniqueId = useId().replace(/:/g, "_");
   const { resolvedTheme } = useTheme();
 
-  // Build theme variables with resolved CSS colors
-  const getThemeVariables = useCallback(() => {
+  // Build theme variables with resolved CSS colors (memoized to prevent infinite re-renders)
+  const themeVariables = useMemo(() => {
     const isDark = resolvedTheme === "dark";
     const foreground = getCssColor("--foreground", isDark ? "#f9fafb" : "#111827");
     const mutedForeground = getCssColor("--muted-foreground", isDark ? "#9ca3af" : "#6b7280");
@@ -115,7 +115,7 @@ export function MermaidDiagram({ code, className }: MermaidDiagramProps) {
           darkMode: isDark,
           securityLevel: "loose",
           fontFamily: "var(--font-geist-sans), system-ui, sans-serif",
-          themeVariables: getThemeVariables(),
+          themeVariables,
         });
 
         const { svg: renderedSvg } = await mermaid.render(
@@ -142,7 +142,7 @@ export function MermaidDiagram({ code, className }: MermaidDiagramProps) {
     return () => {
       mounted = false;
     };
-  }, [code, uniqueId, resolvedTheme, getThemeVariables]);
+  }, [code, uniqueId, resolvedTheme, themeVariables]);
 
   const handleCopy = async () => {
     try {

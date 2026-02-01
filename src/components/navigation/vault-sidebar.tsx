@@ -232,6 +232,9 @@ export function VaultSidebar() {
   const customFolderOrders = settings.customFolderOrders ?? {};
   const vaultRootPath = settings.vaultRootPath ?? "";
 
+  // Pre-calculate all folder paths once (fixes INP-348: Expand All blocking UI 348ms)
+  const allFolderPaths = useMemo(() => getAllFolderPaths(tree), [tree]);
+
   // Get the subtree based on vaultRootPath, then filter and sort
   const filteredTree = useMemo(() => {
     // First, navigate to the vault root subfolder
@@ -495,7 +498,7 @@ export function VaultSidebar() {
               className="h-6 w-6"
               onClick={(e) => {
                 e.preventDefault();
-                expandAllFolders(getAllFolderPaths(tree));
+                expandAllFolders(allFolderPaths);
               }}
               title="Tout ouvrir"
             >

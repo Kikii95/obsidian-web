@@ -85,12 +85,12 @@ export const tagHighlighter = ViewPlugin.fromClass(
 );
 
 /**
- * Theme for tag highlighting - using direct colors for compatibility
+ * Theme for tag highlighting - uses CSS variables for theme compatibility
  */
 export const tagHighlighterTheme = EditorView.theme({
   ".cm-obsidian-tag": {
-    color: "#8b5cf6",
-    backgroundColor: "rgba(139, 92, 246, 0.15)",
+    color: "hsl(var(--primary))",
+    backgroundColor: "hsl(var(--primary) / 0.15)",
     borderRadius: "4px",
     padding: "1px 5px",
     fontWeight: "500",

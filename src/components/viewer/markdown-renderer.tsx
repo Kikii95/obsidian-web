@@ -485,7 +485,7 @@ function MarkdownRendererInner({
             if (className === "obsidian-tag") {
               return (
                 <span
-                  className="text-violet-400 bg-violet-500/15 px-1.5 py-0.5 rounded font-medium text-[0.9em]"
+                  className="text-primary bg-primary/15 px-1.5 py-0.5 rounded font-medium text-[0.9em]"
                   {...props}
                 >
                   {children}

@@ -206,7 +206,9 @@ export default function GraphPage() {
           </div>
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span className="hidden sm:inline">{graphData.connectedNotes} notes</span>
+          <span className="hidden sm:inline">
+            {graphData.connectedNotes} connectées / {graphData.totalNotes} indexées
+          </span>
           <span className="hidden sm:inline">•</span>
           <span className="hidden sm:inline">{graphData.links.length} liens</span>
 

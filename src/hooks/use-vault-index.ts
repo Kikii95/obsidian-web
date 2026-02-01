@@ -19,12 +19,25 @@ interface FileToIndex {
   sha: string;
 }
 
+// Stats from the last refresh/rebuild operation
+export interface LastRefreshStats {
+  mode: "refresh" | "rebuild";
+  totalFiles: number;
+  newFiles: number;
+  modifiedFiles: number;
+  deletedFiles: number;
+  unchangedFiles: number;
+  timestamp: string;
+  wasUpToDate: boolean; // true if nothing needed processing
+}
+
 const BATCH_SIZE = 10;
 
 export function useVaultIndex() {
   const [status, setStatus] = useState<IndexStatus | null>(null);
   const [isIndexing, setIsIndexing] = useState(false);
   const [progress, setProgress] = useState({ indexed: 0, total: 0 });
+  const [lastRefreshStats, setLastRefreshStats] = useState<LastRefreshStats | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const fetchStatus = useCallback(async () => {
@@ -97,8 +110,37 @@ export function useVaultIndex() {
         return;
       }
 
+      // If already up to date, save stats and return early
+      if (startData.status === "completed" && startData.mode === "refresh") {
+        setLastRefreshStats({
+          mode: "refresh",
+          totalFiles: startData.totalFiles,
+          newFiles: startData.newFiles,
+          modifiedFiles: startData.modifiedFiles,
+          deletedFiles: startData.deletedFiles,
+          unchangedFiles: startData.unchangedFiles,
+          timestamp: new Date().toISOString(),
+          wasUpToDate: true,
+        });
+        await fetchStatus();
+        setIsIndexing(false);
+        return;
+      }
+
+      // Save refresh stats
+      setLastRefreshStats({
+        mode: startData.mode || "refresh",
+        totalFiles: startData.totalFiles,
+        newFiles: startData.newFiles || 0,
+        modifiedFiles: startData.modifiedFiles || 0,
+        deletedFiles: startData.deletedFiles || 0,
+        unchangedFiles: startData.unchangedFiles || 0,
+        timestamp: new Date().toISOString(),
+        wasUpToDate: false,
+      });
+
       const files: FileToIndex[] = startData.files;
-      const totalFiles = startData.totalFiles;
+      const totalFiles = files.length; // Use actual files to process count
       setProgress({ indexed: 0, total: totalFiles });
 
       // Process in batches
@@ -211,6 +253,7 @@ export function useVaultIndex() {
     status,
     isIndexing,
     progress,
+    lastRefreshStats,
     fetchStatus,
     startIndexing,
     cancelIndexing,

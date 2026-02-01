@@ -128,6 +128,45 @@ export async function deleteAllVaultIndexEntries(vaultKey: VaultKey): Promise<vo
     );
 }
 
+export async function getVaultIndexShas(
+  vaultKey: VaultKey
+): Promise<Map<string, string>> {
+  const entries = await db
+    .select({ filePath: vaultIndex.filePath, fileSha: vaultIndex.fileSha })
+    .from(vaultIndex)
+    .where(
+      and(
+        eq(vaultIndex.userId, vaultKey.userId),
+        eq(vaultIndex.owner, vaultKey.owner),
+        eq(vaultIndex.repo, vaultKey.repo),
+        eq(vaultIndex.branch, vaultKey.branch)
+      )
+    );
+
+  return new Map(entries.map((e) => [e.filePath, e.fileSha]));
+}
+
+export async function deleteVaultIndexEntries(
+  vaultKey: VaultKey,
+  filePaths: string[]
+): Promise<void> {
+  if (filePaths.length === 0) return;
+
+  for (const filePath of filePaths) {
+    await db
+      .delete(vaultIndex)
+      .where(
+        and(
+          eq(vaultIndex.userId, vaultKey.userId),
+          eq(vaultIndex.owner, vaultKey.owner),
+          eq(vaultIndex.repo, vaultKey.repo),
+          eq(vaultIndex.branch, vaultKey.branch),
+          eq(vaultIndex.filePath, filePath)
+        )
+      );
+  }
+}
+
 // === VAULT INDEX STATUS ===
 
 export async function getVaultIndexStatus(vaultKey: VaultKey): Promise<VaultIndexStatus | null> {

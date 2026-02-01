@@ -121,6 +121,7 @@ export default function SettingsPage() {
     status: indexStatus,
     isIndexing,
     progress: indexProgress,
+    lastRefreshStats,
     fetchStatus: fetchIndexStatus,
     startIndexing,
     cancelIndexing,
@@ -882,7 +883,7 @@ export default function SettingsPage() {
             Index du Vault
           </CardTitle>
           <CardDescription>
-            Indexation pour tags, backlinks et graph performants
+            Index PostgreSQL pour tags, backlinks et graph performants
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -947,6 +948,52 @@ export default function SettingsPage() {
             </div>
           )}
 
+          {/* Last refresh stats */}
+          {lastRefreshStats && !isIndexing && (
+            <div className="p-3 rounded-lg border border-border/50 bg-card/50 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">
+                  Dernier {lastRefreshStats.mode === "rebuild" ? "rebuild" : "refresh"}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {new Date(lastRefreshStats.timestamp).toLocaleTimeString("fr-FR")}
+                </span>
+              </div>
+              {lastRefreshStats.wasUpToDate ? (
+                <p className="text-sm text-green-600 dark:text-green-400">
+                  ✓ Index déjà à jour — aucun changement détecté
+                </p>
+              ) : (
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  {lastRefreshStats.newFiles > 0 && (
+                    <div className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-green-500" />
+                      <span>{lastRefreshStats.newFiles} nouveaux</span>
+                    </div>
+                  )}
+                  {lastRefreshStats.modifiedFiles > 0 && (
+                    <div className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-blue-500" />
+                      <span>{lastRefreshStats.modifiedFiles} modifiés</span>
+                    </div>
+                  )}
+                  {lastRefreshStats.deletedFiles > 0 && (
+                    <div className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-red-500" />
+                      <span>{lastRefreshStats.deletedFiles} supprimés</span>
+                    </div>
+                  )}
+                  {lastRefreshStats.unchangedFiles > 0 && (
+                    <div className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-muted-foreground" />
+                      <span>{lastRefreshStats.unchangedFiles} inchangés</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Action buttons */}
           <div className="flex gap-2">
             {isIndexing ? (
@@ -967,7 +1014,7 @@ export default function SettingsPage() {
                   disabled={isIndexing}
                 >
                   <Search className="h-4 w-4 mr-2" />
-                  {indexStatus?.status === "completed" ? "Mettre à jour" : "Indexer le vault"}
+                  {indexStatus?.status === "completed" ? "Refresh" : "Indexer le vault"}
                 </Button>
                 {indexStatus?.status === "completed" && (
                   <Button
@@ -976,17 +1023,18 @@ export default function SettingsPage() {
                     disabled={isIndexing}
                   >
                     <RefreshCw className="h-4 w-4 mr-2" />
-                    Reconstruire
+                    Rebuild
                   </Button>
                 )}
               </>
             )}
           </div>
 
-          <p className="text-xs text-muted-foreground">
-            L&apos;index permet aux tags, backlinks et graph de fonctionner sans appels API répétés.
-            Reconstruire réinitialise l&apos;index complet.
-          </p>
+          {/* Mode explanation */}
+          <div className="text-xs text-muted-foreground space-y-1 p-3 rounded-lg bg-muted/30">
+            <p><strong>Refresh :</strong> Compare les SHA, indexe uniquement les fichiers nouveaux/modifiés (rapide, ~0 appels API si rien n&apos;a changé)</p>
+            <p><strong>Rebuild :</strong> Supprime l&apos;index et réindexe tout depuis zéro (lent, utilise des appels API)</p>
+          </div>
         </CardContent>
       </Card>
 

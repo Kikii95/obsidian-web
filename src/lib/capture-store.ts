@@ -8,6 +8,7 @@ export interface CaptureItem {
   content: string;
   targetFolder: string;
   appendToDaily: boolean;
+  customFilename: string;
   createdAt: number;
   synced: boolean;
 }
@@ -20,6 +21,7 @@ interface CaptureStore {
   draft: string;
   targetFolder: string;
   appendToDaily: boolean;
+  customFilename: string;
 
   // UI state
   isOpen: boolean;
@@ -29,6 +31,7 @@ interface CaptureStore {
   setDraft: (content: string) => void;
   setTargetFolder: (folder: string) => void;
   setAppendToDaily: (value: boolean) => void;
+  setCustomFilename: (filename: string) => void;
   setIsOpen: (open: boolean) => void;
   setIsVoiceActive: (active: boolean) => void;
 
@@ -50,12 +53,14 @@ export const useCaptureStore = create<CaptureStore>()(
       draft: "",
       targetFolder: "",
       appendToDaily: false,
+      customFilename: "",
       isOpen: false,
       isVoiceActive: false,
 
       setDraft: (content) => set({ draft: content }),
       setTargetFolder: (folder) => set({ targetFolder: folder }),
       setAppendToDaily: (value) => set({ appendToDaily: value }),
+      setCustomFilename: (filename) => set({ customFilename: filename }),
       setIsOpen: (open) => set({ isOpen: open }),
       setIsVoiceActive: (active) => set({ isVoiceActive: active }),
 
@@ -90,7 +95,7 @@ export const useCaptureStore = create<CaptureStore>()(
       },
 
       clearDraft: () => {
-        set({ draft: "", appendToDaily: false });
+        set({ draft: "", appendToDaily: false, customFilename: "" });
       },
 
       getPendingCount: () => {
@@ -103,6 +108,7 @@ export const useCaptureStore = create<CaptureStore>()(
         queue: state.queue,
         targetFolder: state.targetFolder,
         appendToDaily: state.appendToDaily,
+        customFilename: state.customFilename,
       }),
     }
   )

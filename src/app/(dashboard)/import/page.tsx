@@ -142,6 +142,23 @@ export default function ImportPage() {
         setProgress((processed / entries.length) * 100);
       }
 
+      // Check if we found any files to import
+      if (files.length === 0) {
+        const htmlCount = warnings.filter(w => w.includes("HTML ignoré")).length;
+        if (htmlCount > 0) {
+          setError(
+            `Aucun fichier Markdown trouvé. ${htmlCount} fichier(s) HTML détecté(s). ` +
+            `Veuillez ré-exporter depuis Notion en sélectionnant "Markdown & CSV" au lieu de "HTML".`
+          );
+        } else {
+          setError(
+            "Aucun fichier compatible trouvé dans l'archive ZIP. " +
+            "Assurez-vous d'exporter depuis Notion en format Markdown & CSV."
+          );
+        }
+        return;
+      }
+
       // Update state
       const suggestedFolder = suggestTargetFolder(files);
       setImportState({
@@ -161,12 +178,19 @@ export default function ImportPage() {
 
   // Handle import
   const handleImport = async () => {
+    const total = importState.files.length + importState.images.length;
+
+    // Safety check - should not happen if preview worked correctly
+    if (total === 0) {
+      setError("Aucun fichier à importer. Veuillez recommencer.");
+      return;
+    }
+
     setStep("importing");
     setProgress(0);
     setError(null);
 
     try {
-      const total = importState.files.length + importState.images.length;
       let completed = 0;
       let success = 0;
       let failed = 0;

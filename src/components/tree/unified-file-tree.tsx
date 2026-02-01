@@ -2,11 +2,12 @@
 
 import { memo, useCallback, useMemo, useState } from "react";
 import Link from "next/link";
-import { ChevronRight, ChevronDown } from "lucide-react";
+import { ChevronRight, ChevronDown, Palette } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FileTreeIcon } from "./file-tree-icon";
 import { sortTreeItems, isViewableFile as isViewableTreeFile } from "@/lib/tree-utils";
 import { isViewableFile as isViewableFileType } from "@/lib/file-types";
+import { FolderIconPicker } from "@/components/dialogs/folder-icon-picker";
 import type { VaultFile } from "@/types";
 
 export interface UnifiedFileTreeProps {
@@ -22,6 +23,7 @@ export interface UnifiedFileTreeProps {
   indentSize?: number;
   className?: string;
   folderIcons?: Record<string, string>;
+  onFolderIconChange?: (path: string, iconId: string | null) => void;
 }
 
 /**
@@ -41,6 +43,7 @@ export const UnifiedFileTree = memo(function UnifiedFileTree({
   indentSize = 12,
   className,
   folderIcons = {},
+  onFolderIconChange,
 }: UnifiedFileTreeProps) {
   // Internal expansion state if not provided externally
   const [internalExpanded, setInternalExpanded] = useState<Set<string>>(
@@ -111,6 +114,7 @@ export const UnifiedFileTree = memo(function UnifiedFileTree({
           filterViewable={filterViewable}
           indentSize={indentSize}
           folderIcons={folderIcons}
+          onFolderIconChange={onFolderIconChange}
         />
       ))}
     </div>
@@ -130,6 +134,7 @@ interface TreeItemProps {
   filterViewable: boolean;
   indentSize: number;
   folderIcons: Record<string, string>;
+  onFolderIconChange?: (path: string, iconId: string | null) => void;
 }
 
 const TreeItem = memo(function TreeItem({
@@ -145,11 +150,15 @@ const TreeItem = memo(function TreeItem({
   filterViewable,
   indentSize,
   folderIcons,
+  onFolderIconChange,
 }: TreeItemProps) {
+  const [iconPickerOpen, setIconPickerOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const isDir = item.type === "dir";
   const isExpanded = expandedFolders.has(item.path);
   const isActive = currentPath === item.path;
   const href = buildHref(item);
+  const currentFolderIcon = isDir ? folderIcons[item.path] : undefined;
 
   // Filter children for display
   const visibleChildren = useMemo(() => {
@@ -183,16 +192,27 @@ const TreeItem = memo(function TreeItem({
     [isDir, item, onToggleFolder, onFileClick]
   );
 
+  const handleIconButtonClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIconPickerOpen(true);
+    },
+    []
+  );
+
   const content = (
     <div
       className={cn(
-        "flex items-center gap-1.5 py-1.5 px-2 rounded-md text-sm cursor-pointer",
+        "group flex items-center gap-1.5 py-1.5 px-2 rounded-md text-sm cursor-pointer",
         "hover:bg-muted/50 transition-colors",
         isActive && "bg-primary/10 text-primary font-medium",
         !href && !isDir && "opacity-50 cursor-not-allowed"
       )}
       style={{ paddingLeft: `${depth * indentSize + 8}px` }}
       onClick={handleClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Chevron for directories */}
       {isDir && (
@@ -214,48 +234,77 @@ const TreeItem = memo(function TreeItem({
           file={item}
           isExpanded={isExpanded}
           className="shrink-0"
-          customIconId={isDir ? folderIcons[item.path] : undefined}
+          customIconId={currentFolderIcon}
         />
       )}
 
       {/* Name */}
-      <span className="truncate min-w-0">{displayName}</span>
+      <span className="truncate min-w-0 flex-1">{displayName}</span>
+
+      {/* Folder icon edit button (visible on hover for folders, when callback provided) */}
+      {isDir && onFolderIconChange && isHovered && (
+        <button
+          onClick={handleIconButtonClick}
+          className={cn(
+            "shrink-0 p-0.5 rounded hover:bg-muted-foreground/20 transition-opacity",
+            "opacity-0 group-hover:opacity-100"
+          )}
+          title="Personnaliser l'icône"
+        >
+          <Palette className="h-3.5 w-3.5 text-muted-foreground" />
+        </button>
+      )}
     </div>
   );
 
   return (
-    <div>
-      {isDir || !href ? (
-        content
-      ) : (
-        <Link href={href} className="block">
-          {content}
-        </Link>
-      )}
+    <>
+      <div>
+        {isDir || !href ? (
+          content
+        ) : (
+          <Link href={href} className="block">
+            {content}
+          </Link>
+        )}
 
-      {/* Children */}
-      {isDir && isExpanded && visibleChildren.length > 0 && (
-        <div>
-          {visibleChildren.map((child) => (
-            <TreeItem
-              key={child.path}
-              item={child}
-              depth={depth + 1}
-              currentPath={currentPath}
-              buildHref={buildHref}
-              expandedFolders={expandedFolders}
-              onToggleFolder={onToggleFolder}
-              onFileClick={onFileClick}
-              showIcons={showIcons}
-              showFileExtensions={showFileExtensions}
-              filterViewable={filterViewable}
-              indentSize={indentSize}
-              folderIcons={folderIcons}
-            />
-          ))}
-        </div>
+        {/* Children */}
+        {isDir && isExpanded && visibleChildren.length > 0 && (
+          <div>
+            {visibleChildren.map((child) => (
+              <TreeItem
+                key={child.path}
+                item={child}
+                depth={depth + 1}
+                currentPath={currentPath}
+                buildHref={buildHref}
+                expandedFolders={expandedFolders}
+                onToggleFolder={onToggleFolder}
+                onFileClick={onFileClick}
+                showIcons={showIcons}
+                showFileExtensions={showFileExtensions}
+                filterViewable={filterViewable}
+                indentSize={indentSize}
+                folderIcons={folderIcons}
+                onFolderIconChange={onFolderIconChange}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Folder icon picker dialog */}
+      {isDir && onFolderIconChange && (
+        <FolderIconPicker
+          open={iconPickerOpen}
+          onOpenChange={setIconPickerOpen}
+          folderPath={item.path}
+          currentIcon={currentFolderIcon}
+          onSelect={(iconId) => onFolderIconChange(item.path, iconId)}
+          onRemove={() => onFolderIconChange(item.path, null)}
+        />
       )}
-    </div>
+    </>
   );
 });
 

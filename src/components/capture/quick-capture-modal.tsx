@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { X, Send, FolderOpen, CalendarDays, Loader2 } from "lucide-react";
+import { X, Send, FolderOpen, CalendarDays, Loader2, FileText } from "lucide-react";
 import { useCaptureStore } from "@/lib/capture-store";
 import { VoiceInput } from "./voice-input";
 import { cn } from "@/lib/utils";
@@ -9,7 +9,7 @@ import useSWR from "swr";
 
 interface QuickCaptureModalProps {
   onClose: () => void;
-  onSave: (content: string, targetFolder: string, appendToDaily: boolean) => Promise<void>;
+  onSave: (content: string, targetFolder: string, appendToDaily: boolean, customFilename: string) => Promise<void>;
 }
 
 interface FolderItem {
@@ -24,10 +24,12 @@ export function QuickCaptureModal({ onClose, onSave }: QuickCaptureModalProps) {
     draft,
     targetFolder,
     appendToDaily,
+    customFilename,
     isVoiceActive,
     setDraft,
     setTargetFolder,
     setAppendToDaily,
+    setCustomFilename,
     setIsVoiceActive,
     clearDraft,
     addToQueue,
@@ -82,7 +84,7 @@ export function QuickCaptureModal({ onClose, onSave }: QuickCaptureModalProps) {
 
     setIsSaving(true);
     try {
-      await onSave(draft.trim(), targetFolder, appendToDaily);
+      await onSave(draft.trim(), targetFolder, appendToDaily, customFilename.trim());
       clearDraft();
       onClose();
     } catch (error) {
@@ -92,13 +94,14 @@ export function QuickCaptureModal({ onClose, onSave }: QuickCaptureModalProps) {
         content: draft.trim(),
         targetFolder,
         appendToDaily,
+        customFilename: customFilename.trim(),
       });
       clearDraft();
       onClose();
     } finally {
       setIsSaving(false);
     }
-  }, [draft, targetFolder, appendToDaily, onSave, clearDraft, onClose, addToQueue]);
+  }, [draft, targetFolder, appendToDaily, customFilename, onSave, clearDraft, onClose, addToQueue]);
 
   // Handle Ctrl+Enter to save
   const handleKeyDown = useCallback(
@@ -164,6 +167,22 @@ export function QuickCaptureModal({ onClose, onSave }: QuickCaptureModalProps) {
               </div>
             )}
           </div>
+
+          {/* Filename input (optional) */}
+          {!appendToDaily && (
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-1 px-3 py-2 bg-muted/50 rounded-lg">
+                <FileText className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                <input
+                  type="text"
+                  value={customFilename}
+                  onChange={(e) => setCustomFilename(e.target.value)}
+                  placeholder="Nom du fichier (auto-généré si vide)"
+                  className="flex-1 bg-transparent text-xs outline-none placeholder:text-muted-foreground/50"
+                />
+              </div>
+            </div>
+          )}
 
           {/* Options row */}
           <div className="flex items-center gap-2">

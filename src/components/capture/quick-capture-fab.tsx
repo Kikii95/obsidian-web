@@ -27,11 +27,11 @@ export function QuickCaptureFAB({ className }: QuickCaptureFABProps) {
 
   // Save capture to vault
   const handleSave = useCallback(
-    async (content: string, targetFolder: string, appendToDaily: boolean) => {
+    async (content: string, targetFolder: string, appendToDaily: boolean, customFilename: string) => {
       // Check online status
       if (!isOnline) {
         // Queue for later
-        addToQueue({ content, targetFolder, appendToDaily });
+        addToQueue({ content, targetFolder, appendToDaily, customFilename });
         return;
       }
 
@@ -76,10 +76,23 @@ export function QuickCaptureFAB({ className }: QuickCaptureFABProps) {
         }
       } else {
         // Create new capture note
-        const title = content.split("\n")[0].slice(0, 50).trim() || "Quick Capture";
-        const sanitizedTitle = title.replace(/[/\\?%*:|"<>]/g, "-");
+        // Use custom filename if provided, otherwise auto-generate from content
+        let fileName: string;
+        if (customFilename) {
+          // Sanitize custom filename and add .md extension if needed
+          fileName = customFilename.replace(/[/\\?%*:|"<>]/g, "-");
+          if (!fileName.endsWith(".md")) {
+            fileName += ".md";
+          }
+        } else {
+          // Auto-generate from first line of content
+          const title = content.split("\n")[0].slice(0, 50).trim() || "Quick Capture";
+          const sanitizedTitle = title.replace(/[/\\?%*:|"<>]/g, "-");
+          fileName = `${sanitizedTitle}-${timestamp.replace(/[:.]/g, "-")}.md`;
+        }
+
         const folder = targetFolder || "Captures";
-        const finalPath = `${folder}/${sanitizedTitle}-${timestamp.replace(/[:.]/g, "-")}.md`;
+        const finalPath = `${folder}/${fileName}`;
 
         const frontmatter = `---
 created: ${timestamp}

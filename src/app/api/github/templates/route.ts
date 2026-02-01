@@ -8,8 +8,8 @@ interface Template {
   preview?: string; // First 200 chars
 }
 
-// Templates folder (customizable later via settings)
-const TEMPLATES_FOLDER = "Templates";
+// Templates folder candidates (in order of priority)
+const TEMPLATES_FOLDERS = ["Templates", "_templates", "templates", "_Templates"];
 
 export async function GET() {
   try {
@@ -24,18 +24,29 @@ export async function GET() {
     // Get all files
     const allFiles = await getFullVaultTree(octokit, false, vaultConfig);
 
-    // Find templates folder
-    const templatesFolder = allFiles.find(
-      (f) =>
-        f.type === "dir" &&
-        f.name.toLowerCase() === TEMPLATES_FOLDER.toLowerCase()
-    );
+    // Find templates folder (try multiple naming conventions)
+    let templatesFolder = null;
+    let foundFolderName = null;
+
+    for (const folderName of TEMPLATES_FOLDERS) {
+      const found = allFiles.find(
+        (f) =>
+          f.type === "dir" &&
+          f.name.toLowerCase() === folderName.toLowerCase()
+      );
+      if (found && found.children && found.children.length > 0) {
+        templatesFolder = found;
+        foundFolderName = folderName;
+        break;
+      }
+    }
 
     if (!templatesFolder || !templatesFolder.children) {
       return NextResponse.json({
         templates: [],
-        folder: TEMPLATES_FOLDER,
-        message: `Créez un dossier "${TEMPLATES_FOLDER}" pour utiliser les templates`,
+        folder: TEMPLATES_FOLDERS[0],
+        candidates: TEMPLATES_FOLDERS,
+        message: `Créez un dossier "Templates" ou "_templates" pour utiliser les templates. Variables supportées: {{date}}, {{title}}, {{folder}}, {{time}}, {{clipboard}}`,
       });
     }
 
@@ -81,7 +92,7 @@ export async function GET() {
 
     return NextResponse.json({
       templates,
-      folder: TEMPLATES_FOLDER,
+      folder: foundFolderName,
       count: templates.length,
     });
   } catch (error) {

@@ -259,10 +259,9 @@ export default function NotePage() {
           onSave={editor.save}
           isTogglingLock={lock.isTogglingLock}
           onToggleLock={lock.toggleLock}
-          onExportMd={exportFns.exportMd}
-          onExportPdf={exportFns.exportPdf}
+          onExport={exportFns.exportFormat}
           onCopyAll={exportFns.copyAll}
-          isExportingPdf={exportFns.isExportingPdf}
+          isExporting={exportFns.isExporting || exportFns.isExportingPdf}
           copied={exportFns.copied}
         />
       </div>

@@ -120,16 +120,13 @@ export default function NoteHistoryPage() {
 
   // Toggle compare mode
   const handleToggleCompare = () => {
-    setIsCompareMode(!isCompareMode);
-    if (!isCompareMode) {
-      // Entering compare mode - select next commit for comparison
-      const selectedIndex = commits.findIndex((c) => c.sha === selectedSha);
-      if (selectedIndex < commits.length - 1) {
-        setCompareSha(commits[selectedIndex + 1].sha);
-      }
-    } else {
+    const newCompareMode = !isCompareMode;
+    setIsCompareMode(newCompareMode);
+    if (!newCompareMode) {
+      // Exiting compare mode - clear compare selection
       setCompareSha(null);
     }
+    // Note: No auto-selection - user must click "Comparer" on desired commit
   };
 
   return (
@@ -243,6 +240,19 @@ export default function NoteHistoryPage() {
                     newLabel={selectedCommit?.sha.slice(0, 7)}
                     className="h-full"
                   />
+                ) : isCompareMode && selectedContent && !compareSha ? (
+                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-4">
+                    <GitCompare className="h-12 w-12 opacity-50" />
+                    <div className="text-center">
+                      <p className="font-medium">Mode comparaison activé</p>
+                      <p className="text-sm mt-1">
+                        Version de base : <code className="bg-primary/20 px-1.5 rounded">{selectedCommit?.sha.slice(0, 7)}</code>
+                      </p>
+                      <p className="text-sm mt-2 text-muted-foreground/80">
+                        Cliquez sur &quot;Comparer&quot; sur une autre version dans la timeline
+                      </p>
+                    </div>
+                  </div>
                 ) : selectedContent && currentContent ? (
                   <VersionDiff
                     oldContent={selectedContent}
@@ -267,6 +277,19 @@ export default function NoteHistoryPage() {
                     newLabel={selectedCommit?.sha.slice(0, 7)}
                     className="h-full"
                   />
+                ) : isCompareMode && selectedContent && !compareSha ? (
+                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-4">
+                    <Columns className="h-12 w-12 opacity-50" />
+                    <div className="text-center">
+                      <p className="font-medium">Mode comparaison activé</p>
+                      <p className="text-sm mt-1">
+                        Version de base : <code className="bg-primary/20 px-1.5 rounded">{selectedCommit?.sha.slice(0, 7)}</code>
+                      </p>
+                      <p className="text-sm mt-2 text-muted-foreground/80">
+                        Cliquez sur &quot;Comparer&quot; sur une autre version dans la timeline
+                      </p>
+                    </div>
+                  </div>
                 ) : selectedContent && currentContent ? (
                   <VersionDiffSideBySide
                     oldContent={selectedContent}

@@ -109,6 +109,8 @@ function SplitPageContent() {
           rightContent={<NotePane path={rightPath} />}
           leftTitle={leftTitle}
           rightTitle={rightTitle}
+          leftPath={leftPath}
+          rightPath={rightPath}
         />
       </div>
     </div>

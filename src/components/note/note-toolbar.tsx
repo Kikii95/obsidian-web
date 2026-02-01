@@ -1,6 +1,6 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -22,7 +22,6 @@ import {
   TextCursorInput,
   MoreHorizontal,
   Download,
-  FileDown,
   Copy,
   Check,
   Pin,
@@ -37,9 +36,11 @@ import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
 import { MoveNoteDialog } from "@/components/notes/move-note-dialog";
 import { RenameNoteDialog } from "@/components/notes/rename-note-dialog";
 import { ShareNoteDialog } from "@/components/shares/share-note-dialog";
+import { ExportFormatDialog } from "@/components/notes/export-format-dialog";
 import { NoteHistory } from "./note-history";
 import { CopyLinkButton } from "./copy-link-button";
 import type { NoteData } from "@/services/github-client";
+import type { ExportFormat } from "@/hooks/use-note-export";
 
 interface NoteToolbarProps {
   note: NoteData;
@@ -58,10 +59,9 @@ interface NoteToolbarProps {
   isTogglingLock: boolean;
   onToggleLock: () => void;
   // Export
-  onExportMd: () => void;
-  onExportPdf: () => void;
+  onExport: (format: ExportFormat) => Promise<void>;
   onCopyAll: () => void;
-  isExportingPdf: boolean;
+  isExporting: boolean;
   copied: boolean;
 }
 
@@ -79,16 +79,16 @@ export const NoteToolbar = memo(function NoteToolbar({
   onSave,
   isTogglingLock,
   onToggleLock,
-  onExportMd,
-  onExportPdf,
+  onExport,
   onCopyAll,
-  isExportingPdf,
+  isExporting,
   copied,
 }: NoteToolbarProps) {
   const router = useRouter();
   const { isPinned, pinNote, unpinNote } = usePinnedStore();
   const noteIsPinned = isPinned(note.path);
   const canEdit = isOnline && !isFromCache;
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
 
   const handleTogglePin = () => {
     if (noteIsPinned) {
@@ -234,37 +234,36 @@ export const NoteToolbar = memo(function NoteToolbar({
                 </Button>
               }
             />
-            {/* Export dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" title="Exporter">
-                  <Download className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={onCopyAll}>
-                  {copied ? (
-                    <Check className="h-4 w-4 mr-2 text-green-500" />
-                  ) : (
-                    <Copy className="h-4 w-4 mr-2" />
-                  )}
-                  {copied ? "Copié !" : "Copier tout"}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={onExportMd}>
-                  <FileDown className="h-4 w-4 mr-2" />
-                  Télécharger .md
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={onExportPdf} disabled={isExportingPdf}>
-                  {isExportingPdf ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <FileDown className="h-4 w-4 mr-2" />
-                  )}
-                  {isExportingPdf ? "Export..." : "Télécharger .pdf"}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Copy button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onCopyAll}
+              title={copied ? "Copié !" : "Copier tout"}
+            >
+              {copied ? (
+                <Check className="h-4 w-4 text-green-500" />
+              ) : (
+                <Copy className="h-4 w-4" />
+              )}
+            </Button>
+
+            {/* Export button → opens dialog */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setExportDialogOpen(true)}
+              title="Exporter"
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+            <ExportFormatDialog
+              open={exportDialogOpen}
+              onOpenChange={setExportDialogOpen}
+              onExport={onExport}
+              isExporting={isExporting}
+              fileName={noteName}
+            />
 
             {/* Share button */}
             <ShareNoteDialog
@@ -358,17 +357,9 @@ export const NoteToolbar = memo(function NoteToolbar({
                 )}
                 {copied ? "Copié !" : "Copier tout"}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={onExportMd}>
-                <FileDown className="h-4 w-4 mr-2" />
-                Télécharger .md
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={onExportPdf} disabled={isExportingPdf}>
-                {isExportingPdf ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <FileDown className="h-4 w-4 mr-2" />
-                )}
-                {isExportingPdf ? "Export..." : "Télécharger .pdf"}
+              <DropdownMenuItem onClick={() => setExportDialogOpen(true)}>
+                <Download className="h-4 w-4 mr-2" />
+                Exporter...
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <ShareNoteDialog

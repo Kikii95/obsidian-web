@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { githubClient, type NoteData } from "@/services/github-client";
+import { mergeInlineTagsToFrontmatter } from "@/lib/tag-utils";
 
 interface UseNoteEditorOptions {
   note: NoteData | null;
@@ -78,15 +79,23 @@ export function useNoteEditor({
     setError(null);
 
     try {
+      // Merge inline tags (#tag) to frontmatter before saving
+      const contentWithTags = mergeInlineTagsToFrontmatter(editContent);
+
       const result = await githubClient.saveNote(
         note.path,
-        editContent,
+        contentWithTags,
         note.sha
       );
 
+      // Update local content if tags were merged
+      if (contentWithTags !== editContent) {
+        setEditContent(contentWithTags);
+      }
+
       // Update note with new sha and content
       onNoteUpdate?.({
-        content: editContent,
+        content: contentWithTags,
         sha: result.sha,
       });
 

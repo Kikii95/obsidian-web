@@ -15,7 +15,9 @@ import {
   Link2,
   AlertCircle,
   Pencil,
+  BarChart3,
 } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -183,14 +185,22 @@ export default function SharesPage() {
 
   return (
     <div className="container max-w-4xl py-8 px-4">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold flex items-center gap-3">
-          <Link2 className="h-8 w-8 text-primary" />
-          Liens de partage
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Gérez vos liens de partage de dossiers et notes
-        </p>
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold flex items-center gap-3">
+            <Link2 className="h-8 w-8 text-primary" />
+            Liens de partage
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Gérez vos liens de partage de dossiers et notes
+          </p>
+        </div>
+        <Button variant="outline" asChild className="self-start sm:self-auto">
+          <Link href="/shares/analytics">
+            <BarChart3 className="h-4 w-4 mr-2" />
+            Analytics
+          </Link>
+        </Button>
       </div>
 
       {shares.length === 0 ? (

@@ -116,7 +116,7 @@ const defaultSettings: UserSettings = {
   showFrontmatter: true,
   enableKeyboardShortcuts: true,
   vimMode: false, // Disabled by default
-  codeSyntaxTheme: "atom-one-dark", // Default code theme
+  codeSyntaxTheme: "auto", // Default code theme (follows global theme)
 
   // Mobile
   enableGestures: true, // Gestures enabled by default

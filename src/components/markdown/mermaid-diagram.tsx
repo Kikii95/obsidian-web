@@ -1,9 +1,24 @@
 "use client";
 
-import { useState, useEffect, useRef, useId } from "react";
+import { useState, useEffect, useRef, useId, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { Loader2, AlertTriangle, Copy, Check, ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTheme } from "next-themes";
+
+// Get computed CSS color value (resolves CSS variables)
+function getCssColor(varName: string, fallback: string = "#888888"): string {
+  if (typeof window === "undefined") return fallback;
+  const value = getComputedStyle(document.documentElement)
+    .getPropertyValue(varName)
+    .trim();
+  if (!value) return fallback;
+  // Convert HSL value to full hsl() format if needed
+  if (value.match(/^\d+\s+[\d.]+%\s+[\d.]+%$/)) {
+    return `hsl(${value})`;
+  }
+  return value;
+}
 
 interface MermaidDiagramProps {
   code: string;
@@ -18,6 +33,25 @@ export function MermaidDiagram({ code, className }: MermaidDiagramProps) {
   const [zoom, setZoom] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
   const uniqueId = useId().replace(/:/g, "_");
+  const { resolvedTheme } = useTheme();
+
+  // Build theme variables with resolved CSS colors
+  const getThemeVariables = useCallback(() => {
+    const isDark = resolvedTheme === "dark";
+    return {
+      primaryColor: getCssColor("--primary", isDark ? "#3b82f6" : "#2563eb"),
+      primaryTextColor: getCssColor("--primary-foreground", isDark ? "#ffffff" : "#ffffff"),
+      primaryBorderColor: getCssColor("--border", isDark ? "#374151" : "#e5e7eb"),
+      lineColor: getCssColor("--muted-foreground", isDark ? "#9ca3af" : "#6b7280"),
+      secondaryColor: getCssColor("--secondary", isDark ? "#1f2937" : "#f3f4f6"),
+      tertiaryColor: getCssColor("--muted", isDark ? "#374151" : "#f3f4f6"),
+      background: getCssColor("--background", isDark ? "#111827" : "#ffffff"),
+      mainBkg: getCssColor("--card", isDark ? "#1f2937" : "#ffffff"),
+      secondBkg: getCssColor("--muted", isDark ? "#374151" : "#f3f4f6"),
+      nodeTextColor: getCssColor("--foreground", isDark ? "#f9fafb" : "#111827"),
+      textColor: getCssColor("--foreground", isDark ? "#f9fafb" : "#111827"),
+    };
+  }, [resolvedTheme]);
 
   useEffect(() => {
     let mounted = true;
@@ -28,26 +62,15 @@ export function MermaidDiagram({ code, className }: MermaidDiagramProps) {
 
       try {
         const mermaid = (await import("mermaid")).default;
+        const isDark = resolvedTheme === "dark";
 
         mermaid.initialize({
           startOnLoad: false,
-          theme: "dark",
-          darkMode: true,
+          theme: isDark ? "dark" : "default",
+          darkMode: isDark,
           securityLevel: "loose",
           fontFamily: "var(--font-geist-sans), system-ui, sans-serif",
-          themeVariables: {
-            primaryColor: "hsl(var(--primary))",
-            primaryTextColor: "hsl(var(--primary-foreground))",
-            primaryBorderColor: "hsl(var(--border))",
-            lineColor: "hsl(var(--muted-foreground))",
-            secondaryColor: "hsl(var(--secondary))",
-            tertiaryColor: "hsl(var(--muted))",
-            background: "hsl(var(--background))",
-            mainBkg: "hsl(var(--card))",
-            secondBkg: "hsl(var(--muted))",
-            nodeTextColor: "hsl(var(--foreground))",
-            textColor: "hsl(var(--foreground))",
-          },
+          themeVariables: getThemeVariables(),
         });
 
         const { svg: renderedSvg } = await mermaid.render(
@@ -74,7 +97,7 @@ export function MermaidDiagram({ code, className }: MermaidDiagramProps) {
     return () => {
       mounted = false;
     };
-  }, [code, uniqueId]);
+  }, [code, uniqueId, resolvedTheme, getThemeVariables]);
 
   const handleCopy = async () => {
     try {

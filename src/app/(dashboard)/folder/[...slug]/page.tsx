@@ -31,6 +31,7 @@ import { ImportNoteDialog } from "@/components/notes/import-note-dialog";
 import { DeleteFolderDialog } from "@/components/notes/delete-folder-dialog";
 import { ShareFolderDialog } from "@/components/shares/share-folder-dialog";
 import { FolderIconPicker } from "@/components/dialogs/folder-icon-picker";
+import { getFolderIcon } from "@/data/folder-icons";
 import type { VaultFile } from "@/types";
 
 // Check if folder name indicates a private folder
@@ -176,16 +177,25 @@ export default function FolderPage() {
 
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
-          <div className={cn(
-            "p-3 rounded-xl",
-            isPrivateFolder ? "bg-amber-500/10" : "bg-primary/10"
-          )}>
-            {isPrivateFolder ? (
-              <Lock className="h-8 w-8 text-amber-500" />
-            ) : (
-              <FolderOpen className="h-8 w-8 text-primary" />
-            )}
-          </div>
+          {(() => {
+            const customIconId = settings.folderIcons?.[folderPath];
+            const customIconData = customIconId && customIconId !== "default" ? getFolderIcon(customIconId) : null;
+
+            return (
+              <div className={cn(
+                "p-3 rounded-xl",
+                isPrivateFolder ? "bg-amber-500/10" : "bg-primary/10"
+              )}>
+                {isPrivateFolder ? (
+                  <Lock className="h-8 w-8 text-amber-500" />
+                ) : customIconData ? (
+                  <customIconData.icon className={cn("h-8 w-8", customIconData.color || "text-primary")} />
+                ) : (
+                  <FolderOpen className="h-8 w-8 text-primary" />
+                )}
+              </div>
+            );
+          })()}
           <div className="flex-1">
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold">{folderName}</h1>

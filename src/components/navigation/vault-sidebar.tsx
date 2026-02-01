@@ -517,7 +517,7 @@ export function VaultSidebar() {
       </div>
       {/* Virtualized scrollable tree - overflow-x-auto for long filenames on mobile */}
       <div className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden p-2">
-        <VirtualFileTree files={filteredTree} />
+        <VirtualFileTree files={filteredTree} folderIcons={settings.folderIcons} />
       </div>
 
       {/* Manage folder dialog */}

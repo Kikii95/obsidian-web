@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, memo, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -75,6 +75,32 @@ function containsPrivateFolder(folder: VaultFile): boolean {
   }
   return false;
 }
+
+// Isolated input component to prevent re-render of expensive memos
+const RenameInput = memo(function RenameInput({
+  value,
+  onChange,
+  onSubmit,
+  disabled,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onSubmit: () => void;
+  disabled: boolean;
+}) {
+  return (
+    <Input
+      id="newFolderName"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" && !disabled) onSubmit();
+      }}
+      disabled={disabled}
+      placeholder="Nom du dossier"
+    />
+  );
+});
 
 export function ManageFolderDialog({ mode, open, onOpenChange }: ManageFolderDialogProps) {
   const { tree, triggerTreeRefresh } = useVaultStore();
@@ -343,17 +369,11 @@ export function ManageFolderDialog({ mode, open, onOpenChange }: ManageFolderDia
               {isRenameMode && selectedFolder && (
                 <div className="space-y-2">
                   <Label htmlFor="newFolderName">Nouveau nom</Label>
-                  <Input
-                    id="newFolderName"
+                  <RenameInput
                     value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !isLoading) {
-                        handleRename();
-                      }
-                    }}
+                    onChange={setNewName}
+                    onSubmit={handleRename}
                     disabled={isLoading}
-                    placeholder="Nom du dossier"
                   />
                 </div>
               )}

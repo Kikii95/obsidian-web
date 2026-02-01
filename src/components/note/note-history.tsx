@@ -10,7 +10,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { History, Loader2, GitCommit, ExternalLink } from "lucide-react";
+import { History, Loader2, GitCommit, ExternalLink, ArrowLeftRight } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useVaultConfigStore } from "@/lib/vault-config";
 
@@ -67,6 +68,7 @@ export function NoteHistory({ notePath, trigger }: NoteHistoryProps) {
   const [data, setData] = useState<HistoryResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { config } = useVaultConfigStore();
+  const router = useRouter();
 
   useEffect(() => {
     if (!open) return;
@@ -205,8 +207,23 @@ export function NoteHistory({ notePath, trigger }: NoteHistoryProps) {
         </div>
 
         {data && data.count > 0 && (
-          <div className="border-t pt-3 -mx-6 px-6 text-xs text-muted-foreground text-center">
-            {data.count} commit{data.count > 1 ? "s" : ""} trouvé{data.count > 1 ? "s" : ""}
+          <div className="border-t pt-3 -mx-6 px-6 flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">
+              {data.count} commit{data.count > 1 ? "s" : ""} trouvé{data.count > 1 ? "s" : ""}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setOpen(false);
+                // Remove .md extension for the URL
+                const pathWithoutExt = notePath.replace(/\.md$/, "");
+                router.push(`/history/${encodeURIComponent(pathWithoutExt)}`);
+              }}
+            >
+              <ArrowLeftRight className="h-4 w-4 mr-2" />
+              Comparer versions
+            </Button>
           </div>
         )}
       </DialogContent>

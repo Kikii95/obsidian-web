@@ -43,6 +43,7 @@ import { useSessionStateStore } from "@/lib/session-state-store";
 import { useVaultIndex } from "@/hooks/use-vault-index";
 import { CreateNoteDialog } from "@/components/notes/create-note-dialog";
 import { getFileType } from "@/lib/file-types";
+import { getFolderIcon } from "@/data/folder-icons";
 import type { VaultFile } from "@/types";
 
 // Lazy load mini graph
@@ -287,8 +288,16 @@ export default function HomePage() {
 
   // Get icon component based on file type
   const getFileIcon = (path: string, itemType?: "note" | "folder") => {
-    // Folders get folder icon
+    // Folders get folder icon - check for custom icon
     if (itemType === "folder") {
+      const customIconId = settings.folderIcons?.[path];
+      if (customIconId && customIconId !== "default") {
+        const iconData = getFolderIcon(customIconId);
+        if (iconData) {
+          const Icon = iconData.icon;
+          return <Icon className={`h-4 w-4 shrink-0 ${iconData.color || "text-primary/70"}`} />;
+        }
+      }
       return <FolderOpen className="h-4 w-4 text-primary/70 shrink-0" />;
     }
 

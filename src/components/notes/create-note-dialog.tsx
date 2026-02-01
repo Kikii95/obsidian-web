@@ -28,7 +28,59 @@ interface Template {
   name: string;
   path: string;
   preview?: string;
+  content?: string; // For built-in templates
 }
+
+// Built-in templates when no vault templates are found
+const DEFAULT_TEMPLATES: Template[] = [
+  {
+    name: "Note vide",
+    path: "_builtin/blank",
+    preview: "Template minimaliste pour démarrer rapidement",
+    content: "# {{title}}\n\n",
+  },
+  {
+    name: "Daily Note",
+    path: "_builtin/daily",
+    preview: "Note journalière avec date et sections",
+    content: `---
+date: {{date:YYYY-MM-DD}}
+tags: [daily]
+---
+
+# {{date:dddd DD MMMM YYYY}}
+
+## 📋 Tâches
+- [ ]
+
+## 📝 Notes
+
+`,
+  },
+  {
+    name: "Meeting Notes",
+    path: "_builtin/meeting",
+    preview: "Notes de réunion structurées",
+    content: `---
+date: {{date:YYYY-MM-DD}}
+tags: [meeting]
+---
+
+# Meeting: {{title}}
+
+**Date**: {{date:DD/MM/YYYY}} à {{time:HH:mm}}
+
+## 📋 Ordre du jour
+1.
+
+## 📝 Notes
+
+## ✅ Actions
+- [ ]
+
+`,
+  },
+];
 
 interface CreateNoteDialogProps {
   currentFolder?: string;
@@ -78,10 +130,16 @@ export function CreateNoteDialog({
         const res = await fetch("/api/github/templates");
         if (res.ok) {
           const data = await res.json();
-          setTemplates(data.templates || []);
+          // Use vault templates if available, else use built-in defaults
+          const vaultTemplates = data.templates || [];
+          setTemplates(vaultTemplates.length > 0 ? vaultTemplates : DEFAULT_TEMPLATES);
+        } else {
+          // Fallback to built-in templates on error
+          setTemplates(DEFAULT_TEMPLATES);
         }
       } catch {
-        // Silently fail - templates are optional
+        // Fallback to built-in templates
+        setTemplates(DEFAULT_TEMPLATES);
       } finally {
         setLoadingTemplates(false);
       }
@@ -93,6 +151,13 @@ export function CreateNoteDialog({
   useEffect(() => {
     if (selectedTemplate === NO_TEMPLATE) {
       setTemplateContent(null);
+      return;
+    }
+
+    // Check if it's a built-in template (path starts with _builtin/)
+    const builtinTemplate = DEFAULT_TEMPLATES.find((t) => t.path === selectedTemplate);
+    if (builtinTemplate) {
+      setTemplateContent(builtinTemplate.content || "");
       return;
     }
 

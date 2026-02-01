@@ -176,11 +176,14 @@ export function useNoteExport({
             onclone: async (clonedDoc: Document) => {
               // Convert Mermaid SVGs to images (html2canvas can't handle dynamic SVGs)
               const mermaidSvgs = clonedDoc.querySelectorAll(".mermaid svg, .mermaid-diagram svg");
+              const blobUrls: string[] = [];
+
               for (const svg of mermaidSvgs) {
                 try {
                   const svgData = new XMLSerializer().serializeToString(svg);
                   const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
                   const url = URL.createObjectURL(svgBlob);
+                  blobUrls.push(url);
 
                   const img = clonedDoc.createElement("img");
                   img.src = url;
@@ -188,15 +191,24 @@ export function useNoteExport({
                   img.style.maxWidth = "100%";
                   img.style.height = "auto";
 
+                  // CRITICAL: Wait for image to load before replacing
+                  await new Promise<void>((resolve) => {
+                    img.onload = () => resolve();
+                    img.onerror = () => resolve(); // Continue on error
+                    setTimeout(() => resolve(), 5000); // 5s timeout
+                  });
+
                   // Replace SVG with image
                   svg.parentNode?.replaceChild(img, svg);
-
-                  // Cleanup (slight delay to ensure image is loaded)
-                  setTimeout(() => URL.revokeObjectURL(url), 1000);
                 } catch (err) {
                   console.warn("Failed to convert Mermaid SVG to image:", err);
                 }
               }
+
+              // Cleanup blob URLs after longer delay (after PDF is generated)
+              setTimeout(() => {
+                blobUrls.forEach((url) => URL.revokeObjectURL(url));
+              }, 30000);
 
               // Add a style tag to force all colors to simple RGB values
               // This overrides any lab/oklch/oklab colors that html2canvas can't parse

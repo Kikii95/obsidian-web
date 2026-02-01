@@ -33,6 +33,7 @@ const ITEM_HEIGHT = 32; // Fixed height for each row
 interface FolderActionsContextType {
   createNoteIn: (folderPath: string) => void;
   createFolderIn: (folderPath: string) => void;
+  folderIcons?: Record<string, string>;
 }
 
 const FolderActionsContext = createContext<FolderActionsContextType | null>(null);
@@ -45,9 +46,10 @@ function useFolderActions() {
 
 interface VirtualFileTreeProps {
   files: VaultFile[];
+  folderIcons?: Record<string, string>;
 }
 
-export function VirtualFileTree({ files }: VirtualFileTreeProps) {
+export function VirtualFileTree({ files, folderIcons }: VirtualFileTreeProps) {
   const parentRef = useRef<HTMLDivElement>(null);
   const { expandedFolders } = useVaultStore();
 
@@ -77,7 +79,7 @@ export function VirtualFileTree({ files }: VirtualFileTreeProps) {
   }, []);
 
   return (
-    <FolderActionsContext.Provider value={{ createNoteIn, createFolderIn }}>
+    <FolderActionsContext.Provider value={{ createNoteIn, createFolderIn, folderIcons }}>
       <div
         ref={parentRef}
         className="h-full overflow-auto"
@@ -139,7 +141,7 @@ const VirtualTreeItem = memo(function VirtualTreeItem({
   const { toggleFolder } = useVaultStore();
   const { settings } = useSettingsStore();
   const { isSelectionMode, isSelected, toggleItem } = useSelectionStore();
-  const { createNoteIn, createFolderIn } = useFolderActions();
+  const { createNoteIn, createFolderIn, folderIcons } = useFolderActions();
 
   const isDirectory = file.type === "dir";
   const fileType = getFileType(file.name);
@@ -179,6 +181,7 @@ const VirtualTreeItem = memo(function VirtualTreeItem({
       isExpanded={isExpanded}
       isPrivate={isPrivateFolder}
       showFileIcons={showFileIcons}
+      customIconId={folderIcons?.[file.path]}
     />
   );
 

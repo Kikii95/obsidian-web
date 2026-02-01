@@ -177,6 +177,20 @@ function MarkdownRendererInner({
 
             // Check for Mermaid diagrams
             if (className?.includes("language-mermaid")) {
+              // Validate Mermaid syntax keywords to avoid rendering inline code as diagrams
+              const mermaidKeywords = /^(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram|journey|gitGraph|pie|gantt|mindmap|timeline|sankey|block|packet|architecture|kanban|xychart|quadrantChart|requirementDiagram|C4Context|C4Container|C4Component|C4Dynamic|C4Deployment)/m;
+
+              if (!mermaidKeywords.test(content.trim())) {
+                // Not valid Mermaid, render as code block
+                return (
+                  <code
+                    className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono text-primary/90"
+                    {...props}
+                  >
+                    {children}
+                  </code>
+                );
+              }
               return <MermaidDiagram code={content} />;
             }
 

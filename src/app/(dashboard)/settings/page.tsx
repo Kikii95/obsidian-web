@@ -1223,7 +1223,7 @@ export default function SettingsPage() {
         <CardContent className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Version</span>
-            <Badge variant="outline">1.1.0</Badge>
+            <Badge variant="outline">2.0.0</Badge>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Repo</span>
@@ -1274,7 +1274,7 @@ export default function SettingsPage() {
 
 - **Navigateur**: ${navigator.userAgent.includes("Chrome") ? "Chrome" : navigator.userAgent.includes("Firefox") ? "Firefox" : navigator.userAgent.includes("Safari") ? "Safari" : "Autre"}
 - **Appareil**: ${/Mobile|Android|iPhone/i.test(navigator.userAgent) ? "Mobile" : "Desktop"}
-- **Version**: 1.1.0
+- **Version**: 2.0.0
 `);
                   window.open(
                     `https://github.com/Kikii95/obsidian-web/issues/new?title=${title}&body=${body}&labels=bug`,

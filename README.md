@@ -66,6 +66,7 @@ Don't trust our hosted version? You can self-host! See [Deployment](#deployment)
 - **Markdown Viewer** — Full GFM support, syntax highlighting, wikilinks resolution
 - **CodeMirror Editor** — Syntax highlighting, keyboard shortcuts (Ctrl+S, Esc)
 - **File Tree Navigation** — Collapsible folders, search, real-time sync with GitHub
+- **PostgreSQL Index** — Tags, backlinks and graph loaded in milliseconds (smart refresh with SHA comparison)
 
 ### Dashboard
 - **Activity Heatmap** — GitHub-style contribution calendar showing commit history
@@ -82,9 +83,11 @@ Don't trust our hosted version? You can self-host! See [Deployment](#deployment)
 - **Click Navigation** — Click nodes to open notes
 
 ### Media Support
-- **Images** — Zoom, rotation, fullscreen viewing
+- **Images** — Zoom modal with rotation, navigation and download
 - **PDF Viewer** — Navigation, zoom, download
 - **Canvas Viewer** — Visual editing with React Flow (zoom, pan, minimap)
+- **Audio Player** — MP3/WAV playback with speed control (0.5x to 2x)
+- **Excalidraw Viewer** — View `.excalidraw` drawings directly
 
 ### Privacy & Security
 - **Lock System** — Apple Notes-style PIN protection
@@ -110,11 +113,19 @@ Don't trust our hosted version? You can self-host! See [Deployment](#deployment)
 - **Templates** — Select template when creating new notes
 - **Backlinks Panel** — See all notes linking to the current note
 - **Version History** — View git commit history for any file
+- **Callouts** — Full support for `[!note]`, `[!warning]`, `[!tip]` with fold
+- **Table of Contents** — Auto-generated TOC from headings with navigation
+- **Note Stats** — Word count, character count and reading time
+- **Frontmatter Viewer** — Collapsible YAML metadata display
+- **Keyboard Shortcuts** — Press `?` or `Ctrl+/` to see all shortcuts
+- **What's New Modal** — Changelog with full version history
 
 ### Productivity
 - **Export** — Download as .md, print/PDF
 - **Import** — Drag & drop files with folder selection
 - **Copy Code** — One-click copy for code blocks
+- **Code Block Filename** — Display filename header on code blocks (` ```js title="app.js" `)
+- **Copy Note Link** — Copy as wikilink, URL or markdown format
 - **Markdown Cheatsheet** — Quick reference bar in editor
 
 ## Tech Stack

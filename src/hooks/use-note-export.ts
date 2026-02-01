@@ -375,20 +375,26 @@ export function useNoteExport({
     }
   }, [note, content, fileName]);
 
-  // Export to EPUB
+  // Export to EPUB (via API route - requires Node.js)
   const exportEpub = useCallback(async () => {
     if (!note && !content) return;
 
     setIsExporting(true);
     try {
-      const { exportToEpub } = await import("@/lib/exporters/epub");
-      const epub = await exportToEpub({
-        title: fileName,
-        content,
+      const response = await fetch("/api/export/epub", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: fileName,
+          content,
+        }),
       });
 
-      // Cast Buffer to Uint8Array for Blob compatibility
-      const blob = new Blob([new Uint8Array(epub)], { type: "application/epub+zip" });
+      if (!response.ok) {
+        throw new Error("EPUB export failed");
+      }
+
+      const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;

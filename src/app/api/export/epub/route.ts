@@ -1,61 +1,80 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getAuthenticatedContext } from "@/lib/server-vault-config";
 import { marked } from "marked";
-
-interface ExportOptions {
-  title: string;
-  content: string;
-  author?: string;
-}
 
 interface Chapter {
   title: string;
   content: string;
 }
 
-/**
- * Export markdown content to EPUB
- * Uses epub-gen-memory with proper API handling
- */
-export async function exportToEpub(options: ExportOptions): Promise<Buffer> {
-  const { title, content, author = "Obsidian Web" } = options;
+export async function POST(request: NextRequest) {
+  try {
+    const context = await getAuthenticatedContext();
 
-  // Convert markdown to HTML
-  const htmlContent = await marked(content, { async: true });
+    if (!context) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    }
 
-  // Split content into chapters by H1/H2 headings
-  const chapters = splitIntoChapters(content);
+    const { title, content, author = "Obsidian Web" } = await request.json();
 
-  // Convert chapters to HTML
-  const epubChapters: { title: string; content: string }[] = await Promise.all(
-    chapters.map(async (chapter) => ({
-      title: chapter.title,
-      content: await marked(chapter.content, { async: true }),
-    }))
-  );
+    if (!title || !content) {
+      return NextResponse.json(
+        { error: "Title and content required" },
+        { status: 400 }
+      );
+    }
 
-  // If no chapters found, create a single chapter
-  if (epubChapters.length === 0) {
-    epubChapters.push({
-      title: title,
-      content: htmlContent,
+    // Convert markdown to HTML
+    const htmlContent = await marked(content, { async: true });
+
+    // Split content into chapters by H1/H2 headings
+    const chapters = splitIntoChapters(content);
+
+    // Convert chapters to HTML
+    const epubChapters: { title: string; content: string }[] = await Promise.all(
+      chapters.map(async (chapter) => ({
+        title: chapter.title,
+        content: await marked(chapter.content, { async: true }),
+      }))
+    );
+
+    // If no chapters found, create a single chapter
+    if (epubChapters.length === 0) {
+      epubChapters.push({
+        title: title,
+        content: htmlContent,
+      });
+    }
+
+    // Dynamic import epub-gen-memory (server-side only)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const epubModule = (await import("epub-gen-memory")) as any;
+    const EPub = epubModule.default;
+
+    // Generate EPUB
+    const epub: Buffer = await EPub(
+      {
+        title,
+        author,
+        css: epubStyles,
+      },
+      epubChapters
+    );
+
+    // Return as blob (convert Buffer to Uint8Array)
+    return new NextResponse(new Uint8Array(epub), {
+      headers: {
+        "Content-Type": "application/epub+zip",
+        "Content-Disposition": `attachment; filename="${encodeURIComponent(title)}.epub"`,
+      },
     });
+  } catch (error) {
+    console.error("EPUB export error:", error);
+    return NextResponse.json(
+      { error: "Erreur lors de l'export EPUB" },
+      { status: 500 }
+    );
   }
-
-  // Dynamic import to handle epub-gen-memory
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const epubModule = await import("epub-gen-memory") as any;
-  const EPub = epubModule.default;
-
-  // Generate EPUB - the library expects content array as second param
-  const epub: Buffer = await EPub(
-    {
-      title,
-      author,
-      css: epubStyles,
-    },
-    epubChapters
-  );
-
-  return epub;
 }
 
 function splitIntoChapters(content: string): Chapter[] {
@@ -66,12 +85,10 @@ function splitIntoChapters(content: string): Chapter[] {
   let currentContent: string[] = [];
 
   for (const line of lines) {
-    // Check for H1 or H2 heading
     const h1Match = line.match(/^#\s+(.+)$/);
     const h2Match = line.match(/^##\s+(.+)$/);
 
     if (h1Match || h2Match) {
-      // Save previous chapter if exists
       if (currentContent.length > 0 || currentTitle) {
         chapters.push({
           title: currentTitle || "Introduction",
@@ -86,7 +103,6 @@ function splitIntoChapters(content: string): Chapter[] {
     }
   }
 
-  // Save last chapter
   if (currentContent.length > 0 || currentTitle) {
     chapters.push({
       title: currentTitle || "Content",

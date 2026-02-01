@@ -9,6 +9,8 @@ import { UniversalLayout, SidebarHeader } from "@/components/layout";
 import { ShareExportToolbar } from "@/components/shares/share-export-toolbar";
 import { MarkdownRenderer } from "@/components/viewer/markdown-renderer";
 import { MarkdownEditor } from "@/components/editor/markdown-editor";
+import { TableOfContents } from "@/components/note/table-of-contents";
+import { NoteStats } from "@/components/note/note-stats";
 import type { VaultFile } from "@/types";
 import type { ShareMode } from "@/types/shares";
 
@@ -310,6 +312,14 @@ export default function ShareNotePage() {
           <div className="mb-4 p-3 bg-destructive/10 text-destructive rounded-md text-sm">
             {saveError}
           </div>
+        )}
+
+        {/* Note stats & TOC */}
+        {!isEditing && (
+          <>
+            <NoteStats content={note.content} className="mb-4" />
+            <TableOfContents content={note.content} className="mb-6" />
+          </>
         )}
 
         {/* Note content */}

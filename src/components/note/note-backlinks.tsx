@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, memo, useCallback } from "react";
-import { ChevronDown, ChevronRight, Link2, FileText, Loader2, Search, AlertTriangle } from "lucide-react";
+import { useState, memo, useCallback, useEffect } from "react";
+import { ChevronDown, ChevronRight, Link2, FileText, Loader2, Settings } from "lucide-react";
 import { PrefetchLink } from "@/components/ui/prefetch-link";
 import { Button } from "@/components/ui/button";
 import { encodePathSegments } from "@/lib/path-utils";
+import Link from "next/link";
 
 interface Backlink {
   path: string;
@@ -17,27 +18,24 @@ interface BacklinksResponse {
   count: number;
   scanned: number;
   total: number;
+  needsIndex?: boolean;
 }
 
 interface NoteBacklinksProps {
   notePath: string;
-  totalFiles?: number; // Total markdown files in vault (for warning message)
 }
 
 export const NoteBacklinks = memo(function NoteBacklinks({
   notePath,
-  totalFiles,
 }: NoteBacklinksProps) {
   const [isOpen, setIsOpen] = useState(false); // Collapsed by default
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [data, setData] = useState<BacklinksResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const fetchBacklinks = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    setHasSearched(true);
 
     try {
       const res = await fetch(
@@ -57,6 +55,11 @@ export const NoteBacklinks = memo(function NoteBacklinks({
       setIsLoading(false);
     }
   }, [notePath]);
+
+  // Auto-fetch on mount (uses PostgreSQL index, no API cost)
+  useEffect(() => {
+    fetchBacklinks();
+  }, [fetchBacklinks]);
 
   const hasBacklinks = data && data.backlinks.length > 0;
 
@@ -89,23 +92,18 @@ export const NoteBacklinks = memo(function NoteBacklinks({
       {/* Content */}
       {isOpen && (
         <div className="border-t border-border/50">
-          {!hasSearched ? (
-            // Initial state - show search button with warning
+          {data?.needsIndex ? (
+            // Index not available
             <div className="px-4 py-6 text-center">
-              <div className="flex items-center justify-center gap-1.5 text-xs text-amber-500 mb-3">
-                <AlertTriangle className="h-3.5 w-3.5" />
-                <span>
-                  Consomme {totalFiles ?? "~"} appels API (1 par fichier md)
-                </span>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={fetchBacklinks}
-                className="gap-2"
-              >
-                <Search className="h-4 w-4" />
-                Rechercher les backlinks
+              <Link2 className="h-8 w-8 mx-auto mb-2 opacity-30" />
+              <p className="text-sm text-muted-foreground mb-3">
+                Indexation requise pour les backlinks
+              </p>
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/settings">
+                  <Settings className="h-4 w-4 mr-1" />
+                  Paramètres
+                </Link>
               </Button>
             </div>
           ) : isLoading ? (

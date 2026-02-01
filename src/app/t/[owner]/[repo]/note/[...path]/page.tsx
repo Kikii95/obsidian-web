@@ -7,6 +7,8 @@ import { ArrowLeft, AlertCircle, Loader2, Clock, Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UniversalLayout, SidebarHeader } from "@/components/layout";
 import { MarkdownRenderer } from "@/components/viewer/markdown-renderer";
+import { TableOfContents } from "@/components/note/table-of-contents";
+import { NoteStats } from "@/components/note/note-stats";
 import type { VaultFile } from "@/types";
 import type { RateLimitInfo } from "@/lib/github";
 
@@ -237,6 +239,12 @@ export default function TempVaultNotePage() {
               ))}
             </div>
           )}
+
+        {/* Note stats */}
+        <NoteStats content={note.content} className="mb-4" />
+
+        {/* Table of Contents */}
+        <TableOfContents content={note.content} className="mb-6" />
 
         {/* Note content */}
         <div

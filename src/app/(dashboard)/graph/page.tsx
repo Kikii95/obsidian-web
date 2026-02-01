@@ -46,6 +46,8 @@ interface GraphData {
   }>;
   totalNotes: number;
   connectedNotes: number;
+  needsIndex?: boolean;
+  message?: string;
 }
 
 export default function GraphPage() {
@@ -120,6 +122,45 @@ export default function GraphPage() {
     );
   }
 
+  // Index required - show message with link to settings
+  if (graphData?.needsIndex) {
+    return (
+      <div className="flex flex-col h-[calc(100vh-3.5rem)]">
+        <div className="p-4 border-b border-border/50">
+          <div className="flex items-center gap-2">
+            <Network className="h-5 w-5 text-primary" />
+            <span className="font-medium">Graph View</span>
+          </div>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center space-y-4 max-w-md">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center">
+              <Network className="h-8 w-8 text-primary" />
+            </div>
+            <h2 className="text-xl font-semibold">Indexation requise</h2>
+            <p className="text-muted-foreground">
+              Le graphe utilise un index PostgreSQL pour de meilleures performances.
+              Lance l&apos;indexation depuis les paramètres pour activer cette fonctionnalité.
+            </p>
+            <div className="flex justify-center gap-3">
+              <Button variant="outline" asChild>
+                <Link href="/">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Vault
+                </Link>
+              </Button>
+              <Button asChild>
+                <Link href="/settings">
+                  Paramètres
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!graphData || graphData.nodes.length === 0) {
     return (
       <div className="flex flex-col h-[calc(100vh-3.5rem)]">
@@ -165,7 +206,9 @@ export default function GraphPage() {
           </div>
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span className="hidden sm:inline">{graphData.connectedNotes} notes</span>
+          <span className="hidden sm:inline">
+            {graphData.connectedNotes} connectées / {graphData.totalNotes} indexées
+          </span>
           <span className="hidden sm:inline">•</span>
           <span className="hidden sm:inline">{graphData.links.length} liens</span>
 

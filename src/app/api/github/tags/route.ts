@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
-import { getFullVaultTree, getFileContent } from "@/lib/github";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { getAuthenticatedContext } from "@/lib/server-vault-config";
-import { filterPrivatePaths, isPrivateContent } from "@/lib/privacy";
-import matter from "gray-matter";
+import {
+  getPublicVaultIndexEntries,
+  getVaultIndexStatus,
+  type VaultKey,
+} from "@/lib/db/vault-index-queries";
 
 interface TagInfo {
   name: string;
@@ -17,103 +21,65 @@ interface TagsResponse {
   tags: TagInfo[];
   totalTags: number;
   totalNotes: number;
-}
-
-// Parse inline tags like #tag from content
-function parseInlineTags(content: string): string[] {
-  // Remove code blocks and inline code first
-  const cleanContent = content
-    .replace(/```[\s\S]*?```/g, "")
-    .replace(/`[^`]+`/g, "");
-
-  // Match #tag pattern (not in links or headers)
-  const tagRegex = /(?:^|\s)#([a-zA-Z][a-zA-Z0-9_-]*)/g;
-  const tags: string[] = [];
-  let match;
-
-  while ((match = tagRegex.exec(cleanContent)) !== null) {
-    const tag = match[1].toLowerCase();
-    if (!tags.includes(tag)) {
-      tags.push(tag);
-    }
-  }
-
-  return tags;
+  fromIndex: boolean;
 }
 
 export async function GET() {
   try {
+    const session = await getServerSession(authOptions);
     const context = await getAuthenticatedContext();
 
-    if (!context) {
+    if (!context || !session?.user) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    const { octokit, vaultConfig } = context;
+    const { vaultConfig } = context;
 
-    // Get all markdown files
-    const allFiles = await getFullVaultTree(octokit, false, vaultConfig);
-    const publicFiles = filterPrivatePaths(allFiles);
-    const mdFiles = publicFiles.filter(
-      (f) => f.type === "file" && f.path.endsWith(".md")
-    );
+    const vaultKey: VaultKey = {
+      userId: session.user.id || session.user.email || "",
+      owner: vaultConfig.owner,
+      repo: vaultConfig.repo,
+      branch: vaultConfig.branch,
+    };
 
-    // Map to store tag info
+    // Check if index is available
+    const indexStatus = await getVaultIndexStatus(vaultKey);
+
+    if (!indexStatus || indexStatus.status !== "completed") {
+      return NextResponse.json({
+        tags: [],
+        totalTags: 0,
+        totalNotes: 0,
+        fromIndex: false,
+        needsIndex: true,
+        message: "Index non disponible. Lancez l'indexation depuis les paramètres.",
+      });
+    }
+
+    // Get all indexed entries (public only)
+    const entries = await getPublicVaultIndexEntries(vaultKey);
+
+    // Build tags map from index
     const tagsMap = new Map<string, TagInfo>();
 
-    // Scan ALL markdown files (no cap - user triggers manually with warning)
-    const filesToScan = mdFiles;
+    for (const entry of entries) {
+      const noteInfo = { path: entry.filePath, name: entry.fileName };
+      const tags = entry.tags as string[];
 
-    for (const file of filesToScan) {
-      try {
-        const { content } = await getFileContent(octokit, file.path, vaultConfig);
+      for (const tag of tags) {
+        if (!tag) continue;
 
-        // Check if content is private
-        const privacyCheck = isPrivateContent(content);
-        if (privacyCheck.isPrivate) continue;
-
-        const noteName = file.name.replace(/\.md$/, "");
-        const noteInfo = { path: file.path, name: noteName };
-
-        // Parse frontmatter tags
-        const { data: frontmatter } = matter(content);
-        const frontmatterTags: string[] = [];
-
-        if (Array.isArray(frontmatter.tags)) {
-          frontmatterTags.push(
-            ...frontmatter.tags.map((t: string) => String(t).toLowerCase())
-          );
+        if (tagsMap.has(tag)) {
+          const tagInfo = tagsMap.get(tag)!;
+          tagInfo.count++;
+          tagInfo.notes.push(noteInfo);
+        } else {
+          tagsMap.set(tag, {
+            name: tag,
+            count: 1,
+            notes: [noteInfo],
+          });
         }
-        if (typeof frontmatter.tags === "string") {
-          frontmatterTags.push(
-            ...frontmatter.tags.split(",").map((t: string) => t.trim().toLowerCase())
-          );
-        }
-
-        // Parse inline tags
-        const inlineTags = parseInlineTags(content);
-
-        // Merge all tags
-        const allTags = [...new Set([...frontmatterTags, ...inlineTags])];
-
-        // Update tags map
-        for (const tag of allTags) {
-          if (!tag) continue;
-
-          if (tagsMap.has(tag)) {
-            const tagInfo = tagsMap.get(tag)!;
-            tagInfo.count++;
-            tagInfo.notes.push(noteInfo);
-          } else {
-            tagsMap.set(tag, {
-              name: tag,
-              count: 1,
-              notes: [noteInfo],
-            });
-          }
-        }
-      } catch {
-        continue;
       }
     }
 
@@ -123,7 +89,8 @@ export async function GET() {
     const response: TagsResponse = {
       tags,
       totalTags: tags.length,
-      totalNotes: filesToScan.length,
+      totalNotes: entries.length,
+      fromIndex: true,
     };
 
     return NextResponse.json(response);

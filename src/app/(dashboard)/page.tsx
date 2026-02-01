@@ -40,6 +40,7 @@ import { useVaultStore } from "@/lib/store";
 import { usePinnedStore } from "@/lib/pinned-store";
 import { useSettingsStore } from "@/lib/settings-store";
 import { useSessionStateStore } from "@/lib/session-state-store";
+import { useVaultIndex } from "@/hooks/use-vault-index";
 import { CreateNoteDialog } from "@/components/notes/create-note-dialog";
 import { getFileType } from "@/lib/file-types";
 import type { VaultFile } from "@/types";
@@ -167,6 +168,7 @@ export default function HomePage() {
   const { pinnedNotes, unpinNote } = usePinnedStore();
   const { settings } = useSettingsStore();
   const { lastOpenedNotePath } = useSessionStateStore();
+  const { status: indexStatus, fetchStatus: fetchIndexStatus, startIndexing } = useVaultIndex();
 
   const [stats, setStats] = useState<VaultStats>({
     notes: 0,
@@ -220,6 +222,37 @@ export default function HomePage() {
   useEffect(() => {
     fetchGraphData();
   }, [fetchGraphData]);
+
+  // Auto-refresh index if enabled and index is old
+  useEffect(() => {
+    const checkAutoRefresh = async () => {
+      // Skip if auto-refresh disabled
+      if (!settings.autoRefreshIndex) return;
+
+      // Fetch current index status
+      await fetchIndexStatus();
+    };
+
+    checkAutoRefresh();
+  }, [settings.autoRefreshIndex, fetchIndexStatus]);
+
+  // Trigger auto-refresh when we have index status
+  useEffect(() => {
+    if (!settings.autoRefreshIndex) return;
+    if (!indexStatus) return;
+
+    // Check if index exists and is old enough to refresh
+    if (indexStatus.status === "completed" && indexStatus.completedAt) {
+      const lastIndexDate = new Date(indexStatus.completedAt);
+      const daysSinceIndex = (Date.now() - lastIndexDate.getTime()) / (1000 * 60 * 60 * 24);
+      const intervalDays = settings.autoRefreshIntervalDays ?? 7;
+
+      if (daysSinceIndex >= intervalDays) {
+        // Index is older than threshold, trigger refresh
+        startIndexing(false);
+      }
+    }
+  }, [indexStatus, settings.autoRefreshIndex, settings.autoRefreshIntervalDays, startIndexing]);
 
   // Get recent notes based on settings
   const recentNotes = useMemo(() => {

@@ -68,6 +68,10 @@ export interface UserSettings {
   // Cloud Sync
   syncToCloud: boolean; // Sync settings to GitHub (disabled on mobile by default)
   theme: string; // Current theme ID (synced with cloud)
+
+  // Index
+  autoRefreshIndex: boolean; // Auto-refresh index when opening dashboard
+  autoRefreshIntervalDays: number; // Refresh if index is older than X days (1-30)
 }
 
 interface SettingsState {
@@ -140,6 +144,10 @@ const defaultSettings: UserSettings = {
   // Cloud Sync
   syncToCloud: true, // Sync to GitHub by default
   theme: "magenta", // Default theme
+
+  // Index
+  autoRefreshIndex: true, // Auto-refresh by default
+  autoRefreshIntervalDays: 7, // Refresh if older than 7 days
 };
 
 export const useSettingsStore = create<SettingsState>()(

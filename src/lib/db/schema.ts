@@ -7,6 +7,8 @@ import {
   timestamp,
   integer,
   index,
+  jsonb,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 export const shares = pgTable(
@@ -84,3 +86,75 @@ export const pins = pgTable(
 
 export type Pin = typeof pins.$inferSelect;
 export type NewPin = typeof pins.$inferInsert;
+
+// Vault Index - stores parsed file data for fast queries (tags, wikilinks, etc.)
+export const vaultIndex = pgTable(
+  "vault_index",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+
+    // Vault composite key
+    userId: varchar("user_id", { length: 255 }).notNull(),
+    owner: varchar("owner", { length: 255 }).notNull(),
+    repo: varchar("repo", { length: 255 }).notNull(),
+    branch: varchar("branch", { length: 255 }).notNull(),
+
+    // File info
+    filePath: varchar("file_path", { length: 1024 }).notNull(),
+    fileName: varchar("file_name", { length: 255 }).notNull(),
+    fileSha: varchar("file_sha", { length: 40 }).notNull(),
+
+    // Indexed data (JSONB for flexibility)
+    tags: jsonb("tags").$type<string[]>().default([]).notNull(),
+    wikilinks: jsonb("wikilinks").$type<{ target: string; display?: string; isEmbed: boolean }[]>().default([]).notNull(),
+    frontmatter: jsonb("frontmatter").$type<Record<string, unknown>>().default({}).notNull(),
+
+    // Privacy flag (cached from content parsing)
+    isPrivate: boolean("is_private").default(false).notNull(),
+
+    // Timestamps
+    indexedAt: timestamp("indexed_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("idx_vault_index_vault").on(table.userId, table.owner, table.repo, table.branch),
+    index("idx_vault_index_sha").on(table.fileSha),
+    uniqueIndex("idx_vault_index_file").on(table.userId, table.owner, table.repo, table.branch, table.filePath),
+  ]
+);
+
+export type VaultIndexEntry = typeof vaultIndex.$inferSelect;
+export type NewVaultIndexEntry = typeof vaultIndex.$inferInsert;
+
+// Vault Index Status - tracks indexing progress
+export const vaultIndexStatus = pgTable(
+  "vault_index_status",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+
+    // Vault composite key
+    userId: varchar("user_id", { length: 255 }).notNull(),
+    owner: varchar("owner", { length: 255 }).notNull(),
+    repo: varchar("repo", { length: 255 }).notNull(),
+    branch: varchar("branch", { length: 255 }).notNull(),
+
+    // Progress
+    status: varchar("status", { length: 20 }).$type<"pending" | "indexing" | "completed" | "failed">().default("pending").notNull(),
+    totalFiles: integer("total_files").default(0).notNull(),
+    indexedFiles: integer("indexed_files").default(0).notNull(),
+    failedFiles: integer("failed_files").default(0).notNull(),
+    errorMessage: text("error_message"),
+
+    // Timestamps
+    startedAt: timestamp("started_at"),
+    completedAt: timestamp("completed_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("idx_vault_index_status_vault").on(table.userId, table.owner, table.repo, table.branch),
+  ]
+)
+
+export type VaultIndexStatus = typeof vaultIndexStatus.$inferSelect;
+export type NewVaultIndexStatus = typeof vaultIndexStatus.$inferInsert;

@@ -1510,8 +1510,9 @@
 }
 
 /* Code blocks - Obsidian style with horizontal scroll */
+/* Note: rounded corners are handled inline by CodeBlockWrapper for filename header support */
 pre {
-  @apply overflow-x-auto max-w-full rounded-lg;
+  @apply overflow-x-auto max-w-full;
   -webkit-overflow-scrolling: touch;
 }
 

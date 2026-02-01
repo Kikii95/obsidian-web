@@ -16,7 +16,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { VaultSidebar } from "@/components/navigation/vault-sidebar";
 import { useVaultStore } from "@/lib/store";
-import { LogOut, Menu, PanelLeftClose, PanelLeft, Settings, User, Home, Network, Tag, Link2 } from "lucide-react";
+import { LogOut, Menu, PanelLeftClose, PanelLeft, Settings, User, Home, Network, Tag, Link2, Gift } from "lucide-react";
 import { useSelectionStore } from "@/lib/selection-store";
 import { ThemeSwitcher } from "@/components/theme/theme-switcher";
 import { Logo } from "@/components/ui/logo";
@@ -25,6 +25,11 @@ import { ResizableSidebar } from "@/components/ui/resizable-sidebar";
 import { GlobalLockStatus } from "@/components/lock/global-lock-status";
 import { HeaderDateTime } from "@/components/ui/header-date-time";
 import { QuickSwitcher } from "@/components/navigation/quick-switcher";
+import { ShortcutsModal } from "@/components/ui/shortcuts-modal";
+import { useShortcutsModal } from "@/hooks/use-shortcuts-modal";
+import { WhatsNewModal } from "@/components/ui/whats-new-modal";
+import { useWhatsNew } from "@/hooks/use-whats-new";
+import { Badge } from "@/components/ui/badge";
 import { DailyNoteButton } from "@/components/navigation/daily-note-button";
 import { ExploreRepoDialog } from "@/components/navigation/explore-repo-dialog";
 import { ScrollRestoration } from "@/components/navigation/scroll-restoration";
@@ -48,6 +53,8 @@ export default function DashboardLayout({
   const { sidebarOpen, toggleSidebar } = useVaultStore();
   const { exitSelectionMode } = useSelectionStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { isOpen: shortcutsOpen, setIsOpen: setShortcutsOpen } = useShortcutsModal();
+  const { isOpen: whatsNewOpen, setIsOpen: setWhatsNewOpen, hasNewVersion } = useWhatsNew();
 
   // Load and validate vault config (redirects to /setup if not configured)
   const { isLoading: isVaultConfigLoading, isConfigured } = useVaultConfig();
@@ -262,6 +269,15 @@ export default function DashboardLayout({
                     Liens partagés
                   </Link>
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setWhatsNewOpen(true)}>
+                  <Gift className="mr-2 h-4 w-4" />
+                  Quoi de neuf
+                  {hasNewVersion && (
+                    <Badge variant="destructive" className="ml-auto text-xs px-1.5 py-0">
+                      1
+                    </Badge>
+                  )}
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => signOut({ callbackUrl: "/login" })}
@@ -305,6 +321,12 @@ export default function DashboardLayout({
 
       {/* Quick Switcher (Ctrl+P) */}
       <QuickSwitcher />
+
+      {/* Keyboard Shortcuts Modal (? or Ctrl+/) */}
+      <ShortcutsModal open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
+
+      {/* What's New Modal */}
+      <WhatsNewModal open={whatsNewOpen} onOpenChange={setWhatsNewOpen} />
 
       {/* Scroll Restoration */}
       <ScrollRestoration />

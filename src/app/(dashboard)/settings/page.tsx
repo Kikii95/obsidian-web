@@ -44,6 +44,10 @@ import {
   Bug,
   Lightbulb,
   HelpCircle,
+  Search,
+  CheckCircle2,
+  Loader2,
+  XCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { useTheme } from "@/hooks/use-theme";
@@ -53,6 +57,8 @@ import { useSettingsStore, type UserSettings, type ActivityPeriod, type Dashboar
 import { useVaultStore } from "@/lib/store";
 import { useLockStore } from "@/lib/lock-store";
 import { PinDialog } from "@/components/lock/pin-dialog";
+import { Progress } from "@/components/ui/progress";
+import { useVaultIndex } from "@/hooks/use-vault-index";
 import type { VaultFile } from "@/types";
 
 // Security settings keys that require PIN verification to change
@@ -111,6 +117,15 @@ export default function SettingsPage() {
   const { settings, updateSettings, resetSettings } = useSettingsStore();
   const { tree } = useVaultStore();
   const { hasPinConfigured, isUnlocked } = useLockStore();
+  const {
+    status: indexStatus,
+    isIndexing,
+    progress: indexProgress,
+    lastRefreshStats,
+    fetchStatus: fetchIndexStatus,
+    startIndexing,
+    cancelIndexing,
+  } = useVaultIndex();
 
   const [cacheStats, setCacheStats] = useState<{
     count: number;
@@ -184,7 +199,8 @@ export default function SettingsPage() {
 
   useEffect(() => {
     loadCacheStats();
-  }, []);
+    fetchIndexStatus();
+  }, [fetchIndexStatus]);
 
   const loadCacheStats = async () => {
     const stats = await getCacheStats();
@@ -855,6 +871,207 @@ export default function SettingsPage() {
                 {(draft.graphGravityStrength ?? 0.05).toFixed(2)}
               </span>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Vault Index Settings */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Search className="h-5 w-5 text-primary" />
+            Index du Vault
+          </CardTitle>
+          <CardDescription>
+            Index PostgreSQL pour tags, backlinks et graph performants
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Current status */}
+          <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+            <div className="flex items-center gap-3">
+              {!indexStatus || indexStatus.status === "none" ? (
+                <XCircle className="h-5 w-5 text-muted-foreground" />
+              ) : indexStatus.status === "completed" ? (
+                <CheckCircle2 className="h-5 w-5 text-green-500" />
+              ) : indexStatus.status === "indexing" ? (
+                <Loader2 className="h-5 w-5 text-primary animate-spin" />
+              ) : indexStatus.status === "failed" ? (
+                <XCircle className="h-5 w-5 text-destructive" />
+              ) : (
+                <Database className="h-5 w-5 text-muted-foreground" />
+              )}
+              <div>
+                {!indexStatus || indexStatus.status === "none" ? (
+                  <p className="font-medium">Aucun index</p>
+                ) : indexStatus.status === "completed" ? (
+                  <>
+                    <p className="font-medium">{indexStatus.indexedFiles} fichiers indexés</p>
+                    <p className="text-sm text-muted-foreground">
+                      Dernière indexation : {indexStatus.completedAt
+                        ? new Date(indexStatus.completedAt).toLocaleString("fr-FR")
+                        : "—"}
+                    </p>
+                  </>
+                ) : indexStatus.status === "indexing" || isIndexing ? (
+                  <>
+                    <p className="font-medium">Indexation en cours...</p>
+                    <p className="text-sm text-muted-foreground">
+                      {indexProgress.indexed} / {indexProgress.total} fichiers
+                    </p>
+                  </>
+                ) : indexStatus.status === "failed" ? (
+                  <>
+                    <p className="font-medium text-destructive">Échec de l&apos;indexation</p>
+                    <p className="text-sm text-muted-foreground">{indexStatus.errorMessage}</p>
+                  </>
+                ) : (
+                  <p className="font-medium">État inconnu</p>
+                )}
+              </div>
+            </div>
+            <Button variant="outline" size="sm" onClick={fetchIndexStatus}>
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Progress bar during indexing */}
+          {(indexStatus?.status === "indexing" || isIndexing) && indexProgress.total > 0 && (
+            <div className="space-y-2">
+              <Progress
+                value={(indexProgress.indexed / indexProgress.total) * 100}
+                className="h-2"
+              />
+              <p className="text-xs text-muted-foreground text-center">
+                {Math.round((indexProgress.indexed / indexProgress.total) * 100)}%
+              </p>
+            </div>
+          )}
+
+          {/* Last refresh stats */}
+          {lastRefreshStats && !isIndexing && (
+            <div className="p-3 rounded-lg border border-border/50 bg-card/50 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">
+                  Dernier {lastRefreshStats.mode === "rebuild" ? "rebuild" : "refresh"}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {new Date(lastRefreshStats.timestamp).toLocaleTimeString("fr-FR")}
+                </span>
+              </div>
+              {lastRefreshStats.wasUpToDate ? (
+                <p className="text-sm text-green-600 dark:text-green-400">
+                  ✓ Index déjà à jour — aucun changement détecté
+                </p>
+              ) : (
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  {lastRefreshStats.newFiles > 0 && (
+                    <div className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-green-500" />
+                      <span>{lastRefreshStats.newFiles} nouveaux</span>
+                    </div>
+                  )}
+                  {lastRefreshStats.modifiedFiles > 0 && (
+                    <div className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-blue-500" />
+                      <span>{lastRefreshStats.modifiedFiles} modifiés</span>
+                    </div>
+                  )}
+                  {lastRefreshStats.deletedFiles > 0 && (
+                    <div className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-red-500" />
+                      <span>{lastRefreshStats.deletedFiles} supprimés</span>
+                    </div>
+                  )}
+                  {lastRefreshStats.unchangedFiles > 0 && (
+                    <div className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-muted-foreground" />
+                      <span>{lastRefreshStats.unchangedFiles} inchangés</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Action buttons */}
+          <div className="flex gap-2">
+            {isIndexing ? (
+              <Button
+                variant="destructive"
+                className="flex-1"
+                onClick={cancelIndexing}
+              >
+                <XCircle className="h-4 w-4 mr-2" />
+                Annuler
+              </Button>
+            ) : (
+              <>
+                <Button
+                  variant="default"
+                  className="flex-1"
+                  onClick={() => startIndexing(false)}
+                  disabled={isIndexing}
+                >
+                  <Search className="h-4 w-4 mr-2" />
+                  {indexStatus?.status === "completed" ? "Refresh" : "Indexer le vault"}
+                </Button>
+                {indexStatus?.status === "completed" && (
+                  <Button
+                    variant="outline"
+                    onClick={() => startIndexing(true)}
+                    disabled={isIndexing}
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Rebuild
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Mode explanation */}
+          <div className="text-xs text-muted-foreground space-y-1 p-3 rounded-lg bg-muted/30">
+            <p><strong>Refresh :</strong> Compare les SHA, indexe uniquement les fichiers nouveaux/modifiés (rapide, ~0 appels API si rien n&apos;a changé)</p>
+            <p><strong>Rebuild :</strong> Supprime l&apos;index et réindexe tout depuis zéro (lent, utilise des appels API)</p>
+          </div>
+
+          {/* Auto-refresh settings */}
+          <div className="pt-4 border-t border-border/50 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Auto-refresh</Label>
+                <p className="text-sm text-muted-foreground">
+                  Actualise l&apos;index automatiquement au chargement
+                </p>
+              </div>
+              <Switch
+                checked={draft.autoRefreshIndex ?? true}
+                onCheckedChange={(checked) => updateDraft("autoRefreshIndex", checked)}
+              />
+            </div>
+
+            {(draft.autoRefreshIndex ?? true) && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm">Intervalle</Label>
+                  <span className="text-sm font-mono text-muted-foreground">
+                    {draft.autoRefreshIntervalDays ?? 7} jour{(draft.autoRefreshIntervalDays ?? 7) > 1 ? "s" : ""}
+                  </span>
+                </div>
+                <Slider
+                  value={[draft.autoRefreshIntervalDays ?? 7]}
+                  onValueChange={([value]) => updateDraft("autoRefreshIntervalDays", value)}
+                  min={1}
+                  max={30}
+                  step={1}
+                  className="flex-1"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Refresh automatique si l&apos;index date de plus de {draft.autoRefreshIntervalDays ?? 7} jour{(draft.autoRefreshIntervalDays ?? 7) > 1 ? "s" : ""}
+                </p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

@@ -63,6 +63,7 @@ const cheatsheetItems = [
   { syntax: "`code`", desc: "Code inline" },
   { syntax: "```", desc: "Bloc code" },
   { syntax: "> quote", desc: "Citation" },
+  { syntax: "> [!note]", desc: "Callout" },
   { syntax: "- item", desc: "Liste" },
   { syntax: "1. item", desc: "Liste num." },
   { syntax: "[texte](url)", desc: "Lien" },

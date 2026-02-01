@@ -1,8 +1,8 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useState } from "react";
 import Link from "next/link";
-import { FileText, Folder, Image, LayoutDashboard } from "lucide-react";
+import { FileText, Folder, Image, LayoutDashboard, ChevronDown, ChevronRight, Link2 } from "lucide-react";
 import { PrefetchLink } from "@/components/ui/prefetch-link";
 import { encodePathSegments } from "@/lib/path-utils";
 
@@ -81,34 +81,57 @@ function getHref(link: string, type: LinkType): string {
 export const NoteWikilinks = memo(function NoteWikilinks({
   wikilinks,
 }: NoteWikilinksProps) {
+  const [isOpen, setIsOpen] = useState(false); // Collapsed by default
+
   if (wikilinks.length === 0) return null;
 
   return (
-    <div className="mt-12 pt-6 border-t border-border/50">
-      <h3 className="text-sm font-medium text-muted-foreground mb-3">
-        Liens dans cette note ({wikilinks.length})
-      </h3>
-      <div className="flex flex-wrap gap-2">
-        {wikilinks.map((link) => {
-          const displayPath = formatPath(link);
-          const linkType = detectLinkType(link);
-          const href = getHref(link, linkType);
+    <div className="mt-8 border border-border/50 rounded-lg overflow-hidden bg-card/50">
+      {/* Header */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors"
+      >
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <Link2 className="h-4 w-4 text-muted-foreground" />
+          <span>Liens dans cette note</span>
+          <span className="text-muted-foreground font-normal">
+            ({wikilinks.length})
+          </span>
+        </div>
+        {isOpen ? (
+          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+        ) : (
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        )}
+      </button>
 
-          // Use regular Link for non-note types (no prefetch)
-          const LinkComponent = linkType === "note" ? PrefetchLink : Link;
+      {/* Content */}
+      {isOpen && (
+        <div className="px-4 pb-4 border-t border-border/50 pt-3">
+          <div className="flex flex-wrap gap-2">
+            {wikilinks.map((link) => {
+              const displayPath = formatPath(link);
+              const linkType = detectLinkType(link);
+              const href = getHref(link, linkType);
 
-          return (
-            <LinkComponent
-              key={link}
-              href={href}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-            >
-              <LinkIcon type={linkType} />
-              {displayPath}
-            </LinkComponent>
-          );
-        })}
-      </div>
+              // Use regular Link for non-note types (no prefetch)
+              const LinkComponent = linkType === "note" ? PrefetchLink : Link;
+
+              return (
+                <LinkComponent
+                  key={link}
+                  href={href}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                >
+                  <LinkIcon type={linkType} />
+                  {displayPath}
+                </LinkComponent>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 });

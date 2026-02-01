@@ -36,6 +36,7 @@ import { MoveNoteDialog } from "@/components/notes/move-note-dialog";
 import { RenameNoteDialog } from "@/components/notes/rename-note-dialog";
 import { ShareNoteDialog } from "@/components/shares/share-note-dialog";
 import { NoteHistory } from "./note-history";
+import { CopyLinkButton } from "./copy-link-button";
 import type { NoteData } from "@/services/github-client";
 
 interface NoteToolbarProps {
@@ -148,6 +149,9 @@ export const NoteToolbar = memo(function NoteToolbar({
       >
         {noteIsPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
       </Button>
+
+      {/* Copy link button */}
+      <CopyLinkButton notePath={note.path} noteName={noteName} />
 
       <Button
         variant="outline"

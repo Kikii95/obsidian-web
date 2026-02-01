@@ -8,13 +8,23 @@ import rehypeRaw from "rehype-raw";
 import rehypeHighlight from "rehype-highlight";
 import { PrefetchLink } from "@/components/ui/prefetch-link";
 import { CollapsibleContent } from "@/components/viewer/collapsible-content";
+import { Callout, parseCalloutSyntax } from "@/components/markdown/callout";
+import { ImageZoomModal, useImageZoom } from "@/components/media/image-zoom-modal";
 import { wikilinkToPath, buildNoteLookupMap, type NoteLookupMap } from "@/lib/wikilinks";
 import { useVaultStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { Copy, Check } from "lucide-react";
 
-// Code block wrapper with copy button
-function CodeBlockWrapper({ children, code }: { children: React.ReactNode; code: string }) {
+// Code block wrapper with copy button and optional filename
+function CodeBlockWrapper({
+  children,
+  code,
+  filename,
+}: {
+  children: React.ReactNode;
+  code: string;
+  filename?: string;
+}) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = useCallback(async () => {
@@ -29,10 +39,16 @@ function CodeBlockWrapper({ children, code }: { children: React.ReactNode; code:
 
   return (
     <div className="relative group">
+      {filename && (
+        <div className="flex items-center justify-between px-4 py-2 bg-muted/70 border border-border/50 border-b-0 rounded-t-lg">
+          <span className="text-xs font-mono text-muted-foreground">{filename}</span>
+        </div>
+      )}
       <button
         onClick={handleCopy}
         className={cn(
-          "absolute top-2 right-2 p-1.5 rounded-md transition-all z-10",
+          "absolute p-1.5 rounded-md transition-all z-10",
+          filename ? "top-10 right-2" : "top-2 right-2",
           "opacity-0 group-hover:opacity-100 focus:opacity-100",
           copied
             ? "bg-green-500/20 text-green-400"
@@ -68,11 +84,29 @@ function MarkdownRendererInner({
   onCheckboxToggle,
   lookupMap,
 }: MarkdownRendererProps & { lookupMap: NoteLookupMap }) {
+  // Image zoom modal state
+  const imageZoom = useImageZoom();
+
+  // Extract all image URLs from content for navigation
+  const allImages = useMemo(() => {
+    const imgRegex = /!\[.*?\]\((.*?)\)/g;
+    const images: string[] = [];
+    let match;
+    while ((match = imgRegex.exec(content)) !== null) {
+      images.push(match[1]);
+    }
+    return images;
+  }, [content]);
+
   // Pre-process content to convert wikilinks to markdown links and handle collapsible syntax
   // In share viewer mode, wikilinks are displayed as plain text (no navigation)
   const processedContent = useMemo(() => {
     let processed = content;
-    // Process collapsible (hidden::visible) syntax first
+    // Process code block titles first (```js title="file.js")
+    processed = processCodeBlockTitles(processed);
+    // Process callouts BEFORE markdown parsing
+    processed = processCallouts(processed);
+    // Process collapsible (hidden::visible) syntax
     processed = processCollapsible(processed);
     // Then process wikilinks
     processed = isShareViewer ? processWikilinksForShare(processed) : processWikilinks(processed, lookupMap);
@@ -176,7 +210,7 @@ function MarkdownRendererInner({
               </code>
             );
           },
-          // Custom pre for code blocks with copy button
+          // Custom pre for code blocks with copy button and filename support
           pre: ({ children, node, ...props }) => {
             // Check if this contains a dataview/tasks block by looking at children
             const codeElement = node?.children?.[0];
@@ -200,12 +234,23 @@ function MarkdownRendererInner({
               }
               return "";
             };
-            const codeText = extractText(codeElement).replace(/\n$/, "");
+            let codeText = extractText(codeElement).replace(/\n$/, "");
+
+            // Extract filename from comment marker if present
+            let filename: string | undefined;
+            const filenameMatch = codeText.match(/^<!-- codeblock-title:(.+?) -->\n?/);
+            if (filenameMatch) {
+              filename = filenameMatch[1];
+              codeText = codeText.replace(filenameMatch[0], "");
+            }
 
             return (
-              <CodeBlockWrapper code={codeText}>
+              <CodeBlockWrapper code={codeText} filename={filename}>
                 <pre
-                  className="bg-muted/50 border border-border/50 rounded-lg p-4 pr-12 overflow-x-auto"
+                  className={cn(
+                    "bg-muted/50 border border-border/50 p-4 pr-12 overflow-x-auto",
+                    filename ? "rounded-b-lg rounded-t-none border-t-0" : "rounded-lg"
+                  )}
                   {...props}
                 >
                   {children}
@@ -229,15 +274,75 @@ function MarkdownRendererInner({
               {children}
             </h3>
           ),
-          // Custom blockquote
-          blockquote: ({ children, ...props }) => (
-            <blockquote
-              className="border-l-4 border-primary/50 pl-4 py-1 my-4 italic text-muted-foreground bg-muted/20 rounded-r"
-              {...props}
-            >
-              {children}
-            </blockquote>
-          ),
+          // Custom blockquote with callout support
+          blockquote: ({ children, node, ...props }) => {
+            // Extract text content to check for callout syntax
+            const extractFirstLine = (n: unknown): string => {
+              if (!n) return "";
+              if (typeof n === "string") return n.split("\n")[0];
+              if (Array.isArray(n)) {
+                for (const child of n) {
+                  const result = extractFirstLine(child);
+                  if (result) return result;
+                }
+              }
+              if (typeof n === "object" && n !== null) {
+                const obj = n as { children?: unknown; value?: string; props?: { children?: unknown } };
+                if (obj.value) return obj.value.split("\n")[0];
+                if (obj.children) return extractFirstLine(obj.children);
+                if (obj.props?.children) return extractFirstLine(obj.props.children);
+              }
+              return "";
+            };
+
+            const firstLine = extractFirstLine(children);
+            const calloutInfo = parseCalloutSyntax(firstLine.trim());
+
+            if (calloutInfo.isCallout) {
+              // Remove the callout syntax line from children
+              const removeFirstLine = (nodes: React.ReactNode): React.ReactNode => {
+                if (!nodes) return nodes;
+                if (Array.isArray(nodes)) {
+                  return nodes.map((node, i) => {
+                    if (i === 0) return removeFirstLine(node);
+                    return node;
+                  });
+                }
+                if (isValidElement(nodes)) {
+                  const nodeProps = nodes.props as { children?: React.ReactNode };
+                  if (typeof nodeProps.children === "string") {
+                    const lines = nodeProps.children.split("\n");
+                    if (lines[0].match(/^\[!\w+\]/)) {
+                      const remaining = lines.slice(1).join("\n");
+                      return { ...nodes, props: { ...nodeProps, children: remaining } };
+                    }
+                  }
+                }
+                return nodes;
+              };
+
+              return (
+                <Callout
+                  type={calloutInfo.type!}
+                  title={calloutInfo.title}
+                  foldable={calloutInfo.foldable}
+                  defaultFolded={calloutInfo.defaultFolded}
+                >
+                  {removeFirstLine(children)}
+                </Callout>
+              );
+            }
+
+            // Regular blockquote
+            return (
+              <blockquote
+                className="border-l-4 border-primary/50 pl-4 py-1 my-4 italic text-muted-foreground bg-muted/20 rounded-r"
+                {...props}
+              >
+                {children}
+              </blockquote>
+            );
+          },
           // Custom table
           table: ({ children, ...props }) => (
             <div className="overflow-x-auto my-4">
@@ -347,6 +452,19 @@ function MarkdownRendererInner({
           hr: ({ ...props }) => (
             <hr className="my-8 border-border/50" {...props} />
           ),
+          // Custom image with zoom on click
+          img: ({ src, alt, ...props }) => {
+            const srcString = typeof src === "string" ? src : undefined;
+            return (
+              <img
+                src={srcString}
+                alt={alt || ""}
+                className="cursor-zoom-in rounded-lg max-w-full hover:shadow-lg transition-shadow"
+                onClick={() => srcString && imageZoom.openImage(srcString, allImages)}
+                {...props}
+              />
+            );
+          },
           // Custom paragraph
           p: ({ children, ...props }) => (
             <p className="my-3 leading-relaxed text-foreground/90" {...props}>
@@ -364,10 +482,68 @@ function MarkdownRendererInner({
             // Regular span
             return <span className={className} {...props} />;
           },
+          // Custom div for callouts (processed by processCallouts)
+          div: ({ className, node, children, ...props }) => {
+            // Check if this is a callout div
+            if (className === "obsidian-callout") {
+              const type = (node?.properties?.dataType as string) || "note";
+              const title = (node?.properties?.dataTitle as string) || "";
+              const foldable = (node?.properties?.dataFoldable as string) === "true";
+              const defaultFolded = (node?.properties?.dataFolded as string) === "true";
+
+              // The content is HTML-escaped text, we need to unescape and render
+              const extractText = (n: unknown): string => {
+                if (!n) return "";
+                if (typeof n === "string") return n;
+                if (Array.isArray(n)) return n.map(extractText).join("");
+                if (typeof n === "object" && n !== null) {
+                  const obj = n as { value?: string; children?: unknown };
+                  if (obj.value) return obj.value;
+                  if (obj.children) return extractText(obj.children);
+                }
+                return "";
+              };
+
+              const rawContent = extractText(children);
+              // Unescape HTML entities
+              const unescapedContent = rawContent
+                .replace(/&lt;/g, "<")
+                .replace(/&gt;/g, ">")
+                .replace(/&quot;/g, '"')
+                .replace(/&amp;/g, "&");
+
+              return (
+                <Callout
+                  type={type as "note" | "warning" | "tip" | "info" | "danger" | "example" | "quote" | "abstract" | "bug" | "success" | "question" | "failure"}
+                  title={title}
+                  foldable={foldable}
+                  defaultFolded={defaultFolded}
+                >
+                  {/* Render content as markdown for proper formatting */}
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm, remarkBreaks]}
+                    rehypePlugins={[rehypeRaw, rehypeHighlight]}
+                  >
+                    {unescapedContent}
+                  </ReactMarkdown>
+                </Callout>
+              );
+            }
+            // Regular div
+            return <div className={className} {...props}>{children}</div>;
+          },
         }}
       >
         {processedContent}
       </ReactMarkdown>
+
+      {/* Image Zoom Modal */}
+      <ImageZoomModal
+        src={imageZoom.selectedImage}
+        images={imageZoom.images}
+        open={imageZoom.isOpen}
+        onOpenChange={imageZoom.setIsOpen}
+      />
     </div>
   );
 }
@@ -402,6 +578,21 @@ export function MarkdownRenderer({
       lookupMap={lookupMap}
     />
   );
+}
+
+/**
+ * Process code blocks with title="filename" syntax
+ * Converts ```js title="file.js" to include a comment marker for the pre component
+ */
+function processCodeBlockTitles(content: string): string {
+  // Match code blocks with title attribute: ```lang title="filename"
+  // Supports: ```js title="file.js", ```typescript title='app.ts', etc.
+  const codeBlockRegex = /```(\w*)\s+title=["']([^"']+)["']\s*\n/g;
+
+  return content.replace(codeBlockRegex, (match, lang, title) => {
+    // Insert a comment at the start of the code block that we can detect in pre
+    return `\`\`\`${lang}\n<!-- codeblock-title:${title} -->\n`;
+  });
 }
 
 /**
@@ -454,4 +645,77 @@ function processWikilinksForShare(content: string): string {
     // Return as styled text, not a link
     return `**${text}**`;
   });
+}
+
+/**
+ * Process Obsidian callout syntax and convert to HTML before markdown parsing
+ * Syntax: > [!type] optional title
+ *         > content...
+ * Supports: +/- for fold state (e.g., [!note]+ or [!note]-)
+ */
+function processCallouts(content: string): string {
+  // Split content by lines to process blockquotes
+  const lines = content.split("\n");
+  const result: string[] = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // Check if this is the start of a callout: > [!type]
+    const calloutStartMatch = line.match(/^>\s*\[!(\w+)\]([-+])?\s*(.*)?$/);
+
+    if (calloutStartMatch) {
+      const type = calloutStartMatch[1].toLowerCase();
+      const foldState = calloutStartMatch[2]; // + or - or undefined
+      const title = calloutStartMatch[3]?.trim() || "";
+
+      // Determine fold attributes
+      const foldable = foldState === "+" || foldState === "-";
+      const defaultFolded = foldState === "-";
+
+      // Collect all content lines of this callout
+      const contentLines: string[] = [];
+      i++;
+
+      while (i < lines.length) {
+        const nextLine = lines[i];
+        // Continue if line starts with > (part of blockquote)
+        if (nextLine.match(/^>/)) {
+          // Remove the > prefix and add to content
+          contentLines.push(nextLine.replace(/^>\s?/, ""));
+          i++;
+        } else if (nextLine.trim() === "") {
+          // Empty line might be part of callout or end it
+          // Check if next non-empty line continues the blockquote
+          if (i + 1 < lines.length && lines[i + 1].match(/^>/)) {
+            contentLines.push("");
+            i++;
+          } else {
+            break;
+          }
+        } else {
+          break;
+        }
+      }
+
+      // Build callout HTML
+      const calloutContent = contentLines.join("\n");
+      const escapedTitle = title.replace(/"/g, "&quot;");
+      const escapedContent = calloutContent
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+      // Use a custom HTML element that will be handled by rehype-raw
+      result.push(
+        `<div class="obsidian-callout" data-type="${type}" data-title="${escapedTitle}" data-foldable="${foldable}" data-folded="${defaultFolded}">${escapedContent}</div>`
+      );
+    } else {
+      result.push(line);
+      i++;
+    }
+  }
+
+  return result.join("\n");
 }

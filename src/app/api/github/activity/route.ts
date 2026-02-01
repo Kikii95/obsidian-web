@@ -7,6 +7,12 @@ interface CommitActivity {
   count: number;
 }
 
+interface WeeklyStats {
+  week: number; // Unix timestamp
+  days: number[]; // [Sun, Mon, Tue, Wed, Thu, Fri, Sat]
+  total: number;
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -20,64 +26,81 @@ export async function GET(request: Request) {
 
     const { octokit, vaultConfig } = context;
 
-    // Calculate date range
-    const since = new Date();
-    since.setDate(since.getDate() - days);
-
-    // Get commits from the vault repo
     const owner = vaultConfig.owner;
     const repo = vaultConfig.repo;
 
-    // Fetch commits with pagination (max 100 per page)
-    const commits: Array<{ date: string }> = [];
-    let page = 1;
-    let hasMore = true;
+    // Use GitHub Stats API - returns 52 weeks of data in a single call
+    // Much more efficient than paginating through commits
+    const response = await octokit.repos.getCommitActivityStats({
+      owner,
+      repo,
+    });
 
-    while (hasMore && page <= 10) { // Max 10 pages = 1000 commits
-      const { data } = await octokit.repos.listCommits({
-        owner,
-        repo,
-        since: since.toISOString(),
-        per_page: 100,
-        page,
+    // GitHub may return 202 if stats are being computed
+    if (response.status === 202) {
+      return NextResponse.json({
+        activity: [],
+        stats: {
+          totalCommits: 0,
+          activeDays: 0,
+          maxCommitsPerDay: 0,
+          avgCommitsPerDay: 0,
+          currentStreak: 0,
+          longestStreak: 0,
+          period: days,
+        },
+        rateLimit: getLastRateLimit(),
+        computing: true,
+        message: "Stats en cours de calcul, réessayez dans quelques secondes",
       });
+    }
 
-      if (data.length === 0) {
-        hasMore = false;
-      } else {
-        for (const commit of data) {
-          const date = commit.commit.committer?.date || commit.commit.author?.date;
-          if (date) {
-            commits.push({ date: date.split("T")[0] });
-          }
+    const weeklyStats = response.data as WeeklyStats[];
+
+    if (!weeklyStats || !Array.isArray(weeklyStats)) {
+      throw new Error("Invalid stats response from GitHub");
+    }
+
+    // Calculate date range filter
+    const now = new Date();
+    const sinceDate = new Date();
+    sinceDate.setDate(sinceDate.getDate() - days);
+
+    // Convert weekly stats to daily activity
+    const activityMap = new Map<string, number>();
+    let totalCommits = 0;
+
+    for (const week of weeklyStats) {
+      const weekStart = new Date(week.week * 1000);
+
+      for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+        const date = new Date(weekStart);
+        date.setDate(date.getDate() + dayOffset);
+
+        // Skip dates outside the requested range
+        if (date < sinceDate || date > now) continue;
+
+        const count = week.days[dayOffset];
+        if (count > 0) {
+          const dateStr = date.toISOString().split("T")[0];
+          activityMap.set(dateStr, count);
+          totalCommits += count;
         }
-        page++;
-        if (data.length < 100) hasMore = false;
       }
     }
 
-    // Aggregate by date
-    const activityMap = new Map<string, number>();
-
-    for (const commit of commits) {
-      const current = activityMap.get(commit.date) || 0;
-      activityMap.set(commit.date, current + 1);
-    }
-
-    // Convert to array sorted by date
+    // Convert to sorted array
     const activity: CommitActivity[] = Array.from(activityMap.entries())
       .map(([date, count]) => ({ date, count }))
       .sort((a, b) => a.date.localeCompare(b.date));
 
     // Calculate stats
-    const totalCommits = commits.length;
     const activeDays = activityMap.size;
     const maxCommitsPerDay = Math.max(...Array.from(activityMap.values()), 0);
     const avgCommitsPerDay = activeDays > 0 ? totalCommits / activeDays : 0;
 
     // Get streak (consecutive days with commits)
     let currentStreak = 0;
-    let longestStreak = 0;
     const today = new Date().toISOString().split("T")[0];
     const sortedDates = Array.from(activityMap.keys()).sort().reverse();
 
@@ -95,6 +118,7 @@ export async function GET(request: Request) {
 
     // Calculate longest streak
     let streak = 0;
+    let longestStreak = 0;
     const allDates = Array.from(activityMap.keys()).sort();
     for (let i = 0; i < allDates.length; i++) {
       if (i === 0) {
@@ -126,9 +150,14 @@ export async function GET(request: Request) {
       rateLimit: getLastRateLimit(),
     });
   } catch (error) {
-    console.error("Error fetching activity:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("[Activity] Error:", errorMessage);
+
     return NextResponse.json(
-      { error: "Erreur lors de la récupération de l'activité" },
+      {
+        error: "Erreur lors de la récupération de l'activité",
+        details: errorMessage
+      },
       { status: 500 }
     );
   }

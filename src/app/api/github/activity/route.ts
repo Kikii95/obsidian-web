@@ -28,7 +28,7 @@ export async function GET(request: Request) {
     const owner = vaultConfig.owner;
     const repo = vaultConfig.repo;
 
-    // Fetch commits with pagination (max 100 per page)
+    // Fetch commits with pagination
     const commits: Array<{ date: string }> = [];
     let page = 1;
     let hasMore = true;
@@ -36,15 +36,20 @@ export async function GET(request: Request) {
     // Use configured branch (important for correct commit history)
     const branch = vaultConfig.branch || "main";
 
-    while (hasMore && page <= 10) { // Max 10 pages = 1000 commits
+    // Log for debugging
+    console.log(`[Activity] Fetching commits since ${since.toISOString()} (${days} days) on branch ${branch}`);
+
+    while (hasMore && page <= 50) { // Max 50 pages = 5000 commits
       const { data } = await octokit.repos.listCommits({
         owner,
         repo,
-        sha: branch, // Use vault's configured branch
+        sha: branch,
         since: since.toISOString(),
         per_page: 100,
         page,
       });
+
+      console.log(`[Activity] Page ${page}: ${data.length} commits`);
 
       if (data.length === 0) {
         hasMore = false;
@@ -59,6 +64,8 @@ export async function GET(request: Request) {
         if (data.length < 100) hasMore = false;
       }
     }
+
+    console.log(`[Activity] Total commits fetched: ${commits.length}, oldest: ${commits[commits.length - 1]?.date}, newest: ${commits[0]?.date}`);
 
     // Aggregate by date
     const activityMap = new Map<string, number>();

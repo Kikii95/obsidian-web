@@ -22,24 +22,30 @@ This document tracks planned features, known issues, and community ideas for Obs
 | **Deposit mode (dropbox)** | 🟢 | Anonymous file upload without seeing content, rate limited, configurable |
 | **Copy to Vault** | 🟢 | Copy files/folders from share to own vault with conflict handling |
 | **Share permission toggles** | 🟢 | Allow/block copy to vault and export per share |
-| Audio file support | 🔴 | Play .mp3, .wav, .ogg files in vault |
-| Excalidraw viewer | 🔴 | Render .excalidraw files |
+| **Audio file support** | 🟢 | Play .mp3, .wav, .ogg with speed control (0.5x-2x) — v2.0.0 |
+| **Excalidraw viewer** | 🟢 | Render .excalidraw files with zoom controls — v2.0.0 |
+| **Keyboard shortcuts help** | 🟢 | `?` or `Ctrl+/` shows all shortcuts (23 total) — v2.0.0 |
 | Search in file content | 🔴 | Full-text search across all notes |
 | Mobile gestures | 🔴 | Swipe navigation, pinch zoom |
-| Keyboard shortcuts help | 🔴 | `?` to show all shortcuts |
 
 ### Medium Priority
 
 | Feature | Status | Description |
 |---------|--------|-------------|
+| **Callout blocks** | 🟢 | Obsidian-style callouts (18+ types, foldable) — v2.0.0 |
+| **Table of contents** | 🟢 | Auto-generated TOC from headings, collapsible — v2.0.0 |
+| **Reading time estimate** | 🟢 | Show estimated reading time (200 wpm) — v2.0.0 |
+| **Word count** | 🟢 | Display word/character/paragraph count — v2.0.0 |
+| **Interactive checkboxes** | 🟢 | Click checkboxes in reader mode, auto-saves — v1.7.1 |
+| **Code block filenames** | 🟢 | `js title="file.js"` syntax support — v2.0.0 |
+| **Frontmatter viewer** | 🟢 | Collapsible frontmatter with YAML export — v2.0.0 |
+| **Image zoom modal** | 🟢 | Full gallery with zoom/rotation/navigation — v2.0.0 |
+| **Copy note link** | 🟢 | Multiple formats: wikilink, URL, markdown — v2.0.0 |
+| **What's New modal** | 🟢 | Patch notes UI, auto-shows on version change — v2.0.0 |
 | Note linking autocomplete | 🔴 | `[[` triggers note suggestions in editor |
 | Tag autocomplete | 🔴 | `#` triggers tag suggestions |
-| Callout blocks | 🔴 | Obsidian-style callouts (> [!note], > [!warning]) |
-| Mermaid diagrams | 🔴 | Render mermaid code blocks |
-| Math/LaTeX support | 🔴 | KaTeX rendering for equations |
-| Table of contents | 🔴 | Auto-generated TOC from headings |
-| Reading time estimate | 🔴 | Show estimated reading time |
-| Word count | 🔴 | Display word/character count |
+| Mermaid diagrams | 🔴 | Render mermaid code blocks (dep installed) |
+| Math/LaTeX support | 🔴 | KaTeX rendering for equations (dep installed) |
 
 ### Low Priority
 
@@ -55,14 +61,34 @@ This document tracks planned features, known issues, and community ideas for Obs
 
 ## 🐛 Known Issues / Technical Debt
 
-| Issue | Priority | Description |
-|-------|----------|-------------|
-| Settings sync unreliable | High | Cloud settings sync (PIN, theme, preferences) between mobile and desktop doesn't always work correctly |
-| GitHub API rate limiting | High | Tags explorer and some features consume too many API requests, making them nearly unusable on large vaults |
-| Large file handling | Medium | Files > 1MB can be slow to load |
-| Offline sync conflicts | Low | No conflict resolution UI yet |
-| Canvas node editing | Medium | Can't edit text nodes inline |
-| Search performance | Medium | Full-text search on large vaults can be slow (Fuse.js limitations) |
+| Issue | Priority | Status | Description |
+|-------|----------|--------|-------------|
+| Settings sync | High | 🟡 Improved | Throttled/debounced, separate device files. Retry logic could be better |
+| GitHub API rate limiting | High | 🟢 Resolved | PostgreSQL index eliminates most API calls (~5ms vs API) |
+| Large file handling | Medium | 🟢 Resolved | Smart handling >1MB via GitHub download_url |
+| Canvas node editing | Medium | 🟢 Resolved | Inline text editing with double-click, auto-resize |
+| Offline sync conflicts | Low | 🟡 Partial | Conflict detection exists, UI dialog missing |
+| Full-text search | Medium | 🔴 Not Started | Not yet implemented (Fuse.js or PostgreSQL FTS planned) |
+
+---
+
+## 🗄️ PostgreSQL Vault Index (v2.0.0)
+
+Major architecture improvement shipped in v2.0.0:
+
+| Feature | Status | Description |
+|---------|--------|-------------|
+| **Vault Index System** | 🟢 | PostgreSQL tables for tags, backlinks, graph data |
+| **Smart Refresh** | 🟢 | SHA comparison — only re-indexes modified files |
+| **Auto-Refresh** | 🟢 | Configurable interval (Settings > Dashboard) |
+| **Activity Heatmap** | 🟢 | Commit activity stored in PostgreSQL (~5ms queries) |
+| **Graph without limit** | 🟢 | No more 100-file cap, uses indexed data |
+
+**API Endpoints:**
+- `POST /api/vault/index` — Full index rebuild
+- `POST /api/vault/index/batch` — Batch processing
+- `GET /api/vault/index/status` — Index status
+- `POST /api/vault/index/file` — Single file index
 
 ---
 
@@ -268,11 +294,12 @@ Normal mode → Click "Select" button → Selection mode enabled
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v2.0.0** | 2026-02 | **PostgreSQL Vault Index** + **13 Quick Wins**: Audio player, Excalidraw viewer, Keyboard shortcuts, Callouts, TOC, Note stats, Copy link, Frontmatter viewer, Image zoom, Code filenames, What's New modal, Graph unlimited, Auto-refresh index |
 | v1.7.1 | 2026-01 | **Interactive Checkboxes**: Click checkboxes directly in reader mode, auto-saves to GitHub |
-| v1.7.0 | 2026-01 | **Unified Layout**: Refactored architecture with UniversalLayout component for dashboard/share/temp modes. Org shortcuts in explore dialog, proper org OAuth restriction handling, improved Temp Vault UX. Removed auto-format button (remark only normalized style) |
-| v1.5.0 | 2026-01 | **Temp Vault Reader**: Browse any public GitHub repo as Obsidian vault (`/t/owner/repo`), rate limit indicator, 60 req/hr unauthenticated |
-| v1.4.0 | 2026-01 | Copy to Vault from shares, share permission toggles (allow/block copy & export), sidebar refactoring with shared utilities |
-| v1.3.0 | 2026-01 | Share links Reader/Writer/Deposit mode, unified explorer for shares, create notes/folders in writer shares, deposit dropbox for anonymous uploads |
+| v1.7.0 | 2026-01 | **Unified Layout**: Refactored architecture with UniversalLayout component for dashboard/share/temp modes |
+| v1.5.0 | 2026-01 | **Temp Vault Reader**: Browse any public GitHub repo as Obsidian vault (`/t/owner/repo`) |
+| v1.4.0 | 2026-01 | Copy to Vault from shares, share permission toggles, sidebar refactoring |
+| v1.3.0 | 2026-01 | Share links Reader/Writer/Deposit mode, unified explorer for shares |
 | v1.2.0 | 2026-01 | Selection mode, batch operations, cross-device pins sync, settings sync |
 | v1.1.0 | 2025-12 | Multi-user, video viewer, multi-format import |
 | v1.0.0 | 2025-11 | Initial release |

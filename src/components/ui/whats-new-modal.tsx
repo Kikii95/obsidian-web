@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Sparkles,
   Bug,
@@ -54,6 +53,8 @@ export function WhatsNewModal({ open, onOpenChange }: WhatsNewModalProps) {
   const [expandedVersions, setExpandedVersions] = useState<Set<string>>(
     new Set([patchNotes[0]?.version])
   );
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const versionRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   const handleClose = (isOpen: boolean) => {
     if (!isOpen) {
@@ -62,14 +63,28 @@ export function WhatsNewModal({ open, onOpenChange }: WhatsNewModalProps) {
     onOpenChange(isOpen);
   };
 
-  // Accordion mode: only one version open at a time
+  // Store ref for each version section
+  const setVersionRef = useCallback((version: string, el: HTMLDivElement | null) => {
+    if (el) {
+      versionRefs.current.set(version, el);
+    } else {
+      versionRefs.current.delete(version);
+    }
+  }, []);
+
+  // Accordion mode: only one version open at a time + scroll to top
   const toggleVersion = (version: string) => {
     setExpandedVersions((prev) => {
       if (prev.has(version)) {
-        // Close if already open
         return new Set();
       } else {
-        // Open this one, close others
+        // Scroll to the clicked version after state update
+        setTimeout(() => {
+          const el = versionRefs.current.get(version);
+          if (el && scrollContainerRef.current) {
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }, 50);
         return new Set([version]);
       }
     });
@@ -77,7 +92,7 @@ export function WhatsNewModal({ open, onOpenChange }: WhatsNewModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
+      <DialogContent className="w-[90vw] max-w-5xl max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Gift className="h-5 w-5 text-primary" />
@@ -88,11 +103,20 @@ export function WhatsNewModal({ open, onOpenChange }: WhatsNewModalProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 pr-4">
-          <div className="space-y-4">
+        {/* Custom scroll container with visible scrollbar */}
+        <div
+          ref={scrollContainerRef}
+          className="flex-1 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/50"
+          style={{
+            scrollbarWidth: "thin",
+            scrollbarColor: "hsl(var(--muted-foreground) / 0.3) transparent",
+          }}
+        >
+          <div className="space-y-3 pb-2">
             {patchNotes.map((release) => (
               <ReleaseSection
                 key={release.version}
+                ref={(el) => setVersionRef(release.version, el)}
                 release={release}
                 isExpanded={expandedVersions.has(release.version)}
                 isLatest={release.version === patchNotes[0]?.version}
@@ -100,7 +124,7 @@ export function WhatsNewModal({ open, onOpenChange }: WhatsNewModalProps) {
               />
             ))}
           </div>
-        </ScrollArea>
+        </div>
 
         <div className="pt-4 border-t flex justify-end">
           <Button onClick={() => handleClose(false)}>
@@ -112,24 +136,21 @@ export function WhatsNewModal({ open, onOpenChange }: WhatsNewModalProps) {
   );
 }
 
-function ReleaseSection({
-  release,
-  isExpanded,
-  isLatest,
-  onToggle,
-}: {
+import { forwardRef } from "react";
+
+const ReleaseSection = forwardRef<HTMLDivElement, {
   release: PatchNote;
   isExpanded: boolean;
   isLatest: boolean;
   onToggle: () => void;
-}) {
+}>(({ release, isExpanded, isLatest, onToggle }, ref) => {
   const hasContent =
     release.features.length > 0 ||
     release.fixes.length > 0 ||
     release.improvements.length > 0;
 
   return (
-    <div className="rounded-lg border">
+    <div ref={ref} className="rounded-lg border">
       <button
         onClick={onToggle}
         className={cn(
@@ -172,7 +193,9 @@ function ReleaseSection({
       )}
     </div>
   );
-}
+});
+
+ReleaseSection.displayName = "ReleaseSection";
 
 function CategorySection({
   type,

@@ -1,19 +1,29 @@
 "use client";
 
-import { useCallback, useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useState, useRef, useMemo } from "react";
 import CodeMirror, { ReactCodeMirrorRef } from "@uiw/react-codemirror";
 import { markdown } from "@codemirror/lang-markdown";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { EditorView } from "@codemirror/view";
+import { Extension } from "@codemirror/state";
 import { ChevronDown, ChevronUp, HelpCircle, TextSelect } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import {
+  createObsidianAutocomplete,
+  type NoteCompletionItem,
+  type TagCompletionItem,
+} from "./autocomplete";
 
 interface MarkdownEditorProps {
   content: string;
   onChange: (value: string) => void;
   className?: string;
   readOnly?: boolean;
+  /** Notes for wikilink autocomplete */
+  notes?: NoteCompletionItem[];
+  /** Tags for tag autocomplete */
+  tags?: TagCompletionItem[];
 }
 
 const editorTheme = EditorView.theme({
@@ -143,9 +153,19 @@ export function MarkdownEditor({
   onChange,
   className,
   readOnly = false,
+  notes = [],
+  tags = [],
 }: MarkdownEditorProps) {
   const [mounted, setMounted] = useState(false);
   const editorRef = useRef<ReactCodeMirrorRef>(null);
+
+  // Memoize autocomplete extension to prevent re-creation on every render
+  const autocompleteExtension = useMemo<Extension[]>(() => {
+    if (notes.length === 0 && tags.length === 0) {
+      return [];
+    }
+    return createObsidianAutocomplete({ notes, tags });
+  }, [notes, tags]);
 
   // Select all text in editor (for mobile convenience)
   const handleSelectAll = useCallback(() => {
@@ -198,7 +218,12 @@ export function MarkdownEditor({
           ref={editorRef}
           value={content}
           onChange={handleChange}
-          extensions={[markdown(), editorTheme, EditorView.lineWrapping]}
+          extensions={[
+            markdown(),
+            editorTheme,
+            EditorView.lineWrapping,
+            ...autocompleteExtension,
+          ]}
           theme={oneDark}
           readOnly={readOnly}
           basicSetup={{
@@ -218,7 +243,7 @@ export function MarkdownEditor({
             closeBracketsKeymap: true,
             searchKeymap: true,
             foldKeymap: true,
-            completionKeymap: false,
+            completionKeymap: true,
             lintKeymap: false,
           }}
           height="auto"

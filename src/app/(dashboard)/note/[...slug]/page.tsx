@@ -7,6 +7,8 @@ import dynamic from "next/dynamic";
 import { MarkdownRenderer } from "@/components/viewer/markdown-renderer";
 import { Skeleton } from "@/components/ui/skeleton";
 import { githubClient } from "@/services/github-client";
+import { extractNoteList } from "@/lib/wikilinks";
+import { useTags } from "@/hooks/use-tags";
 
 // Lazy load CodeMirror editor (~500kb) - only loaded when editing
 const MarkdownEditor = dynamic(
@@ -46,6 +48,10 @@ export default function NotePage() {
   const { settings } = useSettingsStore();
   const { tree } = useVaultStore();
   const { setLastNote } = useSessionStateStore();
+
+  // Autocomplete data
+  const { tags } = useTags();
+  const noteItems = useMemo(() => extractNoteList(tree), [tree]);
 
   // Editor style settings
   const editorMaxWidth = settings.editorMaxWidth ?? 800;
@@ -311,7 +317,12 @@ export default function NotePage() {
         }}
       >
         {editor.isEditing ? (
-          <MarkdownEditor content={editor.editContent} onChange={editor.setEditContent} />
+          <MarkdownEditor
+            content={editor.editContent}
+            onChange={editor.setEditContent}
+            notes={noteItems}
+            tags={tags}
+          />
         ) : (
           <div ref={contentRef}>
             {/* Key forces re-render when tree loads (fixes wikilink resolution timing) */}

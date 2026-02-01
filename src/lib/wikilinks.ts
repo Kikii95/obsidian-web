@@ -1,4 +1,5 @@
 import type { WikiLink, VaultFile } from "@/types";
+import type { NoteCompletionItem } from "@/components/editor/autocomplete/types";
 
 // Regex for wikilinks: [[target]] or [[target|display]] or ![[embed]]
 const WIKILINK_REGEX = /(!?)\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
@@ -202,4 +203,41 @@ export function parseWikilinkMarker(
   }
 
   return null;
+}
+
+/**
+ * Extract a flat list of notes from the vault tree for autocomplete
+ * @param tree The vault file tree
+ * @returns Array of NoteCompletionItem for autocomplete suggestions
+ */
+export function extractNoteList(tree: VaultFile[]): NoteCompletionItem[] {
+  const notes: NoteCompletionItem[] = [];
+
+  function traverse(files: VaultFile[], parentPath: string = "", parentDisplay: string = "") {
+    for (const file of files) {
+      const fullPath = parentPath ? `${parentPath}/${file.name}` : file.name;
+      const displayPrefix = parentDisplay ? `${parentDisplay} > ` : "";
+
+      if (file.type === "dir" && file.children) {
+        // Use folder name for display hierarchy
+        const folderDisplay = displayPrefix + file.name;
+        traverse(file.children, fullPath, folderDisplay);
+      } else if (file.type === "file" && file.name.endsWith(".md")) {
+        // Only include markdown files
+        const nameWithoutExt = file.name.replace(/\.md$/, "");
+        const displayPath = displayPrefix + nameWithoutExt;
+
+        notes.push({
+          name: nameWithoutExt,
+          path: fullPath,
+          displayPath,
+        });
+      }
+    }
+  }
+
+  traverse(tree);
+
+  // Sort alphabetically by name
+  return notes.sort((a, b) => a.name.localeCompare(b.name));
 }

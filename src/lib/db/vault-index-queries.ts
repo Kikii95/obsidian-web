@@ -1,6 +1,6 @@
-import { db, vaultIndex, vaultIndexStatus } from "./index";
-import { eq, and } from "drizzle-orm";
-import type { NewVaultIndexEntry, VaultIndexEntry, VaultIndexStatus } from "./schema";
+import { db, vaultIndex, vaultIndexStatus, commitActivity } from "./index";
+import { eq, and, gte, sql } from "drizzle-orm";
+import type { NewVaultIndexEntry, VaultIndexEntry, VaultIndexStatus, CommitActivityEntry } from "./schema";
 
 export interface VaultKey {
   userId: string;
@@ -256,4 +256,95 @@ export async function failIndexing(
     errorMessage,
     completedAt: new Date(),
   });
+}
+
+// === COMMIT ACTIVITY ===
+
+export interface CommitActivityData {
+  date: string; // YYYY-MM-DD
+  count: number;
+}
+
+export async function getCommitActivity(
+  vaultKey: VaultKey,
+  sinceDays: number = 365
+): Promise<CommitActivityData[]> {
+  const sinceDate = new Date();
+  sinceDate.setDate(sinceDate.getDate() - sinceDays);
+  const sinceDateStr = sinceDate.toISOString().split("T")[0];
+
+  const entries = await db
+    .select({ date: commitActivity.date, count: commitActivity.count })
+    .from(commitActivity)
+    .where(
+      and(
+        eq(commitActivity.userId, vaultKey.userId),
+        eq(commitActivity.owner, vaultKey.owner),
+        eq(commitActivity.repo, vaultKey.repo),
+        eq(commitActivity.branch, vaultKey.branch),
+        gte(commitActivity.date, sinceDateStr)
+      )
+    )
+    .orderBy(commitActivity.date);
+
+  return entries;
+}
+
+export async function upsertCommitActivity(
+  vaultKey: VaultKey,
+  activities: CommitActivityData[]
+): Promise<void> {
+  if (activities.length === 0) return;
+
+  for (const activity of activities) {
+    await db
+      .insert(commitActivity)
+      .values({
+        ...vaultKey,
+        date: activity.date,
+        count: activity.count,
+      })
+      .onConflictDoUpdate({
+        target: [
+          commitActivity.userId,
+          commitActivity.owner,
+          commitActivity.repo,
+          commitActivity.branch,
+          commitActivity.date,
+        ],
+        set: {
+          count: activity.count,
+          updatedAt: new Date(),
+        },
+      });
+  }
+}
+
+export async function deleteAllCommitActivity(vaultKey: VaultKey): Promise<void> {
+  await db
+    .delete(commitActivity)
+    .where(
+      and(
+        eq(commitActivity.userId, vaultKey.userId),
+        eq(commitActivity.owner, vaultKey.owner),
+        eq(commitActivity.repo, vaultKey.repo),
+        eq(commitActivity.branch, vaultKey.branch)
+      )
+    );
+}
+
+export async function hasCommitActivity(vaultKey: VaultKey): Promise<boolean> {
+  const [result] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(commitActivity)
+    .where(
+      and(
+        eq(commitActivity.userId, vaultKey.userId),
+        eq(commitActivity.owner, vaultKey.owner),
+        eq(commitActivity.repo, vaultKey.repo),
+        eq(commitActivity.branch, vaultKey.branch)
+      )
+    );
+
+  return (result?.count ?? 0) > 0;
 }

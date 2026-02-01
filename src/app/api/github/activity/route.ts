@@ -1,16 +1,17 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { getLastRateLimit } from "@/lib/github";
 import { getAuthenticatedContext } from "@/lib/server-vault-config";
+import {
+  getCommitActivity,
+  hasCommitActivity,
+  type VaultKey,
+} from "@/lib/db/vault-index-queries";
 
-interface CommitActivity {
-  date: string; // YYYY-MM-DD
+interface CommitActivityResponse {
+  date: string;
   count: number;
-}
-
-interface WeeklyStats {
-  week: number; // Unix timestamp
-  days: number[]; // [Sun, Mon, Tue, Wed, Thu, Fri, Sat]
-  total: number;
 }
 
 export async function GET(request: Request) {
@@ -18,88 +19,46 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const days = parseInt(searchParams.get("days") || "365");
 
+    const session = await getServerSession(authOptions);
     const context = await getAuthenticatedContext();
 
-    if (!context) {
+    if (!context || !session?.user) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
     const { octokit, vaultConfig } = context;
 
-    const owner = vaultConfig.owner;
-    const repo = vaultConfig.repo;
+    const vaultKey: VaultKey = {
+      userId: session.user.id || session.user.email || "",
+      owner: vaultConfig.owner,
+      repo: vaultConfig.repo,
+      branch: vaultConfig.branch,
+    };
 
-    // Try GitHub Stats API first - returns 52 weeks of data in a single call
-    let weeklyStats: WeeklyStats[] = [];
-    let usedFallback = false;
+    // Try to get from PostgreSQL first (populated during indexing)
+    const hasData = await hasCommitActivity(vaultKey);
 
-    try {
-      const response = await octokit.repos.getCommitActivityStats({
-        owner,
-        repo,
+    if (hasData) {
+      // Read from PostgreSQL - fast!
+      const dbActivity = await getCommitActivity(vaultKey, days);
+
+      const activity: CommitActivityResponse[] = dbActivity.map((a) => ({
+        date: a.date,
+        count: a.count,
+      }));
+
+      const stats = calculateStats(activity, days);
+
+      return NextResponse.json({
+        activity,
+        stats,
+        rateLimit: getLastRateLimit(),
+        source: "postgresql",
       });
-
-      // GitHub may return 202 if stats are being computed
-      if (response.status === 202) {
-        console.log("[Activity] Stats computing, using fallback...");
-        usedFallback = true;
-      } else if (Array.isArray(response.data) && response.data.length > 0) {
-        weeklyStats = response.data as WeeklyStats[];
-      } else {
-        console.log("[Activity] Stats empty, using fallback...");
-        usedFallback = true;
-      }
-    } catch (statsError) {
-      console.log("[Activity] Stats API failed, using fallback:", statsError);
-      usedFallback = true;
     }
 
-    // Fallback to listCommits if stats unavailable
-    if (usedFallback || weeklyStats.length === 0) {
-      return await fetchWithListCommits(octokit, owner, repo, days);
-    }
-
-    // Process weekly stats
-    const now = new Date();
-    const sinceDate = new Date();
-    sinceDate.setDate(sinceDate.getDate() - days);
-
-    const activityMap = new Map<string, number>();
-    let totalCommits = 0;
-
-    for (const week of weeklyStats) {
-      const weekStart = new Date(week.week * 1000);
-
-      for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
-        const date = new Date(weekStart);
-        date.setDate(date.getDate() + dayOffset);
-
-        // Skip dates outside the requested range
-        if (date < sinceDate || date > now) continue;
-
-        const count = week.days[dayOffset];
-        if (count > 0) {
-          const dateStr = date.toISOString().split("T")[0];
-          activityMap.set(dateStr, count);
-          totalCommits += count;
-        }
-      }
-    }
-
-    // Convert to sorted array
-    const activity: CommitActivity[] = Array.from(activityMap.entries())
-      .map(([date, count]) => ({ date, count }))
-      .sort((a, b) => a.date.localeCompare(b.date));
-
-    // Calculate stats
-    const stats = calculateStats(activityMap, totalCommits, days);
-
-    return NextResponse.json({
-      activity,
-      stats,
-      rateLimit: getLastRateLimit(),
-      source: "stats_api",
-    });
+    // Fallback to GitHub API if no data in PostgreSQL
+    return await fetchFromGitHub(octokit, vaultConfig.owner, vaultConfig.repo, days);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("[Activity] Error:", errorMessage);
@@ -107,16 +66,17 @@ export async function GET(request: Request) {
     return NextResponse.json(
       {
         error: "Erreur lors de la récupération de l'activité",
-        details: errorMessage
+        details: errorMessage,
       },
       { status: 500 }
     );
   }
 }
 
-// Fallback using listCommits with smart pagination
-async function fetchWithListCommits(
-  octokit: ReturnType<typeof import("@octokit/rest").Octokit>,
+// Fallback using GitHub API
+async function fetchFromGitHub(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  octokit: any,
   owner: string,
   repo: string,
   days: number
@@ -127,7 +87,7 @@ async function fetchWithListCommits(
   const activityMap = new Map<string, number>();
   let page = 1;
   const perPage = 100;
-  const maxPages = 30; // 3000 commits max to avoid rate limits
+  const maxPages = 30;
   let hasMore = true;
 
   while (hasMore && page <= maxPages) {
@@ -152,7 +112,6 @@ async function fetchWithListCommits(
       }
     }
 
-    // If we got less than perPage, we're done
     if (data.length < perPage) {
       hasMore = false;
     }
@@ -160,34 +119,32 @@ async function fetchWithListCommits(
     page++;
   }
 
-  let totalCommits = 0;
-  for (const count of activityMap.values()) {
-    totalCommits += count;
-  }
-
-  const activity: CommitActivity[] = Array.from(activityMap.entries())
+  const activity: CommitActivityResponse[] = Array.from(activityMap.entries())
     .map(([date, count]) => ({ date, count }))
     .sort((a, b) => a.date.localeCompare(b.date));
 
-  const stats = calculateStats(activityMap, totalCommits, days);
+  const stats = calculateStats(activity, days);
 
   return NextResponse.json({
     activity,
     stats,
     rateLimit: getLastRateLimit(),
-    source: "list_commits",
+    source: "github_api",
     pagesUsed: page - 1,
   });
 }
 
 // Calculate streak and other stats
-function calculateStats(
-  activityMap: Map<string, number>,
-  totalCommits: number,
-  days: number
-) {
+function calculateStats(activity: CommitActivityResponse[], days: number) {
+  const activityMap = new Map(activity.map((a) => [a.date, a.count]));
+
+  let totalCommits = 0;
+  for (const a of activity) {
+    totalCommits += a.count;
+  }
+
   const activeDays = activityMap.size;
-  const maxCommitsPerDay = Math.max(...Array.from(activityMap.values()), 0);
+  const maxCommitsPerDay = Math.max(...activity.map((a) => a.count), 0);
   const avgCommitsPerDay = activeDays > 0 ? totalCommits / activeDays : 0;
 
   // Current streak

@@ -10,8 +10,73 @@ import {
   deleteAllVaultIndexEntries,
   getVaultIndexShas,
   deleteVaultIndexEntries,
+  upsertCommitActivity,
+  deleteAllCommitActivity,
   type VaultKey,
+  type CommitActivityData,
 } from "@/lib/db/vault-index-queries";
+
+// Helper to fetch and store commit activity during indexing
+async function syncCommitActivity(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  octokit: any,
+  vaultKey: VaultKey,
+  owner: string,
+  repo: string
+): Promise<{ synced: number }> {
+  try {
+    const activityMap = new Map<string, number>();
+    let page = 1;
+    const perPage = 100;
+    const maxPages = 30; // 3000 commits max
+    let hasMore = true;
+
+    // Fetch last 365 days
+    const since = new Date();
+    since.setDate(since.getDate() - 365);
+
+    while (hasMore && page <= maxPages) {
+      const { data } = await octokit.repos.listCommits({
+        owner,
+        repo,
+        since: since.toISOString(),
+        per_page: perPage,
+        page,
+      });
+
+      if (data.length === 0) {
+        hasMore = false;
+        break;
+      }
+
+      for (const commit of data) {
+        const date = commit.commit.author?.date;
+        if (date) {
+          const dateStr = date.split("T")[0];
+          activityMap.set(dateStr, (activityMap.get(dateStr) || 0) + 1);
+        }
+      }
+
+      if (data.length < perPage) {
+        hasMore = false;
+      }
+
+      page++;
+    }
+
+    // Convert to array and store
+    const activities: CommitActivityData[] = Array.from(activityMap.entries()).map(
+      ([date, count]) => ({ date, count })
+    );
+
+    await upsertCommitActivity(vaultKey, activities);
+
+    return { synced: activities.length };
+  } catch (error) {
+    console.error("[Index] Error syncing commit activity:", error);
+    return { synced: 0 };
+  }
+}
 
 export async function GET() {
   try {
@@ -82,6 +147,14 @@ export async function POST(request: Request) {
       });
     }
 
+    // Sync commit activity in background (non-blocking)
+    const commitSyncPromise = syncCommitActivity(
+      octokit,
+      vaultKey,
+      vaultConfig.owner,
+      vaultConfig.repo
+    );
+
     // Get all markdown files from GitHub
     const allFiles = await getFullVaultTree(octokit, false, vaultConfig);
     const publicFiles = filterPrivatePaths(allFiles);
@@ -95,8 +168,12 @@ export async function POST(request: Request) {
     // If rebuild, clear existing index and index all files
     if (rebuild) {
       await deleteAllVaultIndexEntries(vaultKey);
+      await deleteAllCommitActivity(vaultKey); // Clear old commit data too
 
       await startIndexing(vaultKey, mdFiles.length);
+
+      // Wait for commit sync to complete
+      const commitSync = await commitSyncPromise;
 
       return NextResponse.json({
         status: "started",
@@ -106,6 +183,7 @@ export async function POST(request: Request) {
         modifiedFiles: 0,
         deletedFiles: 0,
         unchangedFiles: 0,
+        commitActivitySynced: commitSync.synced,
         files: mdFiles.map((f) => ({
           path: f.path,
           name: f.name,
@@ -155,6 +233,9 @@ export async function POST(request: Request) {
 
     // If nothing to process, return immediately
     if (filesToProcess.length === 0) {
+      // Still wait for commit sync even if no file changes
+      const commitSync = await commitSyncPromise;
+
       return NextResponse.json({
         status: "completed",
         mode: "refresh",
@@ -164,12 +245,16 @@ export async function POST(request: Request) {
         modifiedFiles: 0,
         deletedFiles: deletedFiles.length,
         unchangedFiles: unchangedFiles.length,
+        commitActivitySynced: commitSync.synced,
         files: [],
       });
     }
 
     // Start indexing only for files that need it
     await startIndexing(vaultKey, filesToProcess.length);
+
+    // Wait for commit sync to complete
+    const commitSync = await commitSyncPromise;
 
     return NextResponse.json({
       status: "started",
@@ -179,6 +264,7 @@ export async function POST(request: Request) {
       modifiedFiles: modifiedFiles.length,
       deletedFiles: deletedFiles.length,
       unchangedFiles: unchangedFiles.length,
+      commitActivitySynced: commitSync.synced,
       files: filesToProcess.map((f) => ({
         path: f.path,
         name: f.name,

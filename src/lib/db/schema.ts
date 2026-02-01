@@ -158,3 +158,31 @@ export const vaultIndexStatus = pgTable(
 
 export type VaultIndexStatus = typeof vaultIndexStatus.$inferSelect;
 export type NewVaultIndexStatus = typeof vaultIndexStatus.$inferInsert;
+
+// Commit Activity - stores commit dates for activity heatmap (populated during indexing)
+export const commitActivity = pgTable(
+  "commit_activity",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+
+    // Vault composite key
+    userId: varchar("user_id", { length: 255 }).notNull(),
+    owner: varchar("owner", { length: 255 }).notNull(),
+    repo: varchar("repo", { length: 255 }).notNull(),
+    branch: varchar("branch", { length: 255 }).notNull(),
+
+    // Activity data
+    date: varchar("date", { length: 10 }).notNull(), // YYYY-MM-DD format
+    count: integer("count").default(1).notNull(), // Number of commits on this date
+
+    // Timestamps
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("idx_commit_activity_vault_date").on(table.userId, table.owner, table.repo, table.branch, table.date),
+    index("idx_commit_activity_vault").on(table.userId, table.owner, table.repo, table.branch),
+  ]
+);
+
+export type CommitActivityEntry = typeof commitActivity.$inferSelect;
+export type NewCommitActivityEntry = typeof commitActivity.$inferInsert;

@@ -98,6 +98,8 @@ function MarkdownRendererInner({
     let processed = content;
     // Process code block titles first (```js title="file.js")
     processed = processCodeBlockTitles(processed);
+    // Process callouts BEFORE markdown parsing
+    processed = processCallouts(processed);
     // Process collapsible (hidden::visible) syntax
     processed = processCollapsible(processed);
     // Then process wikilinks
@@ -450,6 +452,56 @@ function MarkdownRendererInner({
             // Regular span
             return <span className={className} {...props} />;
           },
+          // Custom div for callouts (processed by processCallouts)
+          div: ({ className, node, children, ...props }) => {
+            // Check if this is a callout div
+            if (className === "obsidian-callout") {
+              const type = (node?.properties?.dataType as string) || "note";
+              const title = (node?.properties?.dataTitle as string) || "";
+              const foldable = (node?.properties?.dataFoldable as string) === "true";
+              const defaultFolded = (node?.properties?.dataFolded as string) === "true";
+
+              // The content is HTML-escaped text, we need to unescape and render
+              const extractText = (n: unknown): string => {
+                if (!n) return "";
+                if (typeof n === "string") return n;
+                if (Array.isArray(n)) return n.map(extractText).join("");
+                if (typeof n === "object" && n !== null) {
+                  const obj = n as { value?: string; children?: unknown };
+                  if (obj.value) return obj.value;
+                  if (obj.children) return extractText(obj.children);
+                }
+                return "";
+              };
+
+              const rawContent = extractText(children);
+              // Unescape HTML entities
+              const unescapedContent = rawContent
+                .replace(/&lt;/g, "<")
+                .replace(/&gt;/g, ">")
+                .replace(/&quot;/g, '"')
+                .replace(/&amp;/g, "&");
+
+              return (
+                <Callout
+                  type={type as "note" | "warning" | "tip" | "info" | "danger" | "example" | "quote" | "abstract" | "bug" | "success" | "question" | "failure"}
+                  title={title}
+                  foldable={foldable}
+                  defaultFolded={defaultFolded}
+                >
+                  {/* Render content as markdown for proper formatting */}
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm, remarkBreaks]}
+                    rehypePlugins={[rehypeRaw, rehypeHighlight]}
+                  >
+                    {unescapedContent}
+                  </ReactMarkdown>
+                </Callout>
+              );
+            }
+            // Regular div
+            return <div className={className} {...props}>{children}</div>;
+          },
         }}
       >
         {processedContent}
@@ -559,4 +611,77 @@ function processWikilinksForShare(content: string): string {
     // Return as styled text, not a link
     return `**${text}**`;
   });
+}
+
+/**
+ * Process Obsidian callout syntax and convert to HTML before markdown parsing
+ * Syntax: > [!type] optional title
+ *         > content...
+ * Supports: +/- for fold state (e.g., [!note]+ or [!note]-)
+ */
+function processCallouts(content: string): string {
+  // Split content by lines to process blockquotes
+  const lines = content.split("\n");
+  const result: string[] = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // Check if this is the start of a callout: > [!type]
+    const calloutStartMatch = line.match(/^>\s*\[!(\w+)\]([-+])?\s*(.*)?$/);
+
+    if (calloutStartMatch) {
+      const type = calloutStartMatch[1].toLowerCase();
+      const foldState = calloutStartMatch[2]; // + or - or undefined
+      const title = calloutStartMatch[3]?.trim() || "";
+
+      // Determine fold attributes
+      const foldable = foldState === "+" || foldState === "-";
+      const defaultFolded = foldState === "-";
+
+      // Collect all content lines of this callout
+      const contentLines: string[] = [];
+      i++;
+
+      while (i < lines.length) {
+        const nextLine = lines[i];
+        // Continue if line starts with > (part of blockquote)
+        if (nextLine.match(/^>/)) {
+          // Remove the > prefix and add to content
+          contentLines.push(nextLine.replace(/^>\s?/, ""));
+          i++;
+        } else if (nextLine.trim() === "") {
+          // Empty line might be part of callout or end it
+          // Check if next non-empty line continues the blockquote
+          if (i + 1 < lines.length && lines[i + 1].match(/^>/)) {
+            contentLines.push("");
+            i++;
+          } else {
+            break;
+          }
+        } else {
+          break;
+        }
+      }
+
+      // Build callout HTML
+      const calloutContent = contentLines.join("\n");
+      const escapedTitle = title.replace(/"/g, "&quot;");
+      const escapedContent = calloutContent
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+      // Use a custom HTML element that will be handled by rehype-raw
+      result.push(
+        `<div class="obsidian-callout" data-type="${type}" data-title="${escapedTitle}" data-foldable="${foldable}" data-folded="${defaultFolded}">${escapedContent}</div>`
+      );
+    } else {
+      result.push(line);
+      i++;
+    }
+  }
+
+  return result.join("\n");
 }

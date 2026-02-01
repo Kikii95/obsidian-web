@@ -49,7 +49,7 @@ function parseToc(content: string): TocItem[] {
 }
 
 export function TableOfContents({ content, className }: TableOfContentsProps) {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
 
   const toc = useMemo(() => parseToc(content), [content]);
 

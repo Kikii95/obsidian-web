@@ -92,7 +92,7 @@ export function WhatsNewModal({ open, onOpenChange }: WhatsNewModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="w-[90vw] max-w-5xl max-h-[85vh] overflow-hidden flex flex-col">
+      <DialogContent className="w-[90vw] max-w-5xl sm:max-w-5xl max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Gift className="h-5 w-5 text-primary" />

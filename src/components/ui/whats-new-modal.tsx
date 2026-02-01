@@ -62,21 +62,22 @@ export function WhatsNewModal({ open, onOpenChange }: WhatsNewModalProps) {
     onOpenChange(isOpen);
   };
 
+  // Accordion mode: only one version open at a time
   const toggleVersion = (version: string) => {
     setExpandedVersions((prev) => {
-      const next = new Set(prev);
-      if (next.has(version)) {
-        next.delete(version);
+      if (prev.has(version)) {
+        // Close if already open
+        return new Set();
       } else {
-        next.add(version);
+        // Open this one, close others
+        return new Set([version]);
       }
-      return next;
     });
   };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Gift className="h-5 w-5 text-primary" />
@@ -134,6 +135,7 @@ function ReleaseSection({
         className={cn(
           "w-full flex items-center justify-between p-3 text-left",
           "hover:bg-muted/50 transition-colors rounded-t-lg",
+          "focus:outline-none focus-visible:ring-0",
           !isExpanded && "rounded-b-lg"
         )}
       >

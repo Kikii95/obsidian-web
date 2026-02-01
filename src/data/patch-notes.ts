@@ -32,11 +32,10 @@ export const patchNotes: PatchNote[] = [
       { title: "Quoi de Neuf", description: "Modal avec historique complet des versions et nouveautes" },
       { title: "Auto-Refresh Index", description: "Refresh automatique de l'index selon un intervalle configurable" },
     ],
-    fixes: [
-      { title: "Activity Heatmap", description: "Affiche maintenant 52 semaines d'historique (plus de limite 1000 commits)" },
-    ],
+    fixes: [],
     improvements: [
       { title: "Index PostgreSQL", description: "Tags, backlinks et graph charges en millisecondes" },
+      { title: "Activity Heatmap", description: "Stocke dans PostgreSQL pendant l'indexation — 0 appel API, chargement instantane" },
       { title: "Smart Refresh", description: "Compare les SHA, n'indexe que les fichiers modifies (0 appel API si rien n'a change)" },
       { title: "Stats Index", description: "Affiche nouveaux, modifies, supprimes et inchanges apres chaque refresh" },
     ],

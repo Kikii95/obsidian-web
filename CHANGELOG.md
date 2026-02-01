@@ -30,6 +30,8 @@ All notable changes to this project will be documented in this file.
 - **QW11: Image Zoom Modal** - Zoom images avec navigation, rotation et téléchargement
 - **QW12: Code Block Filename** - Affichage nom fichier dans blocs code (` ```js title="app.js" `)
 - **QW13: What's New Modal** - Interface patch notes avec historique complet des versions
+- **QW4: WikiLink Autocomplete** - Tape `[[` pour suggestions de notes avec fuzzy search
+- **QW5: Tag Autocomplete** - Tape `#` pour suggestions de tags avec compteur + highlighting temps réel
 
 ### Improved
 - **Smart Refresh** - Compare SHA des fichiers, n'indexe que les modifiés
@@ -44,3 +46,4 @@ All notable changes to this project will be documented in this file.
 ### Dependencies
 - Added `@excalidraw/excalidraw` for Excalidraw viewer
 - Added `remark-frontmatter`, `remark-parse`, `remark-stringify`, `unified`
+- Added `@codemirror/autocomplete` for editor autocomplete

@@ -31,6 +31,8 @@ export const patchNotes: PatchNote[] = [
       { title: "Graph sans Limite", description: "Affiche tous tes fichiers, plus de limite 100" },
       { title: "Quoi de Neuf", description: "Modal avec historique complet des versions et nouveautes" },
       { title: "Auto-Refresh Index", description: "Refresh automatique de l'index selon un intervalle configurable" },
+      { title: "Autocomplete WikiLinks", description: "Tape [[ pour suggerer tes notes avec fuzzy search" },
+      { title: "Autocomplete Tags", description: "Tape # pour suggerer les tags existants avec compteur" },
     ],
     fixes: [],
     improvements: [

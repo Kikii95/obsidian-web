@@ -1,14 +1,12 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Tag, Search, Hash, FileText, AlertCircle, RefreshCw, AlertTriangle, Loader2 } from "lucide-react";
+import { Tag, Search, Hash, FileText, AlertCircle, RefreshCw, Loader2, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useVaultStore } from "@/lib/store";
-import type { VaultFile } from "@/types";
 
 interface TagInfo {
   name: string;
@@ -23,49 +21,37 @@ interface TagsResponse {
   tags: TagInfo[];
   totalTags: number;
   totalNotes: number;
-}
-
-// Count markdown files recursively
-function countMdFiles(files: VaultFile[]): number {
-  let count = 0;
-  for (const file of files) {
-    if (file.type === "file" && file.name.endsWith(".md")) {
-      count++;
-    } else if (file.type === "dir" && file.children) {
-      count += countMdFiles(file.children);
-    }
-  }
-  return count;
+  needsIndex?: boolean;
+  message?: string;
 }
 
 export default function TagsPage() {
-  const { tree } = useVaultStore();
   const [data, setData] = useState<TagsResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
-  // Count total markdown files for warning
-  const totalMdFiles = useMemo(() => countMdFiles(tree), [tree]);
-
   const fetchTags = async () => {
     setIsLoading(true);
     setError(null);
-    setHasSearched(true);
 
     try {
       const res = await fetch("/api/github/tags");
       if (!res.ok) throw new Error("Failed to fetch");
-      const data = await res.json();
-      setData(data);
+      const result = await res.json();
+      setData(result);
     } catch {
       setError("Impossible de charger les tags");
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Auto-fetch on mount (uses PostgreSQL index, no API cost)
+  useEffect(() => {
+    fetchTags();
+  }, []);
 
   // Filter tags by search
   const filteredTags = useMemo(() => {
@@ -93,34 +79,6 @@ export default function TagsPage() {
 
   const maxCount = data ? Math.max(...data.tags.map((t) => t.count), 1) : 1;
 
-  // Initial state - show search button with warning
-  if (!hasSearched) {
-    return (
-      <div className="p-6 max-w-4xl mx-auto">
-        <div className="flex items-center gap-3 mb-6">
-          <Tag className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold">Tags</h1>
-        </div>
-        <div className="flex flex-col items-center justify-center gap-4 py-16 border border-border/50 rounded-lg bg-card/50">
-          <Hash className="h-12 w-12 text-muted-foreground opacity-50" />
-          <p className="text-muted-foreground text-center">
-            Cliquez pour rechercher tous les tags dans le vault
-          </p>
-          <div className="flex items-center gap-1.5 text-xs text-amber-500">
-            <AlertTriangle className="h-3.5 w-3.5" />
-            <span>
-              Consomme jusqu&apos;à {totalMdFiles || "~"} appels API (1 par fichier md)
-            </span>
-          </div>
-          <Button onClick={fetchTags} className="gap-2">
-            <Search className="h-4 w-4" />
-            Rechercher les tags
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   if (isLoading) {
     return (
       <div className="p-6 max-w-4xl mx-auto">
@@ -146,6 +104,34 @@ export default function TagsPage() {
           <Button variant="outline" onClick={fetchTags}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Réessayer
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Index not available - show message with link to settings
+  if (data?.needsIndex) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto">
+        <div className="flex items-center gap-3 mb-6">
+          <Tag className="h-6 w-6 text-primary" />
+          <h1 className="text-2xl font-bold">Tags</h1>
+        </div>
+        <div className="flex flex-col items-center justify-center gap-4 py-16 border border-border/50 rounded-lg bg-card/50">
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center">
+            <Tag className="h-8 w-8 text-primary" />
+          </div>
+          <h2 className="text-xl font-semibold">Indexation requise</h2>
+          <p className="text-muted-foreground text-center max-w-md">
+            Les tags utilisent un index PostgreSQL pour de meilleures performances.
+            Lance l&apos;indexation depuis les paramètres.
+          </p>
+          <Button asChild>
+            <Link href="/settings">
+              <Settings className="h-4 w-4 mr-2" />
+              Paramètres
+            </Link>
           </Button>
         </div>
       </div>

@@ -38,19 +38,6 @@ import { decodeSlugSegments, buildFilePath } from "@/lib/path-utils";
 import { useSettingsStore } from "@/lib/settings-store";
 import { useSessionStateStore } from "@/lib/session-state-store";
 
-// Count markdown files recursively
-function countMdFiles(files: { type: string; name: string; children?: unknown[] }[]): number {
-  let count = 0;
-  for (const file of files) {
-    if (file.type === "file" && file.name.endsWith(".md")) {
-      count++;
-    } else if (file.type === "dir" && file.children) {
-      count += countMdFiles(file.children as { type: string; name: string; children?: unknown[] }[]);
-    }
-  }
-  return count;
-}
-
 export default function NotePage() {
   const params = useParams();
   const { isOnline } = useOnlineStatus();
@@ -64,9 +51,6 @@ export default function NotePage() {
   const editorFontSize = settings.editorFontSize ?? 16;
   const editorLineHeight = settings.editorLineHeight ?? 1.6;
   const enableKeyboardShortcuts = settings.enableKeyboardShortcuts ?? true;
-
-  // Count total md files for backlinks warning
-  const totalMdFiles = useMemo(() => countMdFiles(tree), [tree]);
 
   // Parse slug
   const slug = params.slug as string[];
@@ -309,7 +293,7 @@ export default function NotePage() {
 
       {/* Backlinks section */}
       {!editor.isEditing && (
-        <NoteBacklinks notePath={filePath} totalFiles={totalMdFiles} />
+        <NoteBacklinks notePath={filePath} />
       )}
 
       {/* PIN Dialog for verifying PIN when removing lock */}

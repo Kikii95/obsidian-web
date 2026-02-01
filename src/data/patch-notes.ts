@@ -30,10 +30,13 @@ export const patchNotes: PatchNote[] = [
       { title: "Nom Fichier Code", description: "Header avec nom de fichier sur les blocs de code" },
       { title: "Graph sans Limite", description: "Affiche tous tes fichiers, plus de limite 100" },
       { title: "Quoi de Neuf", description: "Modal avec historique complet des versions et nouveautes" },
+      { title: "Auto-Refresh Index", description: "Refresh automatique de l'index selon un intervalle configurable" },
     ],
     fixes: [],
     improvements: [
       { title: "Index PostgreSQL", description: "Tags, backlinks et graph charges en millisecondes" },
+      { title: "Smart Refresh", description: "Compare les SHA, n'indexe que les fichiers modifies (0 appel API si rien n'a change)" },
+      { title: "Stats Index", description: "Affiche nouveaux, modifies, supprimes et inchanges apres chaque refresh" },
     ],
   },
 

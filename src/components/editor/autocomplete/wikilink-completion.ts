@@ -1,4 +1,4 @@
-import { CompletionContext, Completion, CompletionResult } from "@codemirror/autocomplete";
+import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
 import Fuse from "fuse.js";
 import type { NoteCompletionItem } from "./types";
 
@@ -68,15 +68,28 @@ export function createWikilinkCompletion(notes: NoteCompletionItem[]) {
     const query = match.text.slice(2); // Remove [[
     const from = match.from + 2; // Position after [[
 
-    let options: Completion[];
+    // Check if ]] already exists after cursor
+    const docLength = context.state.doc.length;
+    const afterCursor = context.state.sliceDoc(context.pos, Math.min(context.pos + 2, docLength));
+    const hasClosingBrackets = afterCursor === "]]";
+
+    // Helper to create apply function that handles existing ]]
+    const createApply = (linkText: string) => {
+      if (hasClosingBrackets) {
+        return linkText; // Don't add ]] if already present
+      }
+      return `${linkText}]]`;
+    };
+
+    let options;
 
     if (query.length === 0) {
       // Show all notes when just typing [[
       options = notes.slice(0, 50).map((note) => ({
         label: getDisplayLabel(note, notes),
         detail: note.displayPath,
-        type: "text",
-        apply: `${getWikilinkText(note, notes)}]]`,
+        type: "text" as const,
+        apply: createApply(getWikilinkText(note, notes)),
         boost: 0,
       }));
     } else {
@@ -87,8 +100,8 @@ export function createWikilinkCompletion(notes: NoteCompletionItem[]) {
       options = results.map((result, index) => ({
         label: getDisplayLabel(result.item, notes),
         detail: result.item.displayPath,
-        type: "text",
-        apply: `${getWikilinkText(result.item, notes)}]]`,
+        type: "text" as const,
+        apply: createApply(getWikilinkText(result.item, notes)),
         boost: 100 - index - (result.score ?? 0) * 100,
       }));
     }

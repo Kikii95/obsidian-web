@@ -29,44 +29,41 @@ export async function GET(request: Request) {
     const owner = vaultConfig.owner;
     const repo = vaultConfig.repo;
 
-    // Use GitHub Stats API - returns 52 weeks of data in a single call
-    // Much more efficient than paginating through commits
-    const response = await octokit.repos.getCommitActivityStats({
-      owner,
-      repo,
-    });
+    // Try GitHub Stats API first - returns 52 weeks of data in a single call
+    let weeklyStats: WeeklyStats[] = [];
+    let usedFallback = false;
 
-    // GitHub may return 202 if stats are being computed
-    if (response.status === 202) {
-      return NextResponse.json({
-        activity: [],
-        stats: {
-          totalCommits: 0,
-          activeDays: 0,
-          maxCommitsPerDay: 0,
-          avgCommitsPerDay: 0,
-          currentStreak: 0,
-          longestStreak: 0,
-          period: days,
-        },
-        rateLimit: getLastRateLimit(),
-        computing: true,
-        message: "Stats en cours de calcul, réessayez dans quelques secondes",
+    try {
+      const response = await octokit.repos.getCommitActivityStats({
+        owner,
+        repo,
       });
+
+      // GitHub may return 202 if stats are being computed
+      if (response.status === 202) {
+        console.log("[Activity] Stats computing, using fallback...");
+        usedFallback = true;
+      } else if (Array.isArray(response.data) && response.data.length > 0) {
+        weeklyStats = response.data as WeeklyStats[];
+      } else {
+        console.log("[Activity] Stats empty, using fallback...");
+        usedFallback = true;
+      }
+    } catch (statsError) {
+      console.log("[Activity] Stats API failed, using fallback:", statsError);
+      usedFallback = true;
     }
 
-    const weeklyStats = response.data as WeeklyStats[];
-
-    if (!weeklyStats || !Array.isArray(weeklyStats)) {
-      throw new Error("Invalid stats response from GitHub");
+    // Fallback to listCommits if stats unavailable
+    if (usedFallback || weeklyStats.length === 0) {
+      return await fetchWithListCommits(octokit, owner, repo, days);
     }
 
-    // Calculate date range filter
+    // Process weekly stats
     const now = new Date();
     const sinceDate = new Date();
     sinceDate.setDate(sinceDate.getDate() - days);
 
-    // Convert weekly stats to daily activity
     const activityMap = new Map<string, number>();
     let totalCommits = 0;
 
@@ -95,59 +92,13 @@ export async function GET(request: Request) {
       .sort((a, b) => a.date.localeCompare(b.date));
 
     // Calculate stats
-    const activeDays = activityMap.size;
-    const maxCommitsPerDay = Math.max(...Array.from(activityMap.values()), 0);
-    const avgCommitsPerDay = activeDays > 0 ? totalCommits / activeDays : 0;
-
-    // Get streak (consecutive days with commits)
-    let currentStreak = 0;
-    const today = new Date().toISOString().split("T")[0];
-    const sortedDates = Array.from(activityMap.keys()).sort().reverse();
-
-    for (let i = 0; i < sortedDates.length; i++) {
-      const date = new Date(sortedDates[i]);
-      const expectedDate = new Date(today);
-      expectedDate.setDate(expectedDate.getDate() - i);
-
-      if (date.toISOString().split("T")[0] === expectedDate.toISOString().split("T")[0]) {
-        currentStreak++;
-      } else {
-        break;
-      }
-    }
-
-    // Calculate longest streak
-    let streak = 0;
-    let longestStreak = 0;
-    const allDates = Array.from(activityMap.keys()).sort();
-    for (let i = 0; i < allDates.length; i++) {
-      if (i === 0) {
-        streak = 1;
-      } else {
-        const prev = new Date(allDates[i - 1]);
-        const curr = new Date(allDates[i]);
-        const diffDays = (curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24);
-        if (diffDays === 1) {
-          streak++;
-        } else {
-          streak = 1;
-        }
-      }
-      longestStreak = Math.max(longestStreak, streak);
-    }
+    const stats = calculateStats(activityMap, totalCommits, days);
 
     return NextResponse.json({
       activity,
-      stats: {
-        totalCommits,
-        activeDays,
-        maxCommitsPerDay,
-        avgCommitsPerDay: Math.round(avgCommitsPerDay * 10) / 10,
-        currentStreak,
-        longestStreak,
-        period: days,
-      },
+      stats,
       rateLimit: getLastRateLimit(),
+      source: "stats_api",
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -161,4 +112,128 @@ export async function GET(request: Request) {
       { status: 500 }
     );
   }
+}
+
+// Fallback using listCommits with smart pagination
+async function fetchWithListCommits(
+  octokit: ReturnType<typeof import("@octokit/rest").Octokit>,
+  owner: string,
+  repo: string,
+  days: number
+) {
+  const since = new Date();
+  since.setDate(since.getDate() - days);
+
+  const activityMap = new Map<string, number>();
+  let page = 1;
+  const perPage = 100;
+  const maxPages = 30; // 3000 commits max to avoid rate limits
+  let hasMore = true;
+
+  while (hasMore && page <= maxPages) {
+    const { data } = await octokit.repos.listCommits({
+      owner,
+      repo,
+      since: since.toISOString(),
+      per_page: perPage,
+      page,
+    });
+
+    if (data.length === 0) {
+      hasMore = false;
+      break;
+    }
+
+    for (const commit of data) {
+      const date = commit.commit.author?.date;
+      if (date) {
+        const dateStr = date.split("T")[0];
+        activityMap.set(dateStr, (activityMap.get(dateStr) || 0) + 1);
+      }
+    }
+
+    // If we got less than perPage, we're done
+    if (data.length < perPage) {
+      hasMore = false;
+    }
+
+    page++;
+  }
+
+  let totalCommits = 0;
+  for (const count of activityMap.values()) {
+    totalCommits += count;
+  }
+
+  const activity: CommitActivity[] = Array.from(activityMap.entries())
+    .map(([date, count]) => ({ date, count }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  const stats = calculateStats(activityMap, totalCommits, days);
+
+  return NextResponse.json({
+    activity,
+    stats,
+    rateLimit: getLastRateLimit(),
+    source: "list_commits",
+    pagesUsed: page - 1,
+  });
+}
+
+// Calculate streak and other stats
+function calculateStats(
+  activityMap: Map<string, number>,
+  totalCommits: number,
+  days: number
+) {
+  const activeDays = activityMap.size;
+  const maxCommitsPerDay = Math.max(...Array.from(activityMap.values()), 0);
+  const avgCommitsPerDay = activeDays > 0 ? totalCommits / activeDays : 0;
+
+  // Current streak
+  let currentStreak = 0;
+  const today = new Date().toISOString().split("T")[0];
+  const sortedDates = Array.from(activityMap.keys()).sort().reverse();
+
+  for (let i = 0; i < sortedDates.length; i++) {
+    const date = new Date(sortedDates[i]);
+    const expectedDate = new Date(today);
+    expectedDate.setDate(expectedDate.getDate() - i);
+
+    if (date.toISOString().split("T")[0] === expectedDate.toISOString().split("T")[0]) {
+      currentStreak++;
+    } else {
+      break;
+    }
+  }
+
+  // Longest streak
+  let streak = 0;
+  let longestStreak = 0;
+  const allDates = Array.from(activityMap.keys()).sort();
+  for (let i = 0; i < allDates.length; i++) {
+    if (i === 0) {
+      streak = 1;
+    } else {
+      const prev = new Date(allDates[i - 1]);
+      const curr = new Date(allDates[i]);
+      const diffDays = (curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24);
+      if (diffDays === 1) {
+        streak++;
+      } else {
+        streak = 1;
+      }
+    }
+    longestStreak = Math.max(longestStreak, streak);
+  }
+
+  return {
+    totalCommits,
+    activeDays,
+    maxCommitsPerDay,
+    avgCommitsPerDay: Math.round(avgCommitsPerDay * 10) / 10,
+    currentStreak,
+    longestStreak,
+    period: days,
+  };
 }

@@ -29,6 +29,7 @@ export const patchNotes: PatchNote[] = [
       { title: "Zoom Images", description: "Agrandir, rotation 90deg et telechargement direct" },
       { title: "Nom Fichier Code", description: "Header avec nom de fichier sur les blocs de code" },
       { title: "Graph sans Limite", description: "Affiche tous tes fichiers, plus de limite 100" },
+      { title: "Quoi de Neuf", description: "Modal avec historique complet des versions et nouveautes" },
     ],
     fixes: [],
     improvements: [

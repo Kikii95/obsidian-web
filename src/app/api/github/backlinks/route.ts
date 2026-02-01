@@ -1,12 +1,16 @@
 import { NextResponse } from "next/server";
-import { getFullVaultTree, getFileContent } from "@/lib/github";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { getAuthenticatedContext } from "@/lib/server-vault-config";
-import { filterPrivatePaths, isPrivateContent } from "@/lib/privacy";
+import {
+  getPublicVaultIndexEntries,
+  getVaultIndexStatus,
+  type VaultKey,
+} from "@/lib/db/vault-index-queries";
 
 interface Backlink {
   path: string;
   name: string;
-  context?: string;
 }
 
 export async function GET(request: Request) {
@@ -21,15 +25,36 @@ export async function GET(request: Request) {
       );
     }
 
+    const session = await getServerSession(authOptions);
     const context = await getAuthenticatedContext();
 
-    if (!context) {
+    if (!context || !session?.user) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    const { octokit, vaultConfig } = context;
+    const { vaultConfig } = context;
 
-    // Normalize target path - ensure .md extension
+    const vaultKey: VaultKey = {
+      userId: session.user.id || session.user.email || "",
+      owner: vaultConfig.owner,
+      repo: vaultConfig.repo,
+      branch: vaultConfig.branch,
+    };
+
+    // Check if index is available
+    const indexStatus = await getVaultIndexStatus(vaultKey);
+
+    if (!indexStatus || indexStatus.status !== "completed") {
+      return NextResponse.json({
+        backlinks: [],
+        count: 0,
+        fromIndex: false,
+        needsIndex: true,
+        message: "Index non disponible. Lancez l'indexation depuis les paramètres.",
+      });
+    }
+
+    // Normalize target path
     const normalizedPath = targetPath.endsWith(".md")
       ? targetPath
       : `${targetPath}.md`;
@@ -40,102 +65,73 @@ export async function GET(request: Request) {
       .split("/")
       .pop() || "";
 
-    // Also keep full path without extension for exact matching
+    // Full path without extension for exact matching
     const targetId = normalizedPath.replace(/\.md$/, "");
 
-    // Create lowercase versions for case-insensitive matching
+    // Lowercase versions for case-insensitive matching
     const targetNameLower = targetName.toLowerCase();
     const targetIdLower = targetId.toLowerCase();
 
-    // Get all markdown files
-    const allFiles = await getFullVaultTree(octokit, false, vaultConfig);
-    const publicFiles = filterPrivatePaths(allFiles);
-    const mdFiles = publicFiles.filter(
-      (f) => f.type === "file" && f.path.endsWith(".md") && f.path !== normalizedPath
-    );
+    // Get all indexed entries (public only)
+    const entries = await getPublicVaultIndexEntries(vaultKey);
 
     const backlinks: Backlink[] = [];
 
-    // Scan ALL markdown files in the vault
-    const filesToScan = mdFiles;
+    for (const entry of entries) {
+      // Skip the target file itself
+      if (entry.filePath === normalizedPath) continue;
 
-    // Regex to find all wikilinks in content
-    const wikilinkRegex = /\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g;
+      const wikilinks = entry.wikilinks as { target: string; display?: string; isEmbed: boolean }[];
 
-    for (const file of filesToScan) {
-      try {
-        const { content } = await getFileContent(octokit, file.path, vaultConfig);
+      for (const link of wikilinks) {
+        const linkTargetLower = link.target.toLowerCase();
 
-        // Check if content marks this file as private
-        const privacyCheck = isPrivateContent(content);
-        if (privacyCheck.isPrivate) continue;
+        // Clean the link target (remove anchors, extensions)
+        const cleanTarget = linkTargetLower
+          .replace(/\.md$/i, "")
+          .replace(/#.*$/, "")
+          .replace(/\\+/g, "");
 
-        // Find all wikilinks in content
-        const matches = content.matchAll(wikilinkRegex);
-        let hasBacklink = false;
-        let matchedLine: string | undefined;
+        let isBacklink = false;
 
-        for (const match of matches) {
-          const linkTarget = match[1].trim();
-          const linkTargetLower = linkTarget.toLowerCase();
-
-          // Clean the link target (remove anchors, extensions)
-          const cleanTarget = linkTargetLower
-            .replace(/\.md$/i, "")
-            .replace(/#.*$/, "")
-            .replace(/\\+/g, "");
-
-          // Multiple matching strategies:
-          // 1. Exact match by full path
-          if (cleanTarget === targetIdLower) {
-            hasBacklink = true;
-          }
-          // 2. Match by name only (Obsidian style - just [[NoteName]])
-          else if (cleanTarget === targetNameLower) {
-            hasBacklink = true;
-          }
-          // 3. Match if link ends with /targetName
-          else if (cleanTarget.endsWith("/" + targetNameLower)) {
-            hasBacklink = true;
-          }
-          // 4. Match if target ends with /linkTarget (partial path match)
-          else if (targetIdLower.endsWith("/" + cleanTarget)) {
-            hasBacklink = true;
-          }
-          // 5. Match just the filename part
-          else if (cleanTarget.split("/").pop() === targetNameLower) {
-            hasBacklink = true;
-          }
-
-          if (hasBacklink) {
-            // Get the line containing this match for context
-            const lineStart = content.lastIndexOf("\n", match.index) + 1;
-            const lineEnd = content.indexOf("\n", match.index);
-            matchedLine = content.substring(
-              lineStart,
-              lineEnd === -1 ? undefined : lineEnd
-            ).trim();
-            break;
-          }
+        // Multiple matching strategies:
+        // 1. Exact match by full path
+        if (cleanTarget === targetIdLower) {
+          isBacklink = true;
+        }
+        // 2. Match by name only (Obsidian style - just [[NoteName]])
+        else if (cleanTarget === targetNameLower) {
+          isBacklink = true;
+        }
+        // 3. Match if link ends with /targetName
+        else if (cleanTarget.endsWith("/" + targetNameLower)) {
+          isBacklink = true;
+        }
+        // 4. Match if target ends with /linkTarget (partial path match)
+        else if (targetIdLower.endsWith("/" + cleanTarget)) {
+          isBacklink = true;
+        }
+        // 5. Match just the filename part
+        else if (cleanTarget.split("/").pop() === targetNameLower) {
+          isBacklink = true;
         }
 
-        if (hasBacklink) {
+        if (isBacklink) {
           backlinks.push({
-            path: file.path,
-            name: file.name.replace(/\.md$/, ""),
-            context: matchedLine?.slice(0, 200),
+            path: entry.filePath,
+            name: entry.fileName,
           });
+          break; // Found a backlink from this file, no need to check more links
         }
-      } catch {
-        continue;
       }
     }
 
     return NextResponse.json({
       backlinks,
       count: backlinks.length,
-      scanned: filesToScan.length,
-      total: mdFiles.length,
+      scanned: entries.length,
+      total: entries.length,
+      fromIndex: true,
     });
   } catch (error) {
     console.error("Error finding backlinks:", error);

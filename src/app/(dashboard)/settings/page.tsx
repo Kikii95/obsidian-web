@@ -44,6 +44,10 @@ import {
   Bug,
   Lightbulb,
   HelpCircle,
+  Search,
+  CheckCircle2,
+  Loader2,
+  XCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { useTheme } from "@/hooks/use-theme";
@@ -53,6 +57,8 @@ import { useSettingsStore, type UserSettings, type ActivityPeriod, type Dashboar
 import { useVaultStore } from "@/lib/store";
 import { useLockStore } from "@/lib/lock-store";
 import { PinDialog } from "@/components/lock/pin-dialog";
+import { Progress } from "@/components/ui/progress";
+import { useVaultIndex } from "@/hooks/use-vault-index";
 import type { VaultFile } from "@/types";
 
 // Security settings keys that require PIN verification to change
@@ -111,6 +117,14 @@ export default function SettingsPage() {
   const { settings, updateSettings, resetSettings } = useSettingsStore();
   const { tree } = useVaultStore();
   const { hasPinConfigured, isUnlocked } = useLockStore();
+  const {
+    status: indexStatus,
+    isIndexing,
+    progress: indexProgress,
+    fetchStatus: fetchIndexStatus,
+    startIndexing,
+    cancelIndexing,
+  } = useVaultIndex();
 
   const [cacheStats, setCacheStats] = useState<{
     count: number;
@@ -184,7 +198,8 @@ export default function SettingsPage() {
 
   useEffect(() => {
     loadCacheStats();
-  }, []);
+    fetchIndexStatus();
+  }, [fetchIndexStatus]);
 
   const loadCacheStats = async () => {
     const stats = await getCacheStats();
@@ -856,6 +871,122 @@ export default function SettingsPage() {
               </span>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Vault Index Settings */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Search className="h-5 w-5 text-primary" />
+            Index du Vault
+          </CardTitle>
+          <CardDescription>
+            Indexation pour tags, backlinks et graph performants
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Current status */}
+          <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+            <div className="flex items-center gap-3">
+              {!indexStatus || indexStatus.status === "none" ? (
+                <XCircle className="h-5 w-5 text-muted-foreground" />
+              ) : indexStatus.status === "completed" ? (
+                <CheckCircle2 className="h-5 w-5 text-green-500" />
+              ) : indexStatus.status === "indexing" ? (
+                <Loader2 className="h-5 w-5 text-primary animate-spin" />
+              ) : indexStatus.status === "failed" ? (
+                <XCircle className="h-5 w-5 text-destructive" />
+              ) : (
+                <Database className="h-5 w-5 text-muted-foreground" />
+              )}
+              <div>
+                {!indexStatus || indexStatus.status === "none" ? (
+                  <p className="font-medium">Aucun index</p>
+                ) : indexStatus.status === "completed" ? (
+                  <>
+                    <p className="font-medium">{indexStatus.indexedFiles} fichiers indexés</p>
+                    <p className="text-sm text-muted-foreground">
+                      Dernière indexation : {indexStatus.completedAt
+                        ? new Date(indexStatus.completedAt).toLocaleString("fr-FR")
+                        : "—"}
+                    </p>
+                  </>
+                ) : indexStatus.status === "indexing" || isIndexing ? (
+                  <>
+                    <p className="font-medium">Indexation en cours...</p>
+                    <p className="text-sm text-muted-foreground">
+                      {indexProgress.indexed} / {indexProgress.total} fichiers
+                    </p>
+                  </>
+                ) : indexStatus.status === "failed" ? (
+                  <>
+                    <p className="font-medium text-destructive">Échec de l&apos;indexation</p>
+                    <p className="text-sm text-muted-foreground">{indexStatus.errorMessage}</p>
+                  </>
+                ) : (
+                  <p className="font-medium">État inconnu</p>
+                )}
+              </div>
+            </div>
+            <Button variant="outline" size="sm" onClick={fetchIndexStatus}>
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Progress bar during indexing */}
+          {(indexStatus?.status === "indexing" || isIndexing) && indexProgress.total > 0 && (
+            <div className="space-y-2">
+              <Progress
+                value={(indexProgress.indexed / indexProgress.total) * 100}
+                className="h-2"
+              />
+              <p className="text-xs text-muted-foreground text-center">
+                {Math.round((indexProgress.indexed / indexProgress.total) * 100)}%
+              </p>
+            </div>
+          )}
+
+          {/* Action buttons */}
+          <div className="flex gap-2">
+            {isIndexing ? (
+              <Button
+                variant="destructive"
+                className="flex-1"
+                onClick={cancelIndexing}
+              >
+                <XCircle className="h-4 w-4 mr-2" />
+                Annuler
+              </Button>
+            ) : (
+              <>
+                <Button
+                  variant="default"
+                  className="flex-1"
+                  onClick={() => startIndexing(false)}
+                  disabled={isIndexing}
+                >
+                  <Search className="h-4 w-4 mr-2" />
+                  {indexStatus?.status === "completed" ? "Mettre à jour" : "Indexer le vault"}
+                </Button>
+                {indexStatus?.status === "completed" && (
+                  <Button
+                    variant="outline"
+                    onClick={() => startIndexing(true)}
+                    disabled={isIndexing}
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Reconstruire
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            L&apos;index permet aux tags, backlinks et graph de fonctionner sans appels API répétés.
+            Reconstruire réinitialise l&apos;index complet.
+          </p>
         </CardContent>
       </Card>
 

@@ -15,6 +15,13 @@
       "when": 1769649668196,
       "tag": "0001_cynical_calypso",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1769905985325,
+      "tag": "0002_illegal_tenebrous",
+      "breakpoints": true
     }
   ]
 }

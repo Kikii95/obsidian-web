@@ -36,36 +36,35 @@ export async function GET(request: Request) {
     // Use configured branch (important for correct commit history)
     const branch = vaultConfig.branch || "main";
 
-    // Log for debugging
-    console.log(`[Activity] Fetching commits since ${since.toISOString()} (${days} days) on branch ${branch}`);
+    while (hasMore && page <= 10) { // Max 10 pages = 1000 commits (conservative for rate limit)
+      try {
+        const { data } = await octokit.repos.listCommits({
+          owner,
+          repo,
+          sha: branch,
+          since: since.toISOString(),
+          per_page: 100,
+          page,
+        });
 
-    while (hasMore && page <= 50) { // Max 50 pages = 5000 commits
-      const { data } = await octokit.repos.listCommits({
-        owner,
-        repo,
-        sha: branch,
-        since: since.toISOString(),
-        per_page: 100,
-        page,
-      });
-
-      console.log(`[Activity] Page ${page}: ${data.length} commits`);
-
-      if (data.length === 0) {
-        hasMore = false;
-      } else {
-        for (const commit of data) {
-          const date = commit.commit.committer?.date || commit.commit.author?.date;
-          if (date) {
-            commits.push({ date: date.split("T")[0] });
+        if (data.length === 0) {
+          hasMore = false;
+        } else {
+          for (const commit of data) {
+            const date = commit.commit.committer?.date || commit.commit.author?.date;
+            if (date) {
+              commits.push({ date: date.split("T")[0] });
+            }
           }
+          page++;
+          if (data.length < 100) hasMore = false;
         }
-        page++;
-        if (data.length < 100) hasMore = false;
+      } catch (pageError) {
+        // If a single page fails (rate limit, etc), stop pagination but return what we have
+        console.warn(`[Activity] Page ${page} failed:`, pageError instanceof Error ? pageError.message : pageError);
+        hasMore = false;
       }
     }
-
-    console.log(`[Activity] Total commits fetched: ${commits.length}, oldest: ${commits[commits.length - 1]?.date}, newest: ${commits[0]?.date}`);
 
     // Aggregate by date
     const activityMap = new Map<string, number>();
@@ -137,9 +136,17 @@ export async function GET(request: Request) {
       rateLimit: getLastRateLimit(),
     });
   } catch (error) {
-    console.error("Error fetching activity:", error);
+    // Log full error details for debugging
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    console.error("[Activity] Error:", errorMessage);
+    if (errorStack) console.error("[Activity] Stack:", errorStack);
+
     return NextResponse.json(
-      { error: "Erreur lors de la récupération de l'activité" },
+      {
+        error: "Erreur lors de la récupération de l'activité",
+        details: errorMessage
+      },
       { status: 500 }
     );
   }

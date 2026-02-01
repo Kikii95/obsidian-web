@@ -2,6 +2,39 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.0] - 2026-02-01
+
+### Added
+
+#### Medium Features (15 new features)
+- **M1: Mermaid Diagrams** - Render mermaid code blocks with lazy-loaded component
+- **M2: Math/LaTeX Support** - KaTeX rendering via remark-math + rehype-katex
+- **M3: Split View** - View two notes side by side with resizable panes (`/split`)
+- **M4: Note Preview on Hover** - Hover over `[[wikilink]]` to see note preview
+- **M5: Vim Mode** - Vim keybindings in editor (Settings > Editor)
+- **M6: Mobile Gestures** - Swipe sidebar, pinch zoom, long press context menu
+- **M7: Code Syntax Themes** - 12 themes (github, dracula, monokai, nord, etc.)
+- **M8: Template Variables** - `{{date}}`, `{{time}}`, `{{title}}`, `{{folder}}`, `{{clipboard}}`
+- **M9: Folder Icons** - Custom Lucide icons per folder (right-click > Set icon)
+- **M10: Note Versioning UI** - Timeline view + diff viewer for note history
+- **M11: Bulk Tag Management** - Rename, merge, delete tags across vault (`/tags/manage`)
+- **M12: Share Analytics Dashboard** - Access logs, charts, views over time (`/shares/analytics`)
+- **M13: Import from Notion** - ZIP import with ID cleanup, callout conversion, link fixes (`/import`)
+- **M14: Export Formats** - Export notes to HTML (3 themes), DOCX, and EPUB formats
+- **M15: Quick Capture Widget** - FAB button with text/voice input, offline queue, daily note append
+
+### Dependencies
+- Added `mermaid` for diagram rendering
+- Added `remark-math`, `rehype-katex`, `katex` for LaTeX
+- Added `@replit/codemirror-vim` for Vim mode
+- Added `@use-gesture/react` for mobile gestures
+- Added `diff` for version diff viewer
+- Added `docx` for DOCX export
+- Added `epub-gen-memory` for EPUB export
+- Added `swr` for data fetching
+
+---
+
 ## [2.0.0] - 2026-02-01
 
 ### Added

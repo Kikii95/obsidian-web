@@ -162,6 +162,12 @@ export default function TagsPage() {
           <h1 className="text-2xl font-bold">Tags</h1>
           <Badge variant="outline">{data.totalTags} tags</Badge>
         </div>
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/tags/manage">
+            <Settings className="h-4 w-4 mr-2" />
+            Gérer
+          </Link>
+        </Button>
       </div>
 
       {/* Search */}

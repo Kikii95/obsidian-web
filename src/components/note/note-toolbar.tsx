@@ -29,7 +29,9 @@ import {
   PinOff,
   History,
   Share2,
+  Columns,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { usePinnedStore } from "@/lib/pinned-store";
 import { DeleteNoteDialog } from "@/components/notes/delete-note-dialog";
 import { MoveNoteDialog } from "@/components/notes/move-note-dialog";
@@ -83,6 +85,7 @@ export const NoteToolbar = memo(function NoteToolbar({
   isExportingPdf,
   copied,
 }: NoteToolbarProps) {
+  const router = useRouter();
   const { isPinned, pinNote, unpinNote } = usePinnedStore();
   const noteIsPinned = isPinned(note.path);
   const canEdit = isOnline && !isFromCache;
@@ -93,6 +96,11 @@ export const NoteToolbar = memo(function NoteToolbar({
     } else {
       pinNote(note.path, noteName);
     }
+  };
+
+  const handleOpenInSplit = () => {
+    const notePath = note.path.replace(/\.md$/, "");
+    router.push(`/split?left=${encodeURIComponent(notePath)}`);
   };
 
   if (isEditing) {
@@ -278,6 +286,16 @@ export const NoteToolbar = memo(function NoteToolbar({
                 </Button>
               }
             />
+
+            {/* Split view button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleOpenInSplit}
+              title="Ouvrir en vue divisée"
+            >
+              <Columns className="h-4 w-4" />
+            </Button>
           </div>
 
           {/* Mobile: dropdown menu */}
@@ -372,6 +390,10 @@ export const NoteToolbar = memo(function NoteToolbar({
                   </DropdownMenuItem>
                 }
               />
+              <DropdownMenuItem onClick={handleOpenInSplit}>
+                <Columns className="h-4 w-4 mr-2" />
+                Vue divisée
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DeleteNoteDialog
                 path={note.path}

@@ -186,3 +186,32 @@ export const commitActivity = pgTable(
 
 export type CommitActivityEntry = typeof commitActivity.$inferSelect;
 export type NewCommitActivityEntry = typeof commitActivity.$inferInsert;
+
+// Share Access Logs - detailed analytics for share access
+export const shareAccessLogs = pgTable(
+  "share_access_logs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    shareId: uuid("share_id").notNull().references(() => shares.id, { onDelete: "cascade" }),
+
+    // Access metadata
+    accessedAt: timestamp("accessed_at").defaultNow().notNull(),
+    userAgent: varchar("user_agent", { length: 512 }),
+    country: varchar("country", { length: 64 }),
+    city: varchar("city", { length: 128 }),
+    referer: varchar("referer", { length: 512 }),
+
+    // Device/browser info (parsed from user agent)
+    device: varchar("device", { length: 32 }), // 'mobile' | 'tablet' | 'desktop'
+    browser: varchar("browser", { length: 64 }),
+    os: varchar("os", { length: 64 }),
+  },
+  (table) => [
+    index("idx_share_access_logs_share").on(table.shareId),
+    index("idx_share_access_logs_accessed_at").on(table.accessedAt),
+    index("idx_share_access_logs_share_date").on(table.shareId, table.accessedAt),
+  ]
+);
+
+export type ShareAccessLog = typeof shareAccessLogs.$inferSelect;
+export type NewShareAccessLog = typeof shareAccessLogs.$inferInsert;

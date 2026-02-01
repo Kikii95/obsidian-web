@@ -1,5 +1,6 @@
 import { createOctokit, type VaultConfig } from "@/lib/github";
 import { getShareByToken, recordShareAccess } from "@/lib/shares/queries";
+import { logShareAccess } from "@/lib/shares/analytics";
 import { decryptToken } from "@/lib/shares/encryption";
 import type { Share } from "@/lib/db/schema";
 import type { Octokit } from "@octokit/rest";
@@ -10,12 +11,20 @@ export interface ShareContext {
   vaultConfig: VaultConfig;
 }
 
+export interface RequestInfo {
+  userAgent?: string;
+  country?: string;
+  city?: string;
+  referer?: string;
+}
+
 /**
  * Get share context for public access
  * Returns null if share not found, expired, or decryption fails
  */
 export async function getShareContext(
-  token: string
+  token: string,
+  requestInfo?: RequestInfo
 ): Promise<ShareContext | null> {
   try {
     const share = await getShareByToken(token);
@@ -39,9 +48,18 @@ export async function getShareContext(
     };
 
     // Record access (fire and forget)
-    recordShareAccess(token).catch(() => {
-      // Ignore errors
-    });
+    recordShareAccess(token).catch(() => {});
+
+    // Log detailed access for analytics (fire and forget)
+    if (requestInfo) {
+      logShareAccess({
+        shareId: share.id,
+        userAgent: requestInfo.userAgent,
+        country: requestInfo.country,
+        city: requestInfo.city,
+        referer: requestInfo.referer,
+      }).catch(() => {});
+    }
 
     return {
       share,

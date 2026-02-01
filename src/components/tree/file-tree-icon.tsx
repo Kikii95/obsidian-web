@@ -17,6 +17,7 @@ import {
 import type { VaultFile } from "@/types";
 import { getFileCategory, type FileCategory } from "@/lib/tree-utils";
 import { cn } from "@/lib/utils";
+import { getFolderIcon } from "@/data/folder-icons";
 import type { LucideIcon } from "lucide-react";
 
 interface FileTreeIconProps {
@@ -25,6 +26,7 @@ interface FileTreeIconProps {
   isPrivate?: boolean;
   showFileIcons?: boolean;
   className?: string;
+  customIconId?: string;
 }
 
 const CATEGORY_ICONS: Record<FileCategory, LucideIcon> = {
@@ -57,14 +59,22 @@ export function FileTreeIcon({
   isPrivate,
   showFileIcons = true,
   className,
+  customIconId,
 }: FileTreeIconProps) {
   // Private directory icon (lock)
   if (file.type === "dir" && isPrivate) {
     return <Lock className={cn("h-4 w-4 text-amber-500 shrink-0", className)} />;
   }
 
-  // Directory icon
+  // Directory icon - check for custom icon first
   if (file.type === "dir") {
+    if (customIconId && customIconId !== "default") {
+      const customIcon = getFolderIcon(customIconId);
+      if (customIcon) {
+        const Icon = customIcon.icon;
+        return <Icon className={cn("h-4 w-4 shrink-0", customIcon.color || "text-muted-foreground", className)} />;
+      }
+    }
     const Icon = isExpanded ? FolderOpen : Folder;
     const color = isExpanded ? "text-primary/70" : "text-muted-foreground";
     return <Icon className={cn("h-4 w-4 shrink-0", color, className)} />;

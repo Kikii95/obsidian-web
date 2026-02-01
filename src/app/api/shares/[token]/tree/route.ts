@@ -11,10 +11,20 @@ interface RouteParams {
 /**
  * GET /api/shares/[token]/tree - Get folder tree for share (public)
  */
-export async function GET(_request: NextRequest, { params }: RouteParams) {
+export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { token } = await params;
-    const context = await getShareContext(token);
+
+    // Extract request info for analytics
+    const requestInfo = {
+      userAgent: request.headers.get("user-agent") || undefined,
+      referer: request.headers.get("referer") || undefined,
+      // Vercel provides geo headers
+      country: request.headers.get("x-vercel-ip-country") || undefined,
+      city: request.headers.get("x-vercel-ip-city") || undefined,
+    };
+
+    const context = await getShareContext(token, requestInfo);
 
     if (!context) {
       return NextResponse.json(

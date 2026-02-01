@@ -3,6 +3,8 @@
 import { useState, useCallback, RefObject } from "react";
 import type { NoteData } from "@/services/github-client";
 
+export type ExportFormat = "md" | "pdf" | "html" | "docx" | "epub";
+
 interface UseNoteExportOptions {
   note: NoteData | null;
   fileName: string;
@@ -13,7 +15,12 @@ interface UseNoteExportOptions {
 interface UseNoteExportReturn {
   exportMd: () => void;
   exportPdf: () => Promise<void>;
+  exportHtml: (theme?: "light" | "dark" | "minimal") => Promise<void>;
+  exportDocx: () => Promise<void>;
+  exportEpub: () => Promise<void>;
+  exportFormat: (format: ExportFormat) => Promise<void>;
   copyAll: () => Promise<void>;
+  isExporting: boolean;
   isExportingPdf: boolean;
   copied: boolean;
 }
@@ -28,6 +35,7 @@ export function useNoteExport({
   currentContent,
   contentRef,
 }: UseNoteExportOptions): UseNoteExportReturn {
+  const [isExporting, setIsExporting] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -308,10 +316,125 @@ export function useNoteExport({
     }
   }, [note, content]);
 
+  // Export to HTML
+  const exportHtml = useCallback(async (theme: "light" | "dark" | "minimal" = "light") => {
+    if (!note && !content) return;
+
+    setIsExporting(true);
+    try {
+      const { exportToHtml } = await import("@/lib/exporters/html");
+      const html = await exportToHtml({
+        title: fileName,
+        content,
+        styles: theme,
+        includeToc: true,
+      });
+
+      const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${fileName}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("HTML export failed:", err);
+      alert("Erreur lors de l'export HTML");
+    } finally {
+      setIsExporting(false);
+    }
+  }, [note, content, fileName]);
+
+  // Export to DOCX
+  const exportDocx = useCallback(async () => {
+    if (!note && !content) return;
+
+    setIsExporting(true);
+    try {
+      const { exportToDocx } = await import("@/lib/exporters/docx");
+      const blob = await exportToDocx({
+        title: fileName,
+        content,
+      });
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${fileName}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("DOCX export failed:", err);
+      alert("Erreur lors de l'export DOCX");
+    } finally {
+      setIsExporting(false);
+    }
+  }, [note, content, fileName]);
+
+  // Export to EPUB
+  const exportEpub = useCallback(async () => {
+    if (!note && !content) return;
+
+    setIsExporting(true);
+    try {
+      const { exportToEpub } = await import("@/lib/exporters/epub");
+      const epub = await exportToEpub({
+        title: fileName,
+        content,
+      });
+
+      // Cast Buffer to Uint8Array for Blob compatibility
+      const blob = new Blob([new Uint8Array(epub)], { type: "application/epub+zip" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${fileName}.epub`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("EPUB export failed:", err);
+      alert("Erreur lors de l'export EPUB");
+    } finally {
+      setIsExporting(false);
+    }
+  }, [note, content, fileName]);
+
+  // Generic export function
+  const exportFormat = useCallback(async (format: ExportFormat) => {
+    switch (format) {
+      case "md":
+        exportMd();
+        break;
+      case "pdf":
+        await exportPdf();
+        break;
+      case "html":
+        await exportHtml();
+        break;
+      case "docx":
+        await exportDocx();
+        break;
+      case "epub":
+        await exportEpub();
+        break;
+    }
+  }, [exportMd, exportPdf, exportHtml, exportDocx, exportEpub]);
+
   return {
     exportMd,
     exportPdf,
+    exportHtml,
+    exportDocx,
+    exportEpub,
+    exportFormat,
     copyAll,
+    isExporting,
     isExportingPdf,
     copied,
   };

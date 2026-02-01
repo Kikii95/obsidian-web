@@ -26,7 +26,7 @@ This document tracks planned features, known issues, and community ideas for Obs
 | **Excalidraw viewer** | 🟢 | Render .excalidraw files with zoom controls — v2.0.0 |
 | **Keyboard shortcuts help** | 🟢 | `?` or `Ctrl+/` shows all shortcuts (23 total) — v2.0.0 |
 | Search in file content | 🔴 | Full-text search across all notes |
-| Mobile gestures | 🔴 | Swipe navigation, pinch zoom |
+| **Mobile gestures** | 🟢 | Swipe sidebar, pinch zoom, long press — v2.1.0 |
 
 ### Medium Priority
 
@@ -42,20 +42,27 @@ This document tracks planned features, known issues, and community ideas for Obs
 | **Image zoom modal** | 🟢 | Full gallery with zoom/rotation/navigation — v2.0.0 |
 | **Copy note link** | 🟢 | Multiple formats: wikilink, URL, markdown — v2.0.0 |
 | **What's New modal** | 🟢 | Patch notes UI, auto-shows on version change — v2.0.0 |
-| Note linking autocomplete | 🔴 | `[[` triggers note suggestions in editor |
-| Tag autocomplete | 🔴 | `#` triggers tag suggestions |
-| Mermaid diagrams | 🔴 | Render mermaid code blocks (dep installed) |
-| Math/LaTeX support | 🔴 | KaTeX rendering for equations (dep installed) |
+| **Note linking autocomplete** | 🟢 | `[[` triggers note suggestions in editor — v2.0.0 |
+| **Tag autocomplete** | 🟢 | `#` triggers tag suggestions — v2.0.0 |
+| **Mermaid diagrams** | 🟢 | Render mermaid code blocks — v2.1.0 |
+| **Math/LaTeX support** | 🟢 | KaTeX rendering for equations — v2.1.0 |
+| **Note versioning UI** | 🟢 | Timeline + diff viewer for history — v2.1.0 |
+| **Bulk tag management** | 🟢 | Rename, merge, delete tags — v2.1.0 |
 
 ### Low Priority
 
 | Feature | Status | Description |
 |---------|--------|-------------|
-| Vim mode | 🔴 | Vim keybindings in editor |
-| Split view | 🔴 | View two notes side by side |
-| Note preview on hover | 🔴 | Hover over `[[link]]` to see preview |
-| Folder icons | 🔴 | Custom icons per folder |
-| Note templates variables | 🔴 | `{{date}}`, `{{title}}` in templates |
+| **Vim mode** | 🟢 | Vim keybindings in editor — v2.1.0 |
+| **Split view** | 🟢 | View two notes side by side — v2.1.0 |
+| **Note preview on hover** | 🟢 | Hover over `[[link]]` to see preview — v2.1.0 |
+| **Folder icons** | 🟢 | Custom Lucide icons per folder — v2.1.0 |
+| **Note templates variables** | 🟢 | `{{date}}`, `{{title}}` in templates — v2.1.0 |
+| **Code syntax themes** | 🟢 | 12 themes (dracula, monokai, etc.) — v2.1.0 |
+| **Share analytics** | 🟢 | Access logs, charts, views over time — v2.1.0 |
+| **Import from Notion** | 🟢 | ZIP import with ID cleanup, callout conversion — v2.1.0 |
+| **Export formats** | 🟢 | Export to HTML, DOCX, EPUB — v2.1.0 |
+| **Quick capture widget** | 🟢 | FAB with voice input, offline queue — v2.1.0 |
 
 ---
 
@@ -282,7 +289,7 @@ Normal mode → Click "Select" button → Selection mode enabled
 | Mobile app (React Native) | 🔴 Very High | Native app wrapping the web |
 | Browser extension | 🟡 Medium | Clip web pages to vault |
 | Dataview-like queries | 🔴 High | Query notes by frontmatter |
-| Code syntax themes | 🟡 Medium | Choose syntax highlighting theme (github, monokai, dracula) |
+| ~~Code syntax themes~~ | 🟢 Done | Choose syntax highlighting theme — v2.1.0 |
 | Custom theme editor | 🔴 High | Full theme customization (every color configurable) |
 | i18n (multi-language) | 🟡 Medium | Support for FR/EN/other languages |
 | Keyboard shortcuts customization | 🟡 Medium | Remap keyboard shortcuts |
@@ -294,6 +301,7 @@ Normal mode → Click "Select" button → Selection mode enabled
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v2.1.0** | 2026-02 | **11 Medium Features**: Mermaid diagrams, Math/LaTeX, Split view, Note preview on hover, Vim mode, Mobile gestures, Code syntax themes, Template variables, Folder icons, Note versioning UI, Bulk tag management |
 | **v2.0.0** | 2026-02 | **PostgreSQL Vault Index** + **13 Quick Wins**: Audio player, Excalidraw viewer, Keyboard shortcuts, Callouts, TOC, Note stats, Copy link, Frontmatter viewer, Image zoom, Code filenames, What's New modal, Graph unlimited, Auto-refresh index |
 | v1.7.1 | 2026-01 | **Interactive Checkboxes**: Click checkboxes directly in reader mode, auto-saves to GitHub |
 | v1.7.0 | 2026-01 | **Unified Layout**: Refactored architecture with UniversalLayout component for dashboard/share/temp modes |

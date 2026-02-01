@@ -41,6 +41,7 @@ import { IosPwaPrompt } from "@/components/pwa/ios-pwa-prompt";
 import { useSettingsSync } from "@/hooks/use-settings-sync";
 import { useVaultConfig } from "@/hooks/use-vault-config";
 import { usePinsSync } from "@/hooks/use-pins-sync";
+import { QuickCaptureFAB } from "@/components/capture/quick-capture-fab";
 
 export default function DashboardLayout({
   children,
@@ -339,6 +340,9 @@ export default function DashboardLayout({
 
       {/* iOS Add to Home Screen Prompt */}
       <IosPwaPrompt />
+
+      {/* Quick Capture FAB */}
+      <QuickCaptureFAB />
     </div>
   );
 }

@@ -59,6 +59,7 @@ import { useLockStore } from "@/lib/lock-store";
 import { PinDialog } from "@/components/lock/pin-dialog";
 import { Progress } from "@/components/ui/progress";
 import { useVaultIndex } from "@/hooks/use-vault-index";
+import { codeThemes, getDarkCodeThemes } from "@/data/code-themes";
 import type { VaultFile } from "@/types";
 
 // Security settings keys that require PIN verification to change
@@ -534,6 +535,57 @@ export default function SettingsPage() {
             <Switch
               checked={draft.enableKeyboardShortcuts ?? true}
               onCheckedChange={(checked) => updateDraft("enableKeyboardShortcuts", checked)}
+            />
+          </div>
+
+          {/* Vim mode - hidden on mobile */}
+          <div className="hidden md:flex items-center justify-between">
+            <div>
+              <Label>Mode Vim</Label>
+              <p className="text-sm text-muted-foreground">
+                Navigation et édition avec les commandes Vim (hjkl, i, dd, etc.)
+              </p>
+            </div>
+            <Switch
+              checked={draft.vimMode ?? false}
+              onCheckedChange={(checked) => updateDraft("vimMode", checked)}
+            />
+          </div>
+
+          {/* Code syntax theme */}
+          <div className="space-y-2">
+            <Label>Thème de syntaxe code</Label>
+            <Select
+              value={draft.codeSyntaxTheme ?? "atom-one-dark"}
+              onValueChange={(value) => updateDraft("codeSyntaxTheme", value)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {getDarkCodeThemes().map((theme) => (
+                  <SelectItem key={theme.id} value={theme.id}>
+                    {theme.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-sm text-muted-foreground">
+              Coloration syntaxique des blocs de code
+            </p>
+          </div>
+
+          {/* Mobile gestures - visible on all devices for testing */}
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>Gestes tactiles</Label>
+              <p className="text-sm text-muted-foreground">
+                Swipe, pinch et long press sur mobile
+              </p>
+            </div>
+            <Switch
+              checked={draft.enableGestures ?? true}
+              onCheckedChange={(checked) => updateDraft("enableGestures", checked)}
             />
           </div>
         </CardContent>

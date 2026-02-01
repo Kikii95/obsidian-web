@@ -4,15 +4,20 @@ import { useState, useCallback, memo, useMemo, isValidElement, ReactNode } from 
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
+import remarkMath from "remark-math";
 import rehypeRaw from "rehype-raw";
 import rehypeHighlight from "rehype-highlight";
+import rehypeKatex from "rehype-katex";
 import { PrefetchLink } from "@/components/ui/prefetch-link";
 import { CollapsibleContent } from "@/components/viewer/collapsible-content";
 import { Callout, parseCalloutSyntax } from "@/components/markdown/callout";
+import { MermaidDiagram } from "@/components/markdown/mermaid-diagram";
+import { LinkPreview } from "@/components/markdown/link-preview";
 import { ImageZoomModal, useImageZoom } from "@/components/media/image-zoom-modal";
 import { wikilinkToPath, buildNoteLookupMap, type NoteLookupMap } from "@/lib/wikilinks";
 import { useVaultStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
+import { useCodeTheme } from "@/hooks/use-code-theme";
 import { Copy, Check } from "lucide-react";
 
 // Code block wrapper with copy button and optional filename
@@ -86,6 +91,8 @@ function MarkdownRendererInner({
 }: MarkdownRendererProps & { lookupMap: NoteLookupMap }) {
   // Image zoom modal state
   const imageZoom = useImageZoom();
+  // Load selected code syntax theme
+  useCodeTheme();
 
   // Extract all image URLs from content for navigation
   const allImages = useMemo(() => {
@@ -118,13 +125,27 @@ function MarkdownRendererInner({
   return (
     <div className={cn("prose prose-invert max-w-none", className)}>
       <ReactMarkdown
-        remarkPlugins={[remarkGfm, remarkBreaks]}
-        rehypePlugins={[rehypeRaw, rehypeHighlight]}
+        remarkPlugins={[remarkGfm, remarkBreaks, remarkMath]}
+        rehypePlugins={[rehypeRaw, rehypeHighlight, rehypeKatex]}
         components={{
           // Custom link component to handle internal links with prefetching
           a: ({ href, children, ...props }) => {
-            // Check if it's an internal wikilink - prefetch on hover
-            if (href?.startsWith("/note/") || href?.startsWith("/canvas/") || href?.startsWith("/file/")) {
+            // Check if it's an internal wikilink - add preview for notes
+            if (href?.startsWith("/note/")) {
+              const notePath = decodeURIComponent(href.replace("/note/", "")) + ".md";
+              return (
+                <LinkPreview
+                  href={href}
+                  notePath={notePath}
+                  className="wikilink text-primary hover:text-primary/80 no-underline hover:underline"
+                >
+                  {children}
+                </LinkPreview>
+              );
+            }
+
+            // Other internal links (canvas, file)
+            if (href?.startsWith("/canvas/") || href?.startsWith("/file/")) {
               return (
                 <PrefetchLink
                   href={href}
@@ -153,6 +174,11 @@ function MarkdownRendererInner({
           code: ({ className, children, ...props }) => {
             const isInline = !className;
             const content = String(children).replace(/\n$/, "");
+
+            // Check for Mermaid diagrams
+            if (className?.includes("language-mermaid")) {
+              return <MermaidDiagram code={content} />;
+            }
 
             // Check for Dataview blocks
             if (className?.includes("language-dataview")) {
@@ -219,8 +245,8 @@ function MarkdownRendererInner({
             const codeClassName = (codeElement as { properties?: { className?: string[] } })?.properties?.className || [];
             const classStr = Array.isArray(codeClassName) ? codeClassName.join(" ") : "";
 
-            // Skip wrapper for dataview/tasks (they render their own container)
-            if (classStr.includes("language-dataview") || classStr.includes("language-tasks")) {
+            // Skip wrapper for mermaid/dataview/tasks (they render their own container)
+            if (classStr.includes("language-mermaid") || classStr.includes("language-dataview") || classStr.includes("language-tasks")) {
               return <>{children}</>;
             }
 
@@ -534,8 +560,8 @@ function MarkdownRendererInner({
                 >
                   {/* Render content as markdown for proper formatting */}
                   <ReactMarkdown
-                    remarkPlugins={[remarkGfm, remarkBreaks]}
-                    rehypePlugins={[rehypeRaw, rehypeHighlight]}
+                    remarkPlugins={[remarkGfm, remarkBreaks, remarkMath]}
+                    rehypePlugins={[rehypeRaw, rehypeHighlight, rehypeKatex]}
                   >
                     {unescapedContent}
                   </ReactMarkdown>

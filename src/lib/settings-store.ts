@@ -33,6 +33,11 @@ export interface UserSettings {
   editorMaxWidth: number; // 600-1200px
   showFrontmatter: boolean; // Show/hide frontmatter badges
   enableKeyboardShortcuts: boolean; // Ctrl+S to save, Esc to cancel
+  vimMode: boolean; // Enable vim keybindings in editor
+  codeSyntaxTheme: string; // Syntax highlighting theme for code blocks
+
+  // Mobile
+  enableGestures: boolean; // Enable swipe/pinch gestures on mobile
 
   // Sidebar
   vaultRootPath: string; // Custom vault root path (e.g. "MonVault" if repo is root/MonVault/...)
@@ -42,6 +47,7 @@ export interface UserSettings {
   showFileIcons: boolean; // Show colored icons by file type
   hidePatterns: string[]; // Patterns to hide (e.g. [".gitkeep", "_private"])
   customFolderOrders: Record<string, string[]>; // Custom order per folder path ("" = root)
+  folderIcons: Record<string, string>; // Custom icons per folder path
 
   // Lock system
   lockTimeout: number; // Minutes before auto-lock (0 = never)
@@ -109,6 +115,11 @@ const defaultSettings: UserSettings = {
   editorMaxWidth: 800,
   showFrontmatter: true,
   enableKeyboardShortcuts: true,
+  vimMode: false, // Disabled by default
+  codeSyntaxTheme: "atom-one-dark", // Default code theme
+
+  // Mobile
+  enableGestures: true, // Gestures enabled by default
 
   // Sidebar
   vaultRootPath: "", // Empty = repo root
@@ -118,6 +129,7 @@ const defaultSettings: UserSettings = {
   showFileIcons: true,
   hidePatterns: [".gitkeep"],
   customFolderOrders: {},
+  folderIcons: {}, // No custom icons by default
 
   // Lock system
   lockTimeout: 5, // 5 minutes

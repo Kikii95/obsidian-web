@@ -13,6 +13,30 @@ export interface PatchNote {
 
 // Plus recent en premier
 export const patchNotes: PatchNote[] = [
+  // v2.1.0 - Medium Features
+  {
+    version: "2.1.0",
+    date: "2026-02-01",
+    features: [
+      { title: "Diagrammes Mermaid", description: "Rend les blocs code mermaid en graphiques interactifs" },
+      { title: "Math/LaTeX", description: "Rendu KaTeX pour formules inline $...$ et block $$...$$" },
+      { title: "Vue Split", description: "Affiche 2 notes cote a cote avec redimensionnement" },
+      { title: "Apercu au Survol", description: "Survole un [[wikilink]] pour voir un apercu de la note" },
+      { title: "Mode Vim", description: "Keybindings Vim dans l'editeur (Settings > Editor)" },
+      { title: "Gestes Mobile", description: "Swipe sidebar, zoom pinch, menu long press" },
+      { title: "Themes Code", description: "12 themes syntax highlighting (github, dracula, etc.)" },
+      { title: "Variables Templates", description: "{{date}}, {{time}}, {{title}}, {{folder}}, {{clipboard}}" },
+      { title: "Icones Dossiers", description: "Icones Lucide personnalisees par dossier" },
+      { title: "Historique Notes", description: "Timeline + diff viewer pour les versions de notes" },
+      { title: "Gestion Tags", description: "Renommer, fusionner, supprimer tags sur tout le vault" },
+      { title: "Analytics Partages", description: "Stats d'acces, graphiques, vues dans le temps" },
+      { title: "Import Notion", description: "Import ZIP avec nettoyage IDs et conversion callouts" },
+      { title: "Export Multi-format", description: "Export vers HTML (3 themes), DOCX et EPUB" },
+      { title: "Capture Rapide", description: "Bouton flottant + voix, file offline, ajout note du jour" },
+    ],
+    fixes: [],
+    improvements: [],
+  },
   // v2.0.0 - Index PostgreSQL + Quick Wins
   {
     version: "2.0.0",

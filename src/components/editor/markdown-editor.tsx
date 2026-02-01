@@ -9,6 +9,7 @@ import { Extension } from "@codemirror/state";
 import { ChevronDown, ChevronUp, HelpCircle, TextSelect } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useSettingsStore } from "@/lib/settings-store";
 import {
   createObsidianAutocomplete,
   type NoteCompletionItem,
@@ -158,6 +159,17 @@ export function MarkdownEditor({
 }: MarkdownEditorProps) {
   const [mounted, setMounted] = useState(false);
   const editorRef = useRef<ReactCodeMirrorRef>(null);
+  const { settings } = useSettingsStore();
+  const [vimExtension, setVimExtension] = useState<Extension | null>(null);
+
+  // Load vim extension dynamically when enabled
+  useEffect(() => {
+    if (settings.vimMode && !vimExtension) {
+      import("@replit/codemirror-vim").then((mod) => {
+        setVimExtension(mod.vim());
+      });
+    }
+  }, [settings.vimMode, vimExtension]);
 
   // Memoize autocomplete extension to prevent re-creation on every render
   // Always includes tag highlighter, adds autocomplete when notes/tags available
@@ -221,6 +233,7 @@ export function MarkdownEditor({
             editorTheme,
             EditorView.lineWrapping,
             ...autocompleteExtension,
+            ...(settings.vimMode && vimExtension ? [vimExtension] : []),
           ]}
           theme={oneDark}
           readOnly={readOnly}

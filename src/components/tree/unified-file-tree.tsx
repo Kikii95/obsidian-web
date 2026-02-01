@@ -21,6 +21,7 @@ export interface UnifiedFileTreeProps {
   filterViewable?: boolean;
   indentSize?: number;
   className?: string;
+  folderIcons?: Record<string, string>;
 }
 
 /**
@@ -39,6 +40,7 @@ export const UnifiedFileTree = memo(function UnifiedFileTree({
   filterViewable = true,
   indentSize = 12,
   className,
+  folderIcons = {},
 }: UnifiedFileTreeProps) {
   // Internal expansion state if not provided externally
   const [internalExpanded, setInternalExpanded] = useState<Set<string>>(
@@ -108,6 +110,7 @@ export const UnifiedFileTree = memo(function UnifiedFileTree({
           showFileExtensions={showFileExtensions}
           filterViewable={filterViewable}
           indentSize={indentSize}
+          folderIcons={folderIcons}
         />
       ))}
     </div>
@@ -126,6 +129,7 @@ interface TreeItemProps {
   showFileExtensions: boolean;
   filterViewable: boolean;
   indentSize: number;
+  folderIcons: Record<string, string>;
 }
 
 const TreeItem = memo(function TreeItem({
@@ -140,6 +144,7 @@ const TreeItem = memo(function TreeItem({
   showFileExtensions,
   filterViewable,
   indentSize,
+  folderIcons,
 }: TreeItemProps) {
   const isDir = item.type === "dir";
   const isExpanded = expandedFolders.has(item.path);
@@ -209,6 +214,7 @@ const TreeItem = memo(function TreeItem({
           file={item}
           isExpanded={isExpanded}
           className="shrink-0"
+          customIconId={isDir ? folderIcons[item.path] : undefined}
         />
       )}
 
@@ -244,6 +250,7 @@ const TreeItem = memo(function TreeItem({
               showFileExtensions={showFileExtensions}
               filterViewable={filterViewable}
               indentSize={indentSize}
+              folderIcons={folderIcons}
             />
           ))}
         </div>

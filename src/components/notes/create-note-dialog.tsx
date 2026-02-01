@@ -17,6 +17,12 @@ import { githubClient } from "@/services/github-client";
 import { useVaultStore } from "@/lib/store";
 import { useDialogAction } from "@/hooks/use-dialog-action";
 import { FolderTreePicker } from "./folder-tree-picker";
+import {
+  processTemplate,
+  templateUsesClipboard,
+  getClipboardContent,
+} from "@/lib/template-engine";
+import { TemplateVariablesHelp } from "./template-variables-help";
 
 interface Template {
   name: string;
@@ -128,11 +134,18 @@ export function CreateNoteDialog({
     // Use template content or default
     let content: string;
     if (templateContent) {
-      // Replace template variables
-      content = templateContent
-        .replace(/\{\{title\}\}/gi, title.trim())
-        .replace(/\{\{date\}\}/gi, new Date().toISOString().split("T")[0])
-        .replace(/\{\{time\}\}/gi, new Date().toLocaleTimeString("fr-FR"));
+      // Get clipboard if template uses it
+      let clipboard = "";
+      if (templateUsesClipboard(templateContent)) {
+        clipboard = await getClipboardContent();
+      }
+
+      // Process template with all variables
+      content = processTemplate(templateContent, {
+        title: title.trim(),
+        folder: actualFolder,
+        clipboard,
+      });
     } else {
       content = `# ${title.trim()}\n\n`;
     }
@@ -199,6 +212,7 @@ export function CreateNoteDialog({
           <Label className="flex items-center gap-2">
             <LayoutTemplate className="h-4 w-4" />
             Template (optionnel)
+            <TemplateVariablesHelp />
           </Label>
           <Select
             value={selectedTemplate}

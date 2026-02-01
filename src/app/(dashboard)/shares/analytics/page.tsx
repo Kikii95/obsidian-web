@@ -89,11 +89,27 @@ export default function ShareAnalyticsPage() {
       <div className="p-6 max-w-6xl mx-auto">
         <div className="flex flex-col items-center justify-center gap-4 py-16">
           <AlertCircle className="h-12 w-12 text-destructive" />
-          <h2 className="text-xl font-semibold">Erreur</h2>
-          <p className="text-muted-foreground">{error}</p>
-          <Button variant="outline" onClick={() => window.location.reload()}>
-            Réessayer
-          </Button>
+          <h2 className="text-xl font-semibold">Erreur de chargement</h2>
+          <p className="text-muted-foreground text-center max-w-md">
+            {error || "Impossible de charger les analytics. Vérifiez votre connexion et réessayez."}
+          </p>
+          <details className="text-xs text-muted-foreground bg-muted p-3 rounded-lg max-w-md">
+            <summary className="cursor-pointer hover:text-foreground">Détails techniques</summary>
+            <pre className="mt-2 whitespace-pre-wrap break-words">
+              {JSON.stringify({ error, days, timestamp: new Date().toISOString() }, null, 2)}
+            </pre>
+          </details>
+          <div className="flex gap-2">
+            <Button variant="outline" asChild>
+              <Link href="/shares">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Retour aux partages
+              </Link>
+            </Button>
+            <Button onClick={() => { setError(null); setDays(days); }}>
+              Réessayer
+            </Button>
+          </div>
         </div>
       </div>
     );

@@ -6,18 +6,34 @@ import { Loader2, AlertTriangle, Copy, Check, ZoomIn, ZoomOut } from "lucide-rea
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 
-// Get computed CSS color value (resolves CSS variables)
+// Get computed CSS color and convert to hex (handles OKLCH, LAB, HSL, etc.)
 function getCssColor(varName: string, fallback: string = "#888888"): string {
   if (typeof window === "undefined") return fallback;
+
   const value = getComputedStyle(document.documentElement)
     .getPropertyValue(varName)
     .trim();
+
   if (!value) return fallback;
-  // Convert HSL value to full hsl() format if needed
+
+  // Use canvas to convert any CSS color (OKLCH, LAB, HSL, etc.) to hex
+  // This is the most reliable cross-browser method
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = 1;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return fallback;
+
+  // Handle HSL shorthand (e.g., "210 40% 98%")
+  let colorValue = value;
   if (value.match(/^\d+\s+[\d.]+%\s+[\d.]+%$/)) {
-    return `hsl(${value})`;
+    colorValue = `hsl(${value})`;
   }
-  return value;
+
+  ctx.fillStyle = colorValue;
+  ctx.fillRect(0, 0, 1, 1);
+  const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+
+  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
 }
 
 interface MermaidDiagramProps {

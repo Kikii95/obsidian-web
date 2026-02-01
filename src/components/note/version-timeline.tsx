@@ -23,8 +23,8 @@ interface VersionTimelineProps {
   selectedCommit?: string;
   compareCommit?: string;
   onSelectCommit: (sha: string) => void;
-  onCompareSelect?: (sha: string) => void;
-  isCompareMode?: boolean;
+  onCompareSelect: (sha: string) => void;
+  onClearCompare?: () => void;
   className?: string;
 }
 
@@ -34,7 +34,7 @@ export function VersionTimeline({
   compareCommit,
   onSelectCommit,
   onCompareSelect,
-  isCompareMode = false,
+  onClearCompare,
   className,
 }: VersionTimelineProps) {
   if (commits.length === 0) {
@@ -48,6 +48,39 @@ export function VersionTimeline({
 
   return (
     <ScrollArea className={cn("h-full", className)}>
+      {/* Comparison status header */}
+      {(selectedCommit || compareCommit) && (
+        <div className="sticky top-0 z-10 px-3 py-2 bg-muted/80 backdrop-blur-sm border-b flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 text-xs">
+            {selectedCommit && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+                <Circle className="h-2 w-2 fill-current" />
+                Base: {selectedCommit.slice(0, 7)}
+              </span>
+            )}
+            {compareCommit && (
+              <>
+                <ArrowLeftRight className="h-3 w-3 text-muted-foreground" />
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-400">
+                  <Circle className="h-2 w-2 fill-current" />
+                  Diff: {compareCommit.slice(0, 7)}
+                </span>
+              </>
+            )}
+          </div>
+          {(selectedCommit || compareCommit) && onClearCompare && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 text-xs"
+              onClick={onClearCompare}
+            >
+              Clear
+            </Button>
+          )}
+        </div>
+      )}
+
       <div className="relative pl-6 pb-4">
         {/* Vertical line */}
         <div className="absolute left-3 top-0 bottom-0 w-px bg-border" />
@@ -114,54 +147,43 @@ export function VersionTimeline({
                   {commit.sha.slice(0, 7)}
                 </code>
 
-                {/* Actions */}
+                {/* Actions - Always show Base + Compare buttons */}
                 <div className="flex items-center gap-1">
-                  {isCompareMode ? (
-                    <>
-                      <Button
-                        variant={isSelected ? "default" : "outline"}
-                        size="sm"
-                        className="h-7 text-xs"
-                        onClick={() => onSelectCommit(commit.sha)}
-                      >
-                        {isSelected ? (
-                          <Check className="h-3 w-3 mr-1" />
-                        ) : (
-                          <Circle className="h-3 w-3 mr-1" />
-                        )}
-                        Base
-                      </Button>
-                      {onCompareSelect && (
-                        <Button
-                          variant={isCompare ? "default" : "outline"}
-                          size="sm"
-                          className={cn(
-                            "h-7 text-xs",
-                            isCompare && "bg-amber-500 hover:bg-amber-600"
-                          )}
-                          onClick={() => onCompareSelect(commit.sha)}
-                          disabled={commit.sha === selectedCommit}
-                        >
-                          {isCompare ? (
-                            <Check className="h-3 w-3 mr-1" />
-                          ) : (
-                            <ArrowLeftRight className="h-3 w-3 mr-1" />
-                          )}
-                          Comparer
-                        </Button>
-                      )}
-                    </>
-                  ) : (
-                    <Button
-                      variant={isSelected ? "default" : "outline"}
-                      size="sm"
-                      className="h-7 text-xs"
-                      onClick={() => onSelectCommit(commit.sha)}
-                    >
+                  <Button
+                    variant={isSelected ? "default" : "outline"}
+                    size="sm"
+                    className={cn(
+                      "h-7 text-xs",
+                      isSelected && "bg-emerald-600 hover:bg-emerald-700"
+                    )}
+                    onClick={() => onSelectCommit(commit.sha)}
+                    title="Sélectionner comme version de base"
+                  >
+                    {isSelected ? (
+                      <Check className="h-3 w-3 mr-1" />
+                    ) : (
                       <Eye className="h-3 w-3 mr-1" />
-                      Voir
-                    </Button>
-                  )}
+                    )}
+                    Base
+                  </Button>
+                  <Button
+                    variant={isCompare ? "default" : "outline"}
+                    size="sm"
+                    className={cn(
+                      "h-7 text-xs",
+                      isCompare && "bg-amber-500 hover:bg-amber-600"
+                    )}
+                    onClick={() => onCompareSelect(commit.sha)}
+                    disabled={commit.sha === selectedCommit}
+                    title="Comparer avec la version de base"
+                  >
+                    {isCompare ? (
+                      <Check className="h-3 w-3 mr-1" />
+                    ) : (
+                      <ArrowLeftRight className="h-3 w-3 mr-1" />
+                    )}
+                    Diff
+                  </Button>
                 </div>
               </div>
             </div>

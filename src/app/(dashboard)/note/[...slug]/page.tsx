@@ -93,6 +93,7 @@ export default function NotePage() {
   const editor = useNoteEditor({
     note,
     onNoteUpdate: updateNote,
+    onSaveSuccess: refetch, // Refetch to update frontmatter/tags after save
   });
 
   // Export hook (with contentRef for styled PDF export)

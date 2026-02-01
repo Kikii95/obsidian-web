@@ -17,6 +17,7 @@ import {
   Upload,
   Trash2,
   Share2,
+  Palette,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useVaultStore } from "@/lib/store";
@@ -29,6 +30,7 @@ import { ReorderFoldersDialog } from "@/components/notes/reorder-folders-dialog"
 import { ImportNoteDialog } from "@/components/notes/import-note-dialog";
 import { DeleteFolderDialog } from "@/components/notes/delete-folder-dialog";
 import { ShareFolderDialog } from "@/components/shares/share-folder-dialog";
+import { FolderIconPicker } from "@/components/dialogs/folder-icon-picker";
 import type { VaultFile } from "@/types";
 
 // Check if folder name indicates a private folder
@@ -40,9 +42,10 @@ function isPrivateFolderName(name: string): boolean {
 export default function FolderPage() {
   const params = useParams();
   const { tree } = useVaultStore();
-  const { getFolderOrder, settings } = useSettingsStore();
+  const { getFolderOrder, settings, setFolderIcon, removeFolderIcon } = useSettingsStore();
   const { hasPinConfigured, isUnlocked } = useLockStore();
   const [reorderDialogOpen, setReorderDialogOpen] = useState(false);
+  const [iconPickerOpen, setIconPickerOpen] = useState(false);
 
   // Should we hide children of _private folders?
   const hidePrivateChildren =
@@ -184,7 +187,21 @@ export default function FolderPage() {
             )}
           </div>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold">{folderName}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold">{folderName}</h1>
+              {/* Folder icon picker button */}
+              {!shouldHideContent && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0"
+                  onClick={() => setIconPickerOpen(true)}
+                  title="Changer l'icône du dossier"
+                >
+                  <Palette className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              )}
+            </div>
             {shouldHideContent ? (
               <p className="text-sm text-amber-500">Dossier verrouillé</p>
             ) : (
@@ -283,6 +300,16 @@ export default function FolderPage() {
           onOpenChange={setReorderDialogOpen}
           parentPath={folderPath}
           folders={folderContent || []}
+        />
+
+        {/* Folder icon picker dialog */}
+        <FolderIconPicker
+          open={iconPickerOpen}
+          onOpenChange={setIconPickerOpen}
+          folderPath={folderPath}
+          currentIcon={settings.folderIcons?.[folderPath]}
+          onSelect={(iconId) => setFolderIcon(folderPath, iconId)}
+          onRemove={() => removeFolderIcon(folderPath)}
         />
       </div>
     </div>

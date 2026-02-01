@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { path, content, sha, message } = body;
+    const { path, content, sha, message, encoding } = body;
 
     if (!path || content === undefined) {
       return NextResponse.json(
@@ -27,7 +27,8 @@ export async function POST(request: NextRequest) {
       content,
       sha,
       message || `Update ${path} via Obsidian Web`,
-      vaultConfig
+      vaultConfig,
+      encoding // "base64" for binary files (images), undefined for text
     );
 
     return NextResponse.json({

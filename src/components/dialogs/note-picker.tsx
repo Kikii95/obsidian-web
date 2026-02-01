@@ -45,10 +45,10 @@ export function NotePicker({
   const [search, setSearch] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  // Flatten and filter notes
+  // Flatten and filter notes (limit increased for large vaults)
   const notes = useMemo(() => {
     const allNotes = flattenTree(tree);
-    if (!search.trim()) return allNotes.slice(0, 50);
+    if (!search.trim()) return allNotes.slice(0, 200);
 
     const query = search.toLowerCase();
     return allNotes
@@ -57,7 +57,7 @@ export function NotePicker({
         const path = note.path.toLowerCase();
         return name.includes(query) || path.includes(query);
       })
-      .slice(0, 50);
+      .slice(0, 200);
   }, [tree, search]);
 
   // Reset selection when search changes

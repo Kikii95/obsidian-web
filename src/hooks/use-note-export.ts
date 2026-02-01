@@ -173,7 +173,31 @@ export function useNoteExport({
             letterRendering: true,
             logging: false,
             // This callback is called with the cloned document BEFORE rendering
-            onclone: (clonedDoc: Document) => {
+            onclone: async (clonedDoc: Document) => {
+              // Convert Mermaid SVGs to images (html2canvas can't handle dynamic SVGs)
+              const mermaidSvgs = clonedDoc.querySelectorAll(".mermaid svg, .mermaid-diagram svg");
+              for (const svg of mermaidSvgs) {
+                try {
+                  const svgData = new XMLSerializer().serializeToString(svg);
+                  const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+                  const url = URL.createObjectURL(svgBlob);
+
+                  const img = clonedDoc.createElement("img");
+                  img.src = url;
+                  img.style.width = (svg as SVGElement).getAttribute("width") || "100%";
+                  img.style.maxWidth = "100%";
+                  img.style.height = "auto";
+
+                  // Replace SVG with image
+                  svg.parentNode?.replaceChild(img, svg);
+
+                  // Cleanup (slight delay to ensure image is loaded)
+                  setTimeout(() => URL.revokeObjectURL(url), 1000);
+                } catch (err) {
+                  console.warn("Failed to convert Mermaid SVG to image:", err);
+                }
+              }
+
               // Add a style tag to force all colors to simple RGB values
               // This overrides any lab/oklch/oklab colors that html2canvas can't parse
               const style = clonedDoc.createElement("style");

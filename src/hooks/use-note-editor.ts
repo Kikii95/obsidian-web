@@ -7,6 +7,8 @@ import { mergeInlineTagsToFrontmatter } from "@/lib/tag-utils";
 interface UseNoteEditorOptions {
   note: NoteData | null;
   onNoteUpdate?: (updates: Partial<NoteData>) => void;
+  /** Called after save to refetch note (updates frontmatter/tags) */
+  onSaveSuccess?: () => Promise<void> | void;
 }
 
 interface UseNoteEditorReturn {
@@ -27,6 +29,7 @@ interface UseNoteEditorReturn {
 export function useNoteEditor({
   note,
   onNoteUpdate,
+  onSaveSuccess,
 }: UseNoteEditorOptions): UseNoteEditorReturn {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState("");
@@ -101,12 +104,15 @@ export function useNoteEditor({
 
       setHasChanges(false);
       setIsEditing(false);
+
+      // Refetch note to update frontmatter/tags
+      await onSaveSuccess?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur de sauvegarde");
     } finally {
       setIsSaving(false);
     }
-  }, [note, editContent, hasChanges, onNoteUpdate]);
+  }, [note, editContent, hasChanges, onNoteUpdate, onSaveSuccess]);
 
   return {
     isEditing,

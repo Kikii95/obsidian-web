@@ -38,6 +38,17 @@ import JSZip from "jszip";
 
 type ImportStep = "upload" | "preview" | "configure" | "importing" | "complete";
 
+// Safe base64 encoding that handles large files (avoids stack overflow)
+function safeBase64Encode(data: Uint8Array): string {
+  const chunkSize = 8192;
+  let binary = "";
+  for (let i = 0; i < data.length; i += chunkSize) {
+    const chunk = data.subarray(i, Math.min(i + chunkSize, data.length));
+    binary += String.fromCharCode.apply(null, Array.from(chunk));
+  }
+  return btoa(binary);
+}
+
 interface ConvertedFile {
   originalPath: string;
   newPath: string;
@@ -195,7 +206,7 @@ export default function ImportPage() {
       let success = 0;
       let failed = 0;
 
-      // Import files
+      // Import markdown files
       for (const file of importState.files) {
         try {
           const targetPath = `${importState.targetFolder}/${file.newPath}`;
@@ -206,13 +217,17 @@ export default function ImportPage() {
             body: JSON.stringify({
               path: targetPath,
               content: file.content,
-              commitMessage: `[import] Import from Notion: ${file.newPath}`,
+              message: `[import] Import from Notion: ${file.newPath}`,
             }),
           });
 
-          if (!res.ok) throw new Error("Failed to save");
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || `HTTP ${res.status}`);
+          }
           success++;
-        } catch {
+        } catch (err) {
+          console.error(`[Import] Failed to save: ${file.newPath}`, err);
           failed++;
         }
 
@@ -220,15 +235,13 @@ export default function ImportPage() {
         setProgress((completed / total) * 100);
       }
 
-      // Import images
+      // Import images with safe base64 encoding
       for (const image of importState.images) {
         try {
           const targetPath = `${importState.targetFolder}/${image.path}`;
 
-          // Convert Uint8Array to base64
-          const base64 = btoa(
-            String.fromCharCode.apply(null, Array.from(image.data))
-          );
+          // Use safe chunked base64 encoding to avoid stack overflow
+          const base64 = safeBase64Encode(image.data);
 
           const res = await fetch("/api/github/save", {
             method: "POST",
@@ -237,13 +250,17 @@ export default function ImportPage() {
               path: targetPath,
               content: base64,
               encoding: "base64",
-              commitMessage: `[import] Import image from Notion: ${image.path}`,
+              message: `[import] Import image from Notion: ${image.path}`,
             }),
           });
 
-          if (!res.ok) throw new Error("Failed to save");
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || `HTTP ${res.status}`);
+          }
           success++;
-        } catch {
+        } catch (err) {
+          console.error(`[Import] Failed to save image: ${image.path}`, err);
           failed++;
         }
 

@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { Plus, CloudOff } from "lucide-react";
 import { useCaptureStore } from "@/lib/capture-store";
+import { useVaultStore } from "@/lib/store";
 import { QuickCaptureModal } from "./quick-capture-modal";
 import { cn } from "@/lib/utils";
 
@@ -12,6 +13,7 @@ interface QuickCaptureFABProps {
 
 export function QuickCaptureFAB({ className }: QuickCaptureFABProps) {
   const { isOpen, setIsOpen, queue, addToQueue } = useCaptureStore();
+  const { triggerTreeRefresh } = useVaultStore();
   const [isOnline, setIsOnline] = useState(
     typeof window !== "undefined" ? navigator.onLine : true
   );
@@ -70,6 +72,8 @@ export function QuickCaptureFAB({ className }: QuickCaptureFABProps) {
             if (!createResponse.ok) {
               throw new Error("Failed to create daily note");
             }
+            // Refresh sidebar to show new daily note
+            triggerTreeRefresh();
           } else {
             throw new Error("Failed to append to daily note");
           }
@@ -114,9 +118,12 @@ tags: [capture]
         if (!response.ok) {
           throw new Error("Failed to save capture");
         }
+
+        // Refresh sidebar to show new capture
+        triggerTreeRefresh();
       }
     },
-    [isOnline, addToQueue]
+    [isOnline, addToQueue, triggerTreeRefresh]
   );
 
   return (

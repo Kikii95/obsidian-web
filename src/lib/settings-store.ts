@@ -89,6 +89,9 @@ interface SettingsState {
   setFolderOrder: (parentPath: string, order: string[]) => void;
   moveFolderInOrder: (parentPath: string, folderName: string, direction: "up" | "down") => void;
   clearFolderOrder: (parentPath: string) => void;
+  // Folder icon helpers
+  setFolderIcon: (folderPath: string, iconId: string) => void;
+  removeFolderIcon: (folderPath: string) => void;
   // Cloud sync
   cloudSha: string | null; // SHA of settings file in GitHub
   isSyncing: boolean;
@@ -242,6 +245,32 @@ export const useSettingsStore = create<SettingsState>()(
             settings: {
               ...state.settings,
               customFolderOrders: newOrders,
+            },
+          };
+        });
+      },
+
+      // Set custom icon for a folder
+      setFolderIcon: (folderPath: string, iconId: string) => {
+        set((state) => ({
+          settings: {
+            ...state.settings,
+            folderIcons: {
+              ...state.settings.folderIcons,
+              [folderPath]: iconId,
+            },
+          },
+        }));
+      },
+
+      // Remove custom icon from a folder
+      removeFolderIcon: (folderPath: string) => {
+        set((state) => {
+          const { [folderPath]: _, ...rest } = state.settings.folderIcons || {};
+          return {
+            settings: {
+              ...state.settings,
+              folderIcons: rest,
             },
           };
         });

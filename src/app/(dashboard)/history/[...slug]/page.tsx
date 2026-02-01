@@ -38,7 +38,6 @@ export default function NoteHistoryPage() {
 
   // View mode
   const [viewMode, setViewMode] = useState<ViewMode>("preview");
-  const [isCompareMode, setIsCompareMode] = useState(false);
 
   // Fetch commits
   useEffect(() => {
@@ -118,16 +117,17 @@ export default function NoteHistoryPage() {
   const selectedCommit = commits.find((c) => c.sha === selectedSha);
   const compareCommit = commits.find((c) => c.sha === compareSha);
 
-  // Toggle compare mode
-  const handleToggleCompare = () => {
-    const newCompareMode = !isCompareMode;
-    setIsCompareMode(newCompareMode);
-    if (!newCompareMode) {
-      // Exiting compare mode - clear compare selection
-      setCompareSha(null);
+  // Clear comparison selection
+  const handleClearCompare = useCallback(() => {
+    setCompareSha(null);
+  }, []);
+
+  // Auto-switch to diff view when both versions selected
+  useEffect(() => {
+    if (selectedSha && compareSha && viewMode === "preview") {
+      setViewMode("diff");
     }
-    // Note: No auto-selection - user must click "Comparer" on desired commit
-  };
+  }, [selectedSha, compareSha, viewMode]);
 
   return (
     <div className="h-full flex flex-col">
@@ -147,15 +147,9 @@ export default function NoteHistoryPage() {
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant={isCompareMode ? "default" : "outline"}
-            size="sm"
-            onClick={handleToggleCompare}
-          >
-            <GitCompare className="h-4 w-4 mr-2" />
-            Comparer
-          </Button>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <GitCompare className="h-4 w-4" />
+          <span>Sélectionnez Base + Diff pour comparer</span>
         </div>
       </div>
 
@@ -180,8 +174,8 @@ export default function NoteHistoryPage() {
               selectedCommit={selectedSha || undefined}
               compareCommit={compareSha || undefined}
               onSelectCommit={setSelectedSha}
-              onCompareSelect={isCompareMode ? setCompareSha : undefined}
-              isCompareMode={isCompareMode}
+              onCompareSelect={setCompareSha}
+              onClearCompare={handleClearCompare}
               className="h-full"
             />
           )}
@@ -201,11 +195,11 @@ export default function NoteHistoryPage() {
                   <Eye className="h-4 w-4" />
                   Aperçu
                 </TabsTrigger>
-                <TabsTrigger value="diff" className="gap-2" disabled={!isCompareMode && !currentContent}>
+                <TabsTrigger value="diff" className="gap-2" disabled={!selectedContent}>
                   <GitCompare className="h-4 w-4" />
                   Diff
                 </TabsTrigger>
-                <TabsTrigger value="side-by-side" className="gap-2" disabled={!isCompareMode && !currentContent}>
+                <TabsTrigger value="side-by-side" className="gap-2" disabled={!selectedContent}>
                   <Columns className="h-4 w-4" />
                   Côte à côte
                 </TabsTrigger>
@@ -232,75 +226,59 @@ export default function NoteHistoryPage() {
               </TabsContent>
 
               <TabsContent value="diff" className="h-full m-0">
-                {isCompareMode && selectedContent && compareContent ? (
+                {selectedContent && compareContent ? (
                   <VersionDiff
-                    oldContent={compareContent}
-                    newContent={selectedContent}
-                    oldLabel={compareCommit?.sha.slice(0, 7)}
-                    newLabel={selectedCommit?.sha.slice(0, 7)}
+                    oldContent={selectedContent}
+                    newContent={compareContent}
+                    oldLabel={`${selectedCommit?.sha.slice(0, 7)} (Base)`}
+                    newLabel={`${compareCommit?.sha.slice(0, 7)} (Diff)`}
                     className="h-full"
                   />
-                ) : isCompareMode && selectedContent && !compareSha ? (
+                ) : selectedContent && !compareSha ? (
                   <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-4">
                     <GitCompare className="h-12 w-12 opacity-50" />
                     <div className="text-center">
-                      <p className="font-medium">Mode comparaison activé</p>
+                      <p className="font-medium">Version de base sélectionnée</p>
                       <p className="text-sm mt-1">
-                        Version de base : <code className="bg-primary/20 px-1.5 rounded">{selectedCommit?.sha.slice(0, 7)}</code>
+                        <code className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 px-1.5 rounded">{selectedCommit?.sha.slice(0, 7)}</code>
                       </p>
                       <p className="text-sm mt-2 text-muted-foreground/80">
-                        Cliquez sur &quot;Comparer&quot; sur une autre version dans la timeline
+                        Cliquez sur &quot;Diff&quot; sur une autre version pour comparer
                       </p>
                     </div>
                   </div>
-                ) : selectedContent && currentContent ? (
-                  <VersionDiff
-                    oldContent={selectedContent}
-                    newContent={currentContent}
-                    oldLabel={selectedCommit?.sha.slice(0, 7)}
-                    newLabel="Actuel"
-                    className="h-full"
-                  />
                 ) : (
                   <div className="flex items-center justify-center h-full text-muted-foreground">
-                    Sélectionnez deux versions à comparer
+                    Sélectionnez une version de base, puis une version à comparer
                   </div>
                 )}
               </TabsContent>
 
               <TabsContent value="side-by-side" className="h-full m-0">
-                {isCompareMode && selectedContent && compareContent ? (
+                {selectedContent && compareContent ? (
                   <VersionDiffSideBySide
-                    oldContent={compareContent}
-                    newContent={selectedContent}
-                    oldLabel={compareCommit?.sha.slice(0, 7)}
-                    newLabel={selectedCommit?.sha.slice(0, 7)}
+                    oldContent={selectedContent}
+                    newContent={compareContent}
+                    oldLabel={`${selectedCommit?.sha.slice(0, 7)} (Base)`}
+                    newLabel={`${compareCommit?.sha.slice(0, 7)} (Diff)`}
                     className="h-full"
                   />
-                ) : isCompareMode && selectedContent && !compareSha ? (
+                ) : selectedContent && !compareSha ? (
                   <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-4">
                     <Columns className="h-12 w-12 opacity-50" />
                     <div className="text-center">
-                      <p className="font-medium">Mode comparaison activé</p>
+                      <p className="font-medium">Version de base sélectionnée</p>
                       <p className="text-sm mt-1">
-                        Version de base : <code className="bg-primary/20 px-1.5 rounded">{selectedCommit?.sha.slice(0, 7)}</code>
+                        <code className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 px-1.5 rounded">{selectedCommit?.sha.slice(0, 7)}</code>
                       </p>
                       <p className="text-sm mt-2 text-muted-foreground/80">
-                        Cliquez sur &quot;Comparer&quot; sur une autre version dans la timeline
+                        Cliquez sur &quot;Diff&quot; sur une autre version pour comparer
                       </p>
                     </div>
                   </div>
-                ) : selectedContent && currentContent ? (
-                  <VersionDiffSideBySide
-                    oldContent={selectedContent}
-                    newContent={currentContent}
-                    oldLabel={selectedCommit?.sha.slice(0, 7)}
-                    newLabel="Actuel"
-                    className="h-full"
-                  />
                 ) : (
                   <div className="flex items-center justify-center h-full text-muted-foreground">
-                    Sélectionnez deux versions à comparer
+                    Sélectionnez une version de base, puis une version à comparer
                   </div>
                 )}
               </TabsContent>

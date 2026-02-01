@@ -189,6 +189,7 @@ export async function getFileContent(
 
 /**
  * Save file content to the vault (create or update)
+ * @param encoding - If "base64", content is already base64 encoded (for binary files)
  */
 export async function saveFileContent(
   octokit: Octokit,
@@ -196,17 +197,24 @@ export async function saveFileContent(
   content: string,
   sha?: string,
   message?: string,
-  config?: Partial<VaultConfig>
+  config?: Partial<VaultConfig>,
+  encoding?: "utf-8" | "base64"
 ): Promise<{ sha: string }> {
   const { owner, repo, branch, rootPath } = getVaultConfig(config);
   const fullPath = rootPath ? withRootPath(path, config) : path;
   try {
+    // If content is already base64 encoded (for images/binary), use it directly
+    // Otherwise, encode the UTF-8 string content to base64
+    const base64Content = encoding === "base64"
+      ? content
+      : Buffer.from(content).toString("base64");
+
     const { data } = await octokit.repos.createOrUpdateFileContents({
       owner,
       repo,
       path: fullPath,
       message: message || `Update ${path}`,
-      content: Buffer.from(content).toString("base64"),
+      content: base64Content,
       sha,
       branch,
     });

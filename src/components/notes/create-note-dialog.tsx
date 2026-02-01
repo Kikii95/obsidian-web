@@ -206,50 +206,55 @@ export function CreateNoteDialog({
         />
       </div>
 
-      {/* Template selector */}
-      {(templates.length > 0 || loadingTemplates) && (
-        <div className="space-y-2">
-          <Label className="flex items-center gap-2">
-            <LayoutTemplate className="h-4 w-4" />
-            Template (optionnel)
-            <TemplateVariablesHelp />
-          </Label>
-          <Select
-            value={selectedTemplate}
-            onValueChange={setSelectedTemplate}
-            disabled={loadingTemplates}
-          >
-            <SelectTrigger>
-              {loadingTemplates ? (
-                <div className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Chargement...
-                </div>
-              ) : loadingContent ? (
-                <div className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <SelectValue />
-                </div>
-              ) : (
-                <SelectValue placeholder="Aucun template" />
-              )}
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={NO_TEMPLATE}>Aucun template</SelectItem>
-              {templates.map((template) => (
-                <SelectItem key={template.path} value={template.path}>
-                  {template.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {selectedTemplate !== NO_TEMPLATE && templateContent && (
-            <p className="text-xs text-muted-foreground line-clamp-2">
-              {templates.find(t => t.path === selectedTemplate)?.preview}
-            </p>
-          )}
-        </div>
-      )}
+      {/* Template selector - always visible */}
+      <div className="space-y-2">
+        <Label className="flex items-center gap-2">
+          <LayoutTemplate className="h-4 w-4" />
+          Template (optionnel)
+          <TemplateVariablesHelp />
+        </Label>
+        {loadingTemplates ? (
+          <div className="flex items-center gap-2 px-3 py-2 border rounded-md bg-muted/50">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span className="text-sm text-muted-foreground">Chargement des templates...</span>
+          </div>
+        ) : templates.length > 0 ? (
+          <>
+            <Select
+              value={selectedTemplate}
+              onValueChange={setSelectedTemplate}
+            >
+              <SelectTrigger>
+                {loadingContent ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <SelectValue />
+                  </div>
+                ) : (
+                  <SelectValue placeholder="Aucun template" />
+                )}
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NO_TEMPLATE}>Aucun template</SelectItem>
+                {templates.map((template) => (
+                  <SelectItem key={template.path} value={template.path}>
+                    {template.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedTemplate !== NO_TEMPLATE && templateContent && (
+              <p className="text-xs text-muted-foreground line-clamp-2">
+                {templates.find(t => t.path === selectedTemplate)?.preview}
+              </p>
+            )}
+          </>
+        ) : (
+          <div className="text-sm text-muted-foreground p-3 border rounded-lg bg-muted/30">
+            💡 Créez un dossier <code className="bg-muted px-1 rounded">Templates/</code> dans votre vault pour utiliser des templates.
+          </div>
+        )}
+      </div>
 
       <div className="space-y-2">
         <Label>Dossier de destination</Label>

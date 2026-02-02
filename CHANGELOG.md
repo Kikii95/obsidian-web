@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.1.0] - 2026-02-01
+## [2.1.0] - 2026-02-02
 
 ### Added
 
@@ -22,6 +22,23 @@ All notable changes to this project will be documented in this file.
 - **M13: Import from Notion** - ZIP import with ID cleanup, callout conversion, link fixes (`/import`)
 - **M14: Export Formats** - Export notes to HTML (3 themes), DOCX, and EPUB formats
 - **M15: Quick Capture Widget** - FAB button with text/voice input, offline queue, daily note append
+
+#### Templates Enhancement Round 5
+- **9 Built-In Templates** - Quick Note, Daily Note, Meeting Notes, Weekly Review, Project, Book Notes, Recipe, Code Snippet, Brainstorm
+- **Advanced Template Variables** - `{{uuid}}`, `{{week}}`, `{{quarter}}`, `{{random:N}}`, `{{weekday}}`, `{{tomorrow}}`, `{{yesterday}}`, `{{dayOfYear}}`
+- **Template Preview Mode** - Code/Preview tabs in template view dialog with live rendering
+- **Template Tree Organization** - Collapsible folder structure for vault templates
+- **Template Manager Page** - Dedicated `/templates` page with Built-in, Custom, and Guide tabs
+- **Templates Header Button** - Quick access in desktop and mobile header
+
+### Fixed
+- **PDF Export Mermaid** - Mermaid diagrams now export correctly to PDF
+- **Vault Templates Detection** - Fixed `buildTree` to properly populate children for template lookup
+- **Template Picker UX** - Compact popover dropdown instead of oversized fixed-height box
+
+### Improved
+- **Templates Quick Actions** - Templates button added to dashboard quick actions card
+- **DRY Code** - Extracted `buildTree` to shared `tree-utils.ts` module
 
 ### Dependencies
 - Added `mermaid` for diagram rendering

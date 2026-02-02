@@ -13,11 +13,12 @@ export interface PatchNote {
 
 // Plus recent en premier
 export const patchNotes: PatchNote[] = [
-  // v2.1.0 - Medium Features
+  // v2.1.0 - Medium Features + Templates Enhancement
   {
     version: "2.1.0",
-    date: "2026-02-01",
+    date: "2026-02-02",
     features: [
+      // Medium Features (15)
       { title: "Diagrammes Mermaid", description: "Rend les blocs code mermaid en graphiques interactifs" },
       { title: "Math/LaTeX", description: "Rendu KaTeX pour formules inline $...$ et block $$...$$" },
       { title: "Vue Split", description: "Affiche 2 notes cote a cote avec redimensionnement" },
@@ -25,7 +26,6 @@ export const patchNotes: PatchNote[] = [
       { title: "Mode Vim", description: "Keybindings Vim dans l'editeur (Settings > Editor)" },
       { title: "Gestes Mobile", description: "Swipe sidebar, zoom pinch, menu long press" },
       { title: "Themes Code", description: "12 themes syntax highlighting (github, dracula, etc.)" },
-      { title: "Variables Templates", description: "{{date}}, {{time}}, {{title}}, {{folder}}, {{clipboard}}" },
       { title: "Icones Dossiers", description: "Icones Lucide personnalisees par dossier" },
       { title: "Historique Notes", description: "Timeline + diff viewer pour les versions de notes" },
       { title: "Gestion Tags", description: "Renommer, fusionner, supprimer tags sur tout le vault" },
@@ -33,9 +33,22 @@ export const patchNotes: PatchNote[] = [
       { title: "Import Notion", description: "Import ZIP avec nettoyage IDs et conversion callouts" },
       { title: "Export Multi-format", description: "Export vers HTML (3 themes), DOCX et EPUB" },
       { title: "Capture Rapide", description: "Bouton flottant + voix, file offline, ajout note du jour" },
+      // Templates Enhancement Round 5
+      { title: "9 Templates Built-In", description: "Quick Note, Daily, Meeting, Weekly Review, Project, Book, Recipe, Code, Brainstorm" },
+      { title: "Variables Avancees", description: "{{uuid}}, {{week}}, {{quarter}}, {{random:N}}, {{weekday}}, {{tomorrow}}, {{yesterday}}" },
+      { title: "Preview Template", description: "Onglets Code/Apercu pour voir le rendu avant creation" },
+      { title: "Templates en Arbre", description: "Organisation par dossiers collapsibles dans le vault" },
+      { title: "Page Templates", description: "Gestionnaire complet avec guide des variables" },
     ],
-    fixes: [],
-    improvements: [],
+    fixes: [
+      { title: "Export PDF Mermaid", description: "Les diagrammes Mermaid s'exportent correctement en PDF" },
+      { title: "Detection Templates Vault", description: "Les templates personnalises sont maintenant detectes" },
+      { title: "Picker Compact", description: "Selecteur template en popover au lieu de box geante" },
+    ],
+    improvements: [
+      { title: "Bouton Templates Header", description: "Acces rapide depuis le header desktop et mobile" },
+      { title: "Quick Actions", description: "Templates disponible dans les actions rapides du dashboard" },
+    ],
   },
   // v2.0.0 - Index PostgreSQL + Quick Wins
   {

@@ -34,10 +34,23 @@ interface Template {
 // Built-in templates when no vault templates are found
 const DEFAULT_TEMPLATES: Template[] = [
   {
-    name: "Note vide",
-    path: "_builtin/blank",
-    preview: "Template minimaliste pour démarrer rapidement",
-    content: "# {{title}}\n\n",
+    name: "Quick Note",
+    path: "_builtin/quick",
+    preview: "Capture rapide d'idée avec date et tags",
+    content: `---
+created: {{date:YYYY-MM-DD}}
+tags: []
+---
+
+# {{title}}
+
+## Idée
+
+
+## Notes
+
+
+`,
   },
   {
     name: "Daily Note",
@@ -77,6 +90,157 @@ tags: [meeting]
 
 ## ✅ Actions
 - [ ]
+
+`,
+  },
+  {
+    name: "Weekly Review",
+    path: "_builtin/weekly",
+    preview: "Bilan hebdomadaire avec objectifs",
+    content: `---
+date: {{date:YYYY-MM-DD}}
+week: {{week}}
+quarter: {{quarter}}
+tags: [weekly, review]
+---
+
+# 📅 Semaine {{week}} - {{quarter}} {{date:YYYY}}
+
+## 🎯 Objectifs de la semaine
+- [ ]
+
+## ✅ Accompli
+-
+
+## 📊 Rétrospective
+### Ce qui a bien marché
+-
+
+### Ce qui peut être amélioré
+-
+
+## 📋 Prochaine semaine
+- [ ]
+
+`,
+  },
+  {
+    name: "Project",
+    path: "_builtin/project",
+    preview: "Structure projet avec objectifs",
+    content: `---
+created: {{date:YYYY-MM-DD}}
+status: active
+tags: [project]
+---
+
+# 🚀 {{title}}
+
+## 📋 Description
+
+
+## 🎯 Objectifs
+- [ ]
+
+## 📝 Tâches
+- [ ]
+
+## 📅 Timeline
+- **Début**: {{date:DD/MM/YYYY}}
+- **Deadline**:
+
+## 📓 Journal
+### {{date:DD/MM/YYYY}}
+-
+
+`,
+  },
+  {
+    name: "Book Notes",
+    path: "_builtin/book",
+    preview: "Fiche de lecture avec citations",
+    content: `---
+created: {{date:YYYY-MM-DD}}
+author:
+rating:
+tags: [book, reading]
+---
+
+# 📚 {{title}}
+
+## 📖 Informations
+- **Auteur**:
+- **Année**:
+- **Genre**:
+
+## 💡 Résumé
+
+
+## 📝 Notes clés
+-
+
+## 💬 Citations
+>
+
+## 🤔 Réflexions personnelles
+
+
+`,
+  },
+  {
+    name: "Recipe",
+    path: "_builtin/recipe",
+    preview: "Recette avec ingrédients",
+    content: `---
+created: {{date:YYYY-MM-DD}}
+servings:
+prep_time:
+cook_time:
+tags: [recipe, cooking]
+---
+
+# 🍳 {{title}}
+
+## 📋 Ingrédients
+- [ ]
+
+## 👨‍🍳 Préparation
+1.
+
+## 📝 Notes
+
+
+`,
+  },
+  {
+    name: "Code Snippet",
+    path: "_builtin/code",
+    preview: "Documentation de code",
+    content: `---
+created: {{date:YYYY-MM-DD}}
+language:
+tags: [code, snippet]
+---
+
+# 💻 {{title}}
+
+## 📋 Description
+
+
+## 📝 Code
+
+\`\`\`
+
+\`\`\`
+
+## 🔧 Utilisation
+
+\`\`\`
+
+\`\`\`
+
+## 📚 Références
+-
 
 `,
   },

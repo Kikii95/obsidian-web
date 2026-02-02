@@ -1,7 +1,8 @@
 /**
  * Template Engine for Obsidian Web
  * Supports variables: {{date}}, {{date:FORMAT}}, {{time}}, {{time:FORMAT}},
- * {{title}}, {{folder}}, {{clipboard}}
+ * {{title}}, {{folder}}, {{clipboard}}, {{uuid}}, {{random:N}},
+ * {{week}}, {{quarter}}, {{dayOfYear}}, {{tomorrow}}, {{yesterday}}, {{weekday}}
  */
 
 export interface TemplateContext {
@@ -50,6 +51,47 @@ export function formatDate(date: Date, format: string): string {
   return result;
 }
 
+/** Get ISO week number (1-53) */
+function getWeekNumber(date: Date): number {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+}
+
+/** Get quarter (Q1-Q4) */
+function getQuarter(date: Date): string {
+  return `Q${Math.floor(date.getMonth() / 3) + 1}`;
+}
+
+/** Get day of year (1-366) */
+function getDayOfYear(date: Date): number {
+  const start = new Date(date.getFullYear(), 0, 0);
+  const diff = date.getTime() - start.getTime();
+  return Math.floor(diff / (1000 * 60 * 60 * 24));
+}
+
+/** Generate UUID v4 */
+function generateUUID(): string {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+/** Generate random alphanumeric string */
+function generateRandom(length: number): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  return Array.from({ length: Math.min(length, 100) }, () =>
+    chars.charAt(Math.floor(Math.random() * chars.length))
+  ).join('');
+}
+
 /**
  * Parse and process a single template variable
  */
@@ -69,6 +111,51 @@ function processVariable(variable: string, context: TemplateContext, now: Date):
   // {{clipboard}}
   if (trimmed.toLowerCase() === "clipboard") {
     return context.clipboard || "";
+  }
+
+  // {{uuid}}
+  if (trimmed.toLowerCase() === "uuid") {
+    return generateUUID();
+  }
+
+  // {{random:N}}
+  const randomMatch = trimmed.match(/^random:(\d+)$/i);
+  if (randomMatch) {
+    return generateRandom(parseInt(randomMatch[1], 10));
+  }
+
+  // {{week}}
+  if (trimmed.toLowerCase() === "week") {
+    return String(getWeekNumber(now)).padStart(2, "0");
+  }
+
+  // {{quarter}}
+  if (trimmed.toLowerCase() === "quarter") {
+    return getQuarter(now);
+  }
+
+  // {{dayOfYear}}
+  if (trimmed.toLowerCase() === "dayofyear") {
+    return String(getDayOfYear(now));
+  }
+
+  // {{tomorrow}}
+  if (trimmed.toLowerCase() === "tomorrow") {
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split("T")[0];
+  }
+
+  // {{yesterday}}
+  if (trimmed.toLowerCase() === "yesterday") {
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    return yesterday.toISOString().split("T")[0];
+  }
+
+  // {{weekday}}
+  if (trimmed.toLowerCase() === "weekday") {
+    return now.toLocaleDateString('fr-FR', { weekday: 'long' });
   }
 
   // {{date}} or {{date:FORMAT}}
@@ -138,8 +225,15 @@ export const TEMPLATE_VARIABLES = [
   { variable: "{{folder}}", description: "Chemin du dossier" },
   { variable: "{{date}}", description: "Date actuelle (YYYY-MM-DD)" },
   { variable: "{{date:DD/MM/YYYY}}", description: "Date format français" },
-  { variable: "{{date:dddd, MMMM D, YYYY}}", description: "Date longue" },
   { variable: "{{time}}", description: "Heure actuelle (HH:mm)" },
   { variable: "{{time:HH:mm:ss}}", description: "Heure avec secondes" },
   { variable: "{{clipboard}}", description: "Contenu du presse-papiers" },
+  { variable: "{{uuid}}", description: "UUID v4 unique" },
+  { variable: "{{random:8}}", description: "Chaîne aléatoire de N caractères" },
+  { variable: "{{week}}", description: "Numéro de semaine ISO (01-53)" },
+  { variable: "{{quarter}}", description: "Trimestre (Q1-Q4)" },
+  { variable: "{{dayOfYear}}", description: "Jour de l'année (1-366)" },
+  { variable: "{{tomorrow}}", description: "Date de demain" },
+  { variable: "{{yesterday}}", description: "Date d'hier" },
+  { variable: "{{weekday}}", description: "Nom du jour (lundi, mardi...)" },
 ] as const;

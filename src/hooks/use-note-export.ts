@@ -176,9 +176,17 @@ export function useNoteExport({
             onclone: async (clonedDoc: Document) => {
               // Convert Mermaid SVGs to images using data:// URLs (not blob://)
               // Data URLs work in the cloned document context, blob URLs don't
-              const mermaidSvgs = clonedDoc.querySelectorAll(".mermaid svg, .mermaid-diagram svg");
+              // Try multiple selectors to catch all Mermaid containers
+              const mermaidContainers = clonedDoc.querySelectorAll(".mermaid-diagram, .mermaid, [data-mermaid]");
+              console.log(`[PDF] Found ${mermaidContainers.length} Mermaid containers`);
 
-              for (const svg of mermaidSvgs) {
+              for (const container of mermaidContainers) {
+                const svg = container.querySelector("svg");
+                if (!svg) {
+                  console.log(`[PDF] No SVG in container:`, container.className);
+                  continue;
+                }
+
                 try {
                   const svgData = new XMLSerializer().serializeToString(svg);
 
@@ -188,14 +196,17 @@ export function useNoteExport({
 
                   const img = clonedDoc.createElement("img");
                   img.src = dataUrl;
-                  img.style.width = (svg as SVGElement).getAttribute("width") || "100%";
+                  // Force explicit dimensions from SVG attributes or bounding box
+                  img.style.width = svg.getAttribute("width") || `${svg.getBoundingClientRect().width}px` || "100%";
+                  img.style.height = svg.getAttribute("height") || "auto";
                   img.style.maxWidth = "100%";
-                  img.style.height = "auto";
+                  img.style.display = "block";
 
-                  // Data URLs load synchronously, no need for onload/timeout
-                  svg.parentNode?.replaceChild(img, svg);
+                  // Replace the SVG with the image
+                  container.replaceChild(img, svg);
+                  console.log(`[PDF] Replaced SVG with data URL image`);
                 } catch (err) {
-                  console.warn("Failed to convert Mermaid SVG to image:", err);
+                  console.warn("[PDF] Failed to convert Mermaid SVG:", err);
                 }
               }
 

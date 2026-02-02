@@ -16,7 +16,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { VaultSidebar } from "@/components/navigation/vault-sidebar";
 import { useVaultStore } from "@/lib/store";
-import { LogOut, Menu, PanelLeftClose, PanelLeft, Settings, User, Home, Network, Tag, Link2, Gift } from "lucide-react";
+import { LogOut, Menu, PanelLeftClose, PanelLeft, Settings, User, Home, Network, Tag, Link2, Gift, LayoutTemplate } from "lucide-react";
 import { useSelectionStore } from "@/lib/selection-store";
 import { ThemeSwitcher } from "@/components/theme/theme-switcher";
 import { Logo } from "@/components/ui/logo";
@@ -146,6 +146,11 @@ export default function DashboardLayout({
                       <Tag className="h-5 w-5" />
                     </Link>
                   </Button>
+                  <Button variant="ghost" size="icon" asChild title="Templates">
+                    <Link href="/templates">
+                      <LayoutTemplate className="h-5 w-5" />
+                    </Link>
+                  </Button>
                   <ExploreRepoDialog />
                 </div>
                 <div className="flex-1 overflow-auto">
@@ -210,6 +215,13 @@ export default function DashboardLayout({
             <Button variant="ghost" size="icon" asChild title="Tags" className="hidden sm:flex">
               <Link href="/tags">
                 <Tag className="h-5 w-5" />
+              </Link>
+            </Button>
+
+            {/* Templates button - hidden on mobile (available in sidebar) */}
+            <Button variant="ghost" size="icon" asChild title="Templates" className="hidden sm:flex">
+              <Link href="/templates">
+                <LayoutTemplate className="h-5 w-5" />
               </Link>
             </Button>
 

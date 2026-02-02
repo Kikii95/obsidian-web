@@ -39,8 +39,10 @@ import {
   Loader2,
   BookOpen,
   FileText,
+  Code,
 } from "lucide-react";
-import { TEMPLATE_VARIABLES } from "@/lib/template-engine";
+import { TEMPLATE_VARIABLES, processTemplate } from "@/lib/template-engine";
+import { MarkdownRenderer } from "@/components/viewer/markdown-renderer";
 import { githubClient } from "@/services/github-client";
 
 interface Template {
@@ -54,10 +56,23 @@ interface Template {
 // Built-in templates (same as create-note-dialog)
 const BUILTIN_TEMPLATES: Template[] = [
   {
-    name: "Note vide",
-    path: "_builtin/blank",
-    preview: "Template minimaliste pour une nouvelle note",
-    content: "# {{title}}\n\n",
+    name: "Quick Note",
+    path: "_builtin/quick",
+    preview: "Capture rapide d'idée avec date et tags",
+    content: `---
+created: {{date:YYYY-MM-DD}}
+tags: []
+---
+
+# {{title}}
+
+## Idée
+
+
+## Notes
+
+
+`,
     isBuiltIn: true,
   },
   {
@@ -99,6 +114,162 @@ tags: [meeting]
 
 ## ✅ Actions
 - [ ]
+
+`,
+    isBuiltIn: true,
+  },
+  {
+    name: "Weekly Review",
+    path: "_builtin/weekly",
+    preview: "Bilan hebdomadaire avec objectifs et rétrospective",
+    content: `---
+date: {{date:YYYY-MM-DD}}
+week: {{week}}
+quarter: {{quarter}}
+tags: [weekly, review]
+---
+
+# 📅 Semaine {{week}} - {{quarter}} {{date:YYYY}}
+
+## 🎯 Objectifs de la semaine
+- [ ]
+
+## ✅ Accompli
+-
+
+## 📊 Rétrospective
+### Ce qui a bien marché
+-
+
+### Ce qui peut être amélioré
+-
+
+## 📋 Prochaine semaine
+- [ ]
+
+`,
+    isBuiltIn: true,
+  },
+  {
+    name: "Project",
+    path: "_builtin/project",
+    preview: "Structure projet avec objectifs et tâches",
+    content: `---
+created: {{date:YYYY-MM-DD}}
+status: active
+tags: [project]
+---
+
+# 🚀 {{title}}
+
+## 📋 Description
+
+
+## 🎯 Objectifs
+- [ ]
+
+## 📝 Tâches
+- [ ]
+
+## 📅 Timeline
+- **Début**: {{date:DD/MM/YYYY}}
+- **Deadline**:
+
+## 📓 Journal
+### {{date:DD/MM/YYYY}}
+-
+
+`,
+    isBuiltIn: true,
+  },
+  {
+    name: "Book Notes",
+    path: "_builtin/book",
+    preview: "Fiche de lecture avec citations et réflexions",
+    content: `---
+created: {{date:YYYY-MM-DD}}
+author:
+rating:
+tags: [book, reading]
+---
+
+# 📚 {{title}}
+
+## 📖 Informations
+- **Auteur**:
+- **Année**:
+- **Genre**:
+
+## 💡 Résumé
+
+
+## 📝 Notes clés
+-
+
+## 💬 Citations
+>
+
+## 🤔 Réflexions personnelles
+
+
+`,
+    isBuiltIn: true,
+  },
+  {
+    name: "Recipe",
+    path: "_builtin/recipe",
+    preview: "Recette avec ingrédients et étapes",
+    content: `---
+created: {{date:YYYY-MM-DD}}
+servings:
+prep_time:
+cook_time:
+tags: [recipe, cooking]
+---
+
+# 🍳 {{title}}
+
+## 📋 Ingrédients
+- [ ]
+
+## 👨‍🍳 Préparation
+1.
+
+## 📝 Notes
+
+
+`,
+    isBuiltIn: true,
+  },
+  {
+    name: "Code Snippet",
+    path: "_builtin/code",
+    preview: "Documentation de code avec exemples",
+    content: `---
+created: {{date:YYYY-MM-DD}}
+language:
+tags: [code, snippet]
+---
+
+# 💻 {{title}}
+
+## 📋 Description
+
+
+## 📝 Code
+
+\`\`\`
+
+\`\`\`
+
+## 🔧 Utilisation
+
+\`\`\`
+
+\`\`\`
+
+## 📚 Références
+-
 
 `,
     isBuiltIn: true,
@@ -536,6 +707,40 @@ export default function TemplatesPage() {
 
           <Card>
             <CardHeader>
+              <CardTitle>Nouvelles Variables</CardTitle>
+              <CardDescription>
+                Variables avancées pour vos templates
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="p-3 rounded-lg bg-muted/50 border">
+                <p className="text-sm font-medium mb-2">Identifiants uniques</p>
+                <div className="space-y-1 text-xs text-muted-foreground">
+                  <p><code className="bg-background px-1 rounded">{"{{uuid}}"}</code> → f47ac10b-58cc-4372-a567-0e02b2c3d479</p>
+                  <p><code className="bg-background px-1 rounded">{"{{random:8}}"}</code> → Xk9mN2pQ</p>
+                </div>
+              </div>
+              <div className="p-3 rounded-lg bg-muted/50 border">
+                <p className="text-sm font-medium mb-2">Dates relatives</p>
+                <div className="space-y-1 text-xs text-muted-foreground">
+                  <p><code className="bg-background px-1 rounded">{"{{tomorrow}}"}</code> → 2025-01-26</p>
+                  <p><code className="bg-background px-1 rounded">{"{{yesterday}}"}</code> → 2025-01-24</p>
+                  <p><code className="bg-background px-1 rounded">{"{{weekday}}"}</code> → samedi</p>
+                </div>
+              </div>
+              <div className="p-3 rounded-lg bg-muted/50 border">
+                <p className="text-sm font-medium mb-2">Calendrier</p>
+                <div className="space-y-1 text-xs text-muted-foreground">
+                  <p><code className="bg-background px-1 rounded">{"{{week}}"}</code> → 04</p>
+                  <p><code className="bg-background px-1 rounded">{"{{quarter}}"}</code> → Q1</p>
+                  <p><code className="bg-background px-1 rounded">{"{{dayOfYear}}"}</code> → 25</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
               <CardTitle>Structure Recommandée</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -573,15 +778,39 @@ export default function TemplatesPage() {
                 <Badge variant="secondary">Built-in</Badge>
               )}
             </DialogTitle>
-            <DialogDescription>
-              Contenu du template
-            </DialogDescription>
           </DialogHeader>
-          <div className="flex-1 min-h-0 overflow-auto">
-            <pre className="p-4 bg-muted/50 rounded-lg text-sm font-mono whitespace-pre-wrap break-words">
-              {viewTemplate?.content}
-            </pre>
-          </div>
+
+          <Tabs defaultValue="code" className="flex-1 min-h-0 flex flex-col">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="code" className="gap-1.5">
+                <Code className="h-3.5 w-3.5" />
+                Code
+              </TabsTrigger>
+              <TabsTrigger value="preview" className="gap-1.5">
+                <Eye className="h-3.5 w-3.5" />
+                Aperçu
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="code" className="flex-1 min-h-0 overflow-auto mt-4">
+              <pre className="p-4 bg-muted/50 rounded-lg text-sm font-mono whitespace-pre-wrap break-words">
+                {viewTemplate?.content}
+              </pre>
+            </TabsContent>
+
+            <TabsContent value="preview" className="flex-1 min-h-0 overflow-auto mt-4">
+              <div className="p-4 border rounded-lg bg-card prose prose-sm dark:prose-invert max-w-none">
+                <MarkdownRenderer
+                  content={processTemplate(viewTemplate?.content || "", {
+                    title: "Mon Titre",
+                    folder: "Notes/Examples",
+                    clipboard: "",
+                  })}
+                />
+              </div>
+            </TabsContent>
+          </Tabs>
+
           <DialogFooter>
             <Button
               variant="outline"

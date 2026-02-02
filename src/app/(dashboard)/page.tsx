@@ -34,6 +34,7 @@ import {
   ChevronRight,
   Settings,
   History,
+  LayoutTemplate,
 } from "lucide-react";
 import { githubClient } from "@/services/github-client";
 import { useVaultStore } from "@/lib/store";
@@ -460,6 +461,12 @@ export default function HomePage() {
               <Link href="/graph">
                 <Network className="h-4 w-4" />
                 Graph View
+              </Link>
+            </Button>
+            <Button variant="outline" className="w-full justify-start gap-2" asChild>
+              <Link href="/templates">
+                <LayoutTemplate className="h-4 w-4" />
+                Templates
               </Link>
             </Button>
             <Button variant="outline" className="w-full justify-start gap-2" asChild>

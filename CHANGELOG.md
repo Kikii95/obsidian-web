@@ -33,15 +33,6 @@ All notable changes to this project will be documented in this file.
 - **Template Manager Page** - Dedicated `/templates` page with Built-in, Custom, and Guide tabs
 - **Templates Header Button** - Quick access in desktop and mobile header
 
-### Fixed
-- **PDF Export Mermaid** - Mermaid diagrams now export correctly to PDF
-- **Vault Templates Detection** - Fixed `buildTree` to properly populate children for template lookup
-- **Template Picker UX** - Compact popover dropdown instead of oversized fixed-height box
-
-### Improved
-- **Templates Quick Actions** - Templates button added to dashboard quick actions card
-- **DRY Code** - Extracted `buildTree` to shared `tree-utils.ts` module
-
 ### Dependencies
 - Added `mermaid` for diagram rendering
 - Added `remark-math`, `rehype-katex`, `katex` for LaTeX

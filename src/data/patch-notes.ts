@@ -38,15 +38,8 @@ export const patchNotes: PatchNote[] = [
       { title: "Templates en Arbre", description: "Organisation par dossiers collapsibles dans le vault" },
       { title: "Page Templates", description: "Gestionnaire complet avec guide des variables" },
     ],
-    fixes: [
-      { title: "Export PDF Mermaid", description: "Les diagrammes Mermaid s'exportent correctement en PDF" },
-      { title: "Detection Templates Vault", description: "Les templates personnalises sont maintenant detectes" },
-      { title: "Picker Compact", description: "Selecteur template en popover au lieu de box geante" },
-    ],
-    improvements: [
-      { title: "Bouton Templates Header", description: "Acces rapide depuis le header desktop et mobile" },
-      { title: "Quick Actions", description: "Templates disponible dans les actions rapides du dashboard" },
-    ],
+    fixes: [],
+    improvements: [],
   },
   // v2.0.0 - Index PostgreSQL + Quick Wins
   {

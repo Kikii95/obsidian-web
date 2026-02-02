@@ -1,15 +1,96 @@
 import { NextResponse } from "next/server";
+import { Octokit } from "@octokit/rest";
 import { getFullVaultTree, getFileContent } from "@/lib/github";
 import { getAuthenticatedContext } from "@/lib/server-vault-config";
+import type { VaultFile } from "@/types";
 
 interface Template {
   name: string;
   path: string;
-  preview?: string; // First 200 chars
+  preview?: string;
+}
+
+interface TemplateFolder {
+  name: string;
+  path: string;
+  templates: Template[];
+  subfolders: TemplateFolder[];
 }
 
 // Templates folder candidates (in order of priority)
 const TEMPLATES_FOLDERS = ["Templates", "_templates", "templates", "_Templates"];
+
+// Recursively process templates folder
+async function processTemplatesFolder(
+  octokit: Octokit,
+  folder: VaultFile,
+  vaultConfig: { owner: string; repo: string; branch: string },
+  depth = 0
+): Promise<{ templates: Template[]; subfolders: TemplateFolder[] }> {
+  const templates: Template[] = [];
+  const subfolders: TemplateFolder[] = [];
+
+  if (!folder.children || depth > 3) return { templates, subfolders };
+
+  for (const item of folder.children) {
+    if (item.type === "dir") {
+      // Recursively process subfolder
+      const subfolder = await processTemplatesFolder(octokit, item, vaultConfig, depth + 1);
+      if (subfolder.templates.length > 0 || subfolder.subfolders.length > 0) {
+        subfolders.push({
+          name: item.name,
+          path: item.path,
+          templates: subfolder.templates,
+          subfolders: subfolder.subfolders,
+        });
+      }
+    } else if (item.type === "file" && item.path.endsWith(".md")) {
+      try {
+        const { content } = await getFileContent(octokit, item.path, vaultConfig);
+
+        // Get preview (first 200 chars, without frontmatter)
+        let preview = content;
+        if (preview.startsWith("---")) {
+          const endIndex = preview.indexOf("---", 3);
+          if (endIndex !== -1) {
+            preview = preview.substring(endIndex + 3).trim();
+          }
+        }
+        preview = preview.substring(0, 200).trim();
+        if (content.length > 200) preview += "...";
+
+        templates.push({
+          name: item.name.replace(/\.md$/, ""),
+          path: item.path,
+          preview,
+        });
+      } catch {
+        templates.push({
+          name: item.name.replace(/\.md$/, ""),
+          path: item.path,
+        });
+      }
+    }
+  }
+
+  return { templates, subfolders };
+}
+
+// Flatten tree to get total count
+function countTemplates(folder: TemplateFolder): number {
+  return (
+    folder.templates.length +
+    folder.subfolders.reduce((acc, sub) => acc + countTemplates(sub), 0)
+  );
+}
+
+// Flatten tree to flat list (for backward compatibility)
+function flattenTemplates(folder: TemplateFolder): Template[] {
+  return [
+    ...folder.templates,
+    ...folder.subfolders.flatMap((sub) => flattenTemplates(sub)),
+  ];
+}
 
 export async function GET() {
   try {
@@ -44,56 +125,33 @@ export async function GET() {
     if (!templatesFolder || !templatesFolder.children) {
       return NextResponse.json({
         templates: [],
+        tree: null,
         folder: TEMPLATES_FOLDERS[0],
         candidates: TEMPLATES_FOLDERS,
-        message: `Créez un dossier "Templates" ou "_templates" pour utiliser les templates. Variables supportées: {{date}}, {{title}}, {{folder}}, {{time}}, {{clipboard}}`,
+        message: `Créez un dossier "Templates" ou "_templates" pour utiliser les templates.`,
       });
     }
 
-    // Get markdown files in templates folder
-    const templateFiles = templatesFolder.children.filter(
-      (f) => f.type === "file" && f.path.endsWith(".md")
-    );
+    // Process templates folder recursively
+    const result = await processTemplatesFolder(octokit, templatesFolder, vaultConfig);
 
-    const templates: Template[] = [];
+    // Build tree structure
+    const tree: TemplateFolder = {
+      name: foundFolderName!,
+      path: templatesFolder.path,
+      templates: result.templates,
+      subfolders: result.subfolders,
+    };
 
-    for (const file of templateFiles.slice(0, 20)) {
-      try {
-        const { content } = await getFileContent(octokit, file.path, vaultConfig);
-
-        // Get preview (first 200 chars, without frontmatter)
-        let preview = content;
-
-        // Remove frontmatter
-        if (preview.startsWith("---")) {
-          const endIndex = preview.indexOf("---", 3);
-          if (endIndex !== -1) {
-            preview = preview.substring(endIndex + 3).trim();
-          }
-        }
-
-        // Truncate
-        preview = preview.substring(0, 200).trim();
-        if (content.length > 200) preview += "...";
-
-        templates.push({
-          name: file.name.replace(/\.md$/, ""),
-          path: file.path,
-          preview,
-        });
-      } catch {
-        // Include template without preview if content can't be read
-        templates.push({
-          name: file.name.replace(/\.md$/, ""),
-          path: file.path,
-        });
-      }
-    }
+    // Flatten for backward compatibility
+    const flatTemplates = flattenTemplates(tree);
+    const count = countTemplates(tree);
 
     return NextResponse.json({
-      templates,
+      templates: flatTemplates, // Flat list for backward compat
+      tree, // Full tree structure
       folder: foundFolderName,
-      count: templates.length,
+      count,
     });
   } catch (error) {
     console.error("Error fetching templates:", error);

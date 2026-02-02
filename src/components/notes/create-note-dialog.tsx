@@ -5,18 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FilePlus, LayoutTemplate, Loader2 } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { FormDialog } from "@/components/dialogs";
 import { githubClient } from "@/services/github-client";
 import { useVaultStore } from "@/lib/store";
 import { useDialogAction } from "@/hooks/use-dialog-action";
 import { FolderTreePicker } from "./folder-tree-picker";
+import { TemplateTreePicker } from "./template-tree-picker";
 import {
   processTemplate,
   templateUsesClipboard,
@@ -244,6 +238,57 @@ tags: [code, snippet]
 
 `,
   },
+  {
+    name: "Brainstorm",
+    path: "_builtin/brainstorm",
+    preview: "Session brainstorm avec catégories",
+    content: `---
+created: {{date:YYYY-MM-DD}}
+session_id: {{uuid}}
+tags: [brainstorm, ideas]
+---
+
+# 🧠 Brainstorm: {{title}}
+
+**Date**: {{weekday}} {{date:DD/MM/YYYY}} à {{time:HH:mm}}
+
+## 🎯 Objectif
+
+
+## 💡 Idées Brutes
+> Capture rapide, pas de filtre !
+
+-
+-
+-
+
+## 🗂️ Catégories
+
+### 🟢 Quick Wins (facile + impact)
+-
+
+### 🔵 À Creuser (potentiel)
+-
+
+### 🟡 Long Terme
+-
+
+### 🔴 Rejeté (et pourquoi)
+-
+
+## 🔗 Connexions & Patterns
+> Liens entre les idées
+
+-
+
+## ✅ Prochaines Actions
+- [ ]
+
+## 📝 Notes de Session
+
+
+`,
+  },
 ];
 
 interface CreateNoteDialogProps {
@@ -268,10 +313,8 @@ export function CreateNoteDialog({
 
   const [title, setTitle] = useState("");
   const [selectedFolder, setSelectedFolder] = useState(currentFolder || ROOT_VALUE);
-  const [templates, setTemplates] = useState<Template[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState(NO_TEMPLATE);
   const [templateContent, setTemplateContent] = useState<string | null>(null);
-  const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [loadingContent, setLoadingContent] = useState(false);
 
   // Sync selectedFolder when dialog opens in controlled mode
@@ -285,31 +328,6 @@ export function CreateNoteDialog({
   }, [controlledOpen, currentFolder]);
 
   const actualFolder = selectedFolder === ROOT_VALUE ? "" : selectedFolder;
-
-  // Fetch templates on mount
-  useEffect(() => {
-    async function fetchTemplates() {
-      setLoadingTemplates(true);
-      try {
-        const res = await fetch("/api/github/templates");
-        if (res.ok) {
-          const data = await res.json();
-          // Use vault templates if available, else use built-in defaults
-          const vaultTemplates = data.templates || [];
-          setTemplates(vaultTemplates.length > 0 ? vaultTemplates : DEFAULT_TEMPLATES);
-        } else {
-          // Fallback to built-in templates on error
-          setTemplates(DEFAULT_TEMPLATES);
-        }
-      } catch {
-        // Fallback to built-in templates
-        setTemplates(DEFAULT_TEMPLATES);
-      } finally {
-        setLoadingTemplates(false);
-      }
-    }
-    fetchTemplates();
-  }, []);
 
   // Fetch template content when selected
   useEffect(() => {
@@ -435,54 +453,19 @@ export function CreateNoteDialog({
         />
       </div>
 
-      {/* Template selector - always visible */}
+      {/* Template selector with tree view */}
       <div className="space-y-2">
         <Label className="flex items-center gap-2">
           <LayoutTemplate className="h-4 w-4" />
           Template (optionnel)
           <TemplateVariablesHelp />
+          {loadingContent && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
         </Label>
-        {loadingTemplates ? (
-          <div className="flex items-center gap-2 px-3 py-2 border rounded-md bg-muted/50">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span className="text-sm text-muted-foreground">Chargement des templates...</span>
-          </div>
-        ) : templates.length > 0 ? (
-          <>
-            <Select
-              value={selectedTemplate}
-              onValueChange={setSelectedTemplate}
-            >
-              <SelectTrigger>
-                {loadingContent ? (
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <SelectValue />
-                  </div>
-                ) : (
-                  <SelectValue placeholder="Aucun template" />
-                )}
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={NO_TEMPLATE}>Aucun template</SelectItem>
-                {templates.map((template) => (
-                  <SelectItem key={template.path} value={template.path}>
-                    {template.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {selectedTemplate !== NO_TEMPLATE && templateContent && (
-              <p className="text-xs text-muted-foreground line-clamp-2">
-                {templates.find(t => t.path === selectedTemplate)?.preview}
-              </p>
-            )}
-          </>
-        ) : (
-          <div className="text-sm text-muted-foreground p-3 border rounded-lg bg-muted/30">
-            💡 Créez un dossier <code className="bg-muted px-1 rounded">Templates/</code> dans votre vault pour utiliser des templates.
-          </div>
-        )}
+        <TemplateTreePicker
+          selectedTemplate={selectedTemplate}
+          onSelect={setSelectedTemplate}
+          builtInTemplates={DEFAULT_TEMPLATES}
+        />
       </div>
 
       <div className="space-y-2">

@@ -40,6 +40,11 @@ import {
   BookOpen,
   FileText,
   Code,
+  ChevronRight,
+  ChevronDown,
+  Folder,
+  FolderOpen,
+  Sparkles,
 } from "lucide-react";
 import { TEMPLATE_VARIABLES, processTemplate } from "@/lib/template-engine";
 import { MarkdownRenderer } from "@/components/viewer/markdown-renderer";
@@ -51,6 +56,13 @@ interface Template {
   preview?: string;
   content?: string;
   isBuiltIn?: boolean;
+}
+
+interface TemplateFolder {
+  name: string;
+  path: string;
+  templates: Template[];
+  subfolders: TemplateFolder[];
 }
 
 // Built-in templates (same as create-note-dialog)
@@ -274,13 +286,67 @@ tags: [code, snippet]
 `,
     isBuiltIn: true,
   },
+  {
+    name: "Brainstorm",
+    path: "_builtin/brainstorm",
+    preview: "Session brainstorm avec catégories et mind mapping",
+    content: `---
+created: {{date:YYYY-MM-DD}}
+session_id: {{uuid}}
+tags: [brainstorm, ideas]
+---
+
+# 🧠 Brainstorm: {{title}}
+
+**Date**: {{weekday}} {{date:DD/MM/YYYY}} à {{time:HH:mm}}
+
+## 🎯 Objectif
+
+
+## 💡 Idées Brutes
+> Capture rapide, pas de filtre !
+
+-
+-
+-
+
+## 🗂️ Catégories
+
+### 🟢 Quick Wins (facile + impact)
+-
+
+### 🔵 À Creuser (potentiel)
+-
+
+### 🟡 Long Terme
+-
+
+### 🔴 Rejeté (et pourquoi)
+-
+
+## 🔗 Connexions & Patterns
+> Liens entre les idées
+
+-
+
+## ✅ Prochaines Actions
+- [ ]
+
+## 📝 Notes de Session
+
+
+`,
+    isBuiltIn: true,
+  },
 ];
 
 export default function TemplatesPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
+  const [templatesTree, setTemplatesTree] = useState<TemplateFolder | null>(null);
   const [templatesFolder, setTemplatesFolder] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(["_builtin"]));
 
   // Dialog states
   const [viewTemplate, setViewTemplate] = useState<Template | null>(null);
@@ -304,6 +370,19 @@ export default function TemplatesPage() {
     setTimeout(() => setStatusMessage(null), 3000);
   };
 
+  // Toggle folder expansion
+  const toggleFolder = (path: string) => {
+    setExpandedFolders((prev) => {
+      const next = new Set(prev);
+      if (next.has(path)) {
+        next.delete(path);
+      } else {
+        next.add(path);
+      }
+      return next;
+    });
+  };
+
   // Fetch templates from vault
   const fetchTemplates = useCallback(async () => {
     setLoading(true);
@@ -313,7 +392,12 @@ export default function TemplatesPage() {
       if (res.ok) {
         const data = await res.json();
         setTemplates(data.templates || []);
+        setTemplatesTree(data.tree || null);
         setTemplatesFolder(data.folder || null);
+        // Auto-expand root folder
+        if (data.tree?.path) {
+          setExpandedFolders((prev) => new Set([...prev, data.tree.path]));
+        }
       } else {
         setError("Erreur lors du chargement des templates");
       }
@@ -420,6 +504,83 @@ export default function TemplatesPage() {
     } catch {
       showStatus("error", "Erreur lors de la copie");
     }
+  };
+
+  // Folder section component for tree display
+  const FolderSection = ({
+    folder,
+    depth = 0,
+    showActions = false,
+    isBuiltIn = false,
+  }: {
+    folder: TemplateFolder;
+    depth?: number;
+    showActions?: boolean;
+    isBuiltIn?: boolean;
+  }) => {
+    const isExpanded = expandedFolders.has(folder.path);
+    const templateCount =
+      folder.templates.length +
+      folder.subfolders.reduce((acc, sub) => {
+        const count = (f: TemplateFolder): number =>
+          f.templates.length + f.subfolders.reduce((a, s) => a + count(s), 0);
+        return acc + count(sub);
+      }, 0);
+
+    return (
+      <div className={depth > 0 ? "mt-4" : ""}>
+        {/* Folder header */}
+        <button
+          onClick={() => toggleFolder(folder.path)}
+          className="w-full flex items-center gap-2 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-left mb-3"
+        >
+          {isExpanded ? (
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          ) : (
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          )}
+          {isBuiltIn ? (
+            <Sparkles className="h-4 w-4 text-amber-500" />
+          ) : isExpanded ? (
+            <FolderOpen className="h-4 w-4 text-primary/70" />
+          ) : (
+            <Folder className="h-4 w-4 text-primary/70" />
+          )}
+          <span className="font-medium flex-1">{folder.name}</span>
+          <Badge variant="secondary" className="text-xs">
+            {templateCount}
+          </Badge>
+        </button>
+
+        {/* Folder content */}
+        {isExpanded && (
+          <div className={depth > 0 ? "pl-4 border-l-2 border-border/50 ml-2" : ""}>
+            {/* Templates in this folder */}
+            {folder.templates.length > 0 && (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-4">
+                {folder.templates.map((template) => (
+                  <TemplateCard
+                    key={template.path}
+                    template={{ ...template, isBuiltIn }}
+                    showActions={showActions && !isBuiltIn}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Subfolders */}
+            {folder.subfolders.map((subfolder) => (
+              <FolderSection
+                key={subfolder.path}
+                folder={subfolder}
+                depth={depth + 1}
+                showActions={showActions}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    );
   };
 
   // Render template card
@@ -559,11 +720,15 @@ export default function TemplatesPage() {
           <div className="text-sm text-muted-foreground mb-4">
             Templates intégrés disponibles lors de la création d'une note.
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {BUILTIN_TEMPLATES.map((template) => (
-              <TemplateCard key={template.path} template={template} />
-            ))}
-          </div>
+          <FolderSection
+            folder={{
+              name: "Built-In",
+              path: "_builtin",
+              templates: BUILTIN_TEMPLATES,
+              subfolders: [],
+            }}
+            isBuiltIn
+          />
         </TabsContent>
 
         {/* Custom templates tab */}
@@ -592,7 +757,7 @@ export default function TemplatesPage() {
                 </Button>
               </CardContent>
             </Card>
-          ) : templates.length === 0 ? (
+          ) : !templatesTree || templates.length === 0 ? (
             <Card>
               <CardContent className="py-8 text-center space-y-4">
                 <FolderPlus className="h-12 w-12 mx-auto text-muted-foreground" />
@@ -613,20 +778,16 @@ export default function TemplatesPage() {
             </Card>
           ) : (
             <>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-2">
                 <div className="text-sm text-muted-foreground">
-                  Templates depuis <code className="bg-muted px-1.5 py-0.5 rounded text-xs">{templatesFolder}/</code>
+                  Templates organisés par dossier
                 </div>
                 <Button size="sm" onClick={() => setShowCreate(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Nouveau
                 </Button>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {templates.map((template) => (
-                  <TemplateCard key={template.path} template={template} showActions />
-                ))}
-              </div>
+              <FolderSection folder={templatesTree} showActions />
             </>
           )}
         </TabsContent>

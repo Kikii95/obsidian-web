@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Octokit } from "@octokit/rest";
 import { getFullVaultTree, getFileContent } from "@/lib/github";
 import { getAuthenticatedContext } from "@/lib/server-vault-config";
+import { buildTree } from "@/lib/tree-utils";
 import type { VaultFile } from "@/types";
 
 interface Template {
@@ -102,8 +103,11 @@ export async function GET() {
 
     const { octokit, vaultConfig } = context;
 
-    // Get all files
-    const allFiles = await getFullVaultTree(octokit, false, vaultConfig);
+    // Get all files (flat list)
+    const flatFiles = await getFullVaultTree(octokit, false, vaultConfig);
+
+    // Build tree structure with children
+    const allFiles = buildTree(flatFiles);
 
     // Find templates folder (try multiple naming conventions)
     let templatesFolder = null;

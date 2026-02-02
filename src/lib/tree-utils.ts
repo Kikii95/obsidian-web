@@ -159,3 +159,125 @@ export function filterTreeItems(
     return matchesFilter && matchesViewable;
   });
 }
+
+/**
+ * Build a tree structure from flat file list
+ * Takes a flat array of VaultFile and returns nested tree with children
+ */
+export function buildTree(
+  files: VaultFile[],
+  isPathLocked?: (path: string) => boolean
+): VaultFile[] {
+  const root: VaultFile[] = [];
+  const map = new Map<string, VaultFile>();
+
+  // Helper to ensure all parent directories exist
+  const ensureParents = (path: string) => {
+    const parts = path.split("/");
+    let currentPath = "";
+
+    for (let i = 0; i < parts.length - 1; i++) {
+      const part = parts[i];
+      const parentPath = currentPath;
+      currentPath = currentPath ? `${currentPath}/${part}` : part;
+
+      if (!map.has(currentPath)) {
+        const dirNode: VaultFile = {
+          name: part,
+          path: currentPath,
+          type: "dir",
+          children: [],
+          isLocked: isPathLocked?.(currentPath) ?? false,
+        };
+
+        if (parentPath === "") {
+          root.push(dirNode);
+        } else {
+          const parent = map.get(parentPath);
+          if (parent && parent.children) {
+            parent.children.push(dirNode);
+          }
+        }
+
+        map.set(currentPath, dirNode);
+      }
+    }
+  };
+
+  // First pass: create all directories
+  for (const file of files) {
+    if (file.type === "dir") {
+      ensureParents(file.path + "/dummy"); // Ensure parent dirs exist
+      if (!map.has(file.path)) {
+        const parts = file.path.split("/");
+        const dirNode: VaultFile = {
+          name: file.name,
+          path: file.path,
+          type: "dir",
+          children: [],
+          isLocked: file.isLocked ?? isPathLocked?.(file.path) ?? false,
+        };
+
+        if (parts.length === 1) {
+          root.push(dirNode);
+        } else {
+          const parentPath = parts.slice(0, -1).join("/");
+          const parent = map.get(parentPath);
+          if (parent && parent.children) {
+            parent.children.push(dirNode);
+          }
+        }
+
+        map.set(file.path, dirNode);
+      }
+    }
+  }
+
+  // Second pass: add all files
+  for (const file of files) {
+    if (file.type === "file") {
+      const parts = file.path.split("/");
+      ensureParents(file.path); // Ensure parent dirs exist
+
+      const fileNode: VaultFile = {
+        name: file.name,
+        path: file.path,
+        type: "file",
+        isLocked: file.isLocked ?? isPathLocked?.(file.path) ?? false,
+      };
+
+      if (parts.length === 1) {
+        root.push(fileNode);
+      } else {
+        const parentPath = parts.slice(0, -1).join("/");
+        const parent = map.get(parentPath);
+        if (parent && parent.children) {
+          parent.children.push(fileNode);
+        }
+      }
+    }
+  }
+
+  // Sort children of each directory
+  const sortChildren = (nodes: VaultFile[]) => {
+    nodes.sort((a, b) => {
+      // _Index.md always first
+      if (a.name === "_Index.md") return -1;
+      if (b.name === "_Index.md") return 1;
+      // Directories before files
+      if (a.type !== b.type) return a.type === "dir" ? -1 : 1;
+      // Alphabetical
+      return a.name.localeCompare(b.name);
+    });
+
+    for (const node of nodes) {
+      if (node.children) {
+        sortChildren(node.children);
+      }
+    }
+  };
+
+  sortChildren(root);
+
+  return root;
+}

@@ -1620,3 +1620,164 @@ pre code {
 * {
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SYNTAX HIGHLIGHTING — THEME-INTEGRATED MODE
+   Used when codeSyntaxTheme = "auto"
+   Colors derive from --theme-hue global variable
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Base container */
+.hljs {
+  color: var(--foreground);
+  background: transparent;
+}
+
+/* Comments — muted italic */
+.hljs-comment,
+.hljs-quote {
+  color: var(--muted-foreground);
+  font-style: italic;
+}
+
+/* Keywords — primary color */
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-built_in,
+.hljs-name {
+  color: var(--primary);
+}
+
+/* Strings — offset hue +90° (greenish) */
+.hljs-string,
+.hljs-attr,
+.hljs-addition {
+  color: oklch(0.65 0.18 calc(var(--theme-hue) + 90));
+}
+
+/* Numbers, literals — offset hue +180° (complementary) */
+.hljs-number,
+.hljs-literal,
+.hljs-variable,
+.hljs-template-variable {
+  color: oklch(0.68 0.18 calc(var(--theme-hue) + 180));
+}
+
+/* Functions, titles — brighter primary */
+.hljs-title,
+.hljs-section,
+.hljs-selector-id,
+.hljs-title.class_,
+.hljs-title.function_ {
+  color: oklch(0.75 0.22 var(--theme-hue));
+}
+
+/* Types, classes — offset hue +45° */
+.hljs-type,
+.hljs-class .hljs-title {
+  color: oklch(0.70 0.20 calc(var(--theme-hue) + 45));
+}
+
+/* Symbols, bullets — offset hue +270° */
+.hljs-symbol,
+.hljs-bullet,
+.hljs-link {
+  color: oklch(0.70 0.18 calc(var(--theme-hue) + 270));
+}
+
+/* Meta, preprocessor — offset hue +30° */
+.hljs-meta,
+.hljs-selector-attr,
+.hljs-selector-pseudo {
+  color: oklch(0.60 0.15 calc(var(--theme-hue) + 30));
+}
+
+/* Deletion — destructive red */
+.hljs-deletion {
+  color: var(--destructive);
+}
+
+/* Emphasis */
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: bold;
+}
+
+/* Attributes (HTML) — offset hue +120° */
+.hljs-attribute {
+  color: oklch(0.68 0.16 calc(var(--theme-hue) + 120));
+}
+
+/* RegExp — offset hue +150° */
+.hljs-regexp {
+  color: oklch(0.65 0.20 calc(var(--theme-hue) + 150));
+}
+
+/* Tags — muted */
+.hljs-tag {
+  color: var(--muted-foreground);
+}
+
+/* Subst (interpolation) */
+.hljs-subst {
+  color: var(--foreground);
+}
+
+/* Doctag — offset hue +60° */
+.hljs-doctag {
+  color: oklch(0.62 0.12 calc(var(--theme-hue) + 60));
+}
+
+/* Light theme adjustments - higher lightness for readability */
+:root .hljs-string,
+:root .hljs-attr,
+:root .hljs-addition {
+  color: oklch(0.45 0.16 calc(var(--theme-hue) + 90));
+}
+
+:root .hljs-number,
+:root .hljs-literal,
+:root .hljs-variable,
+:root .hljs-template-variable {
+  color: oklch(0.48 0.16 calc(var(--theme-hue) + 180));
+}
+
+:root .hljs-title,
+:root .hljs-section,
+:root .hljs-selector-id,
+:root .hljs-title.class_,
+:root .hljs-title.function_ {
+  color: oklch(0.50 0.20 var(--theme-hue));
+}
+
+:root .hljs-type,
+:root .hljs-class .hljs-title {
+  color: oklch(0.50 0.18 calc(var(--theme-hue) + 45));
+}
+
+:root .hljs-symbol,
+:root .hljs-bullet,
+:root .hljs-link {
+  color: oklch(0.50 0.16 calc(var(--theme-hue) + 270));
+}
+
+:root .hljs-meta,
+:root .hljs-selector-attr,
+:root .hljs-selector-pseudo {
+  color: oklch(0.45 0.14 calc(var(--theme-hue) + 30));
+}
+
+:root .hljs-attribute {
+  color: oklch(0.48 0.14 calc(var(--theme-hue) + 120));
+}
+
+:root .hljs-regexp {
+  color: oklch(0.45 0.18 calc(var(--theme-hue) + 150));
+}
+
+:root .hljs-doctag {
+  color: oklch(0.45 0.10 calc(var(--theme-hue) + 60));
+}

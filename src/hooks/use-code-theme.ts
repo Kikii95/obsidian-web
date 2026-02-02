@@ -36,7 +36,13 @@ export function useCodeTheme() {
       existingStyle.remove();
     }
 
-    // Create a link element for the highlight.js CSS
+    // In "auto" mode, use integrated CSS styles from globals.css
+    // No need to load external CDN stylesheet
+    if (themeSetting === "auto") {
+      return;
+    }
+
+    // For specific themes, load from CDN
     const link = document.createElement("link");
     link.id = THEME_STYLE_ID;
     link.rel = "stylesheet";
@@ -51,7 +57,7 @@ export function useCodeTheme() {
         styleToRemove.remove();
       }
     };
-  }, [resolvedCodeTheme]);
+  }, [resolvedCodeTheme, themeSetting]);
 
   return {
     theme: resolvedCodeTheme,

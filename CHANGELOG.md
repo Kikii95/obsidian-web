@@ -25,13 +25,8 @@ All notable changes to this project will be documented in this file.
 - **M4: Note Preview on Hover** - TODO
 - **M13: Import from Notion** - TODO (generic import exists, not Notion-specific)
 
-#### Templates Enhancement Round 5
-- **9 Built-In Templates** - Quick Note, Daily Note, Meeting Notes, Weekly Review, Project, Book Notes, Recipe, Code Snippet, Brainstorm
-- **Advanced Template Variables** - `{{uuid}}`, `{{week}}`, `{{quarter}}`, `{{random:N}}`, `{{weekday}}`, `{{tomorrow}}`, `{{yesterday}}`, `{{dayOfYear}}`
-- **Template Preview Mode** - Code/Preview tabs in template view dialog with live rendering
-- **Template Tree Organization** - Collapsible folder structure for vault templates
-- **Template Manager Page** - Dedicated `/templates` page with Built-in, Custom, and Guide tabs
-- **Templates Header Button** - Quick access in desktop and mobile header
+#### Templates Enhancement
+- **Advanced Templates** - 9 built-in templates, advanced variables (`{{uuid}}`, `{{week}}`, `{{quarter}}`...), live preview, collapsible tree, `/templates` page with guide
 
 ### Dependencies
 - Added `mermaid` for diagram rendering

@@ -31,12 +31,8 @@ export const patchNotes: PatchNote[] = [
       { title: "Analytics Partages", description: "Stats d'acces, graphiques, vues dans le temps" },
       { title: "Export Multi-format", description: "Export vers HTML (3 themes), DOCX et EPUB" },
       { title: "Capture Rapide", description: "Bouton flottant + voix, file offline, ajout note du jour" },
-      // Templates Enhancement Round 5
-      { title: "9 Templates Built-In", description: "Quick Note, Daily, Meeting, Weekly Review, Project, Book, Recipe, Code, Brainstorm" },
-      { title: "Variables Avancees", description: "{{uuid}}, {{week}}, {{quarter}}, {{random:N}}, {{weekday}}, {{tomorrow}}, {{yesterday}}" },
-      { title: "Preview Template", description: "Onglets Code/Apercu pour voir le rendu avant creation" },
-      { title: "Templates en Arbre", description: "Organisation par dossiers collapsibles dans le vault" },
-      { title: "Page Templates", description: "Gestionnaire complet avec guide des variables" },
+      // Templates Enhancement
+      { title: "Templates Avances", description: "9 built-in, variables avancees (uuid, week, quarter...), preview live, arborescence collapsible, page /templates avec guide" },
     ],
     fixes: [],
     improvements: [],

@@ -6,22 +6,24 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-#### Medium Features (15 new features)
+#### Medium Features (13 implemented)
 - **M1: Mermaid Diagrams** - Render mermaid code blocks with lazy-loaded component
 - **M2: Math/LaTeX Support** - KaTeX rendering via remark-math + rehype-katex
 - **M3: Split View** - View two notes side by side with resizable panes (`/split`)
-- **M4: Note Preview on Hover** - Hover over `[[wikilink]]` to see note preview
 - **M5: Vim Mode** - Vim keybindings in editor (Settings > Editor)
 - **M6: Mobile Gestures** - Swipe sidebar, pinch zoom, long press context menu
 - **M7: Code Syntax Themes** - 12 themes (github, dracula, monokai, nord, etc.)
-- **M8: Template Variables** - `{{date}}`, `{{time}}`, `{{title}}`, `{{folder}}`, `{{clipboard}}`
+- **M8: Template Variables** - `{{date}}`, `{{time}}`, `{{title}}`, `{{folder}}`, `{{clipboard}}` + advanced
 - **M9: Folder Icons** - Custom Lucide icons per folder (right-click > Set icon)
 - **M10: Note Versioning UI** - Timeline view + diff viewer for note history
 - **M11: Bulk Tag Management** - Rename, merge, delete tags across vault (`/tags/manage`)
 - **M12: Share Analytics Dashboard** - Access logs, charts, views over time (`/shares/analytics`)
-- **M13: Import from Notion** - ZIP import with ID cleanup, callout conversion, link fixes (`/import`)
 - **M14: Export Formats** - Export notes to HTML (3 themes), DOCX, and EPUB formats
 - **M15: Quick Capture Widget** - FAB button with text/voice input, offline queue, daily note append
+
+#### Not Yet Implemented
+- **M4: Note Preview on Hover** - TODO
+- **M13: Import from Notion** - TODO (generic import exists, not Notion-specific)
 
 #### Templates Enhancement Round 5
 - **9 Built-In Templates** - Quick Note, Daily Note, Meeting Notes, Weekly Review, Project, Book Notes, Recipe, Code Snippet, Brainstorm

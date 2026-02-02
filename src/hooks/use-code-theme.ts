@@ -13,17 +13,18 @@ export function useCodeTheme() {
   const themeSetting = settings.codeSyntaxTheme || defaultCodeTheme;
 
   // Resolve the actual theme to use
+  // Note: resolvedTheme can be undefined during SSR/hydration
   const resolvedCodeTheme = useMemo(() => {
     if (themeSetting === "auto") {
       const autoTheme = getAutoTheme();
+      // Default to dark if resolvedTheme is undefined (SSR)
+      const isDark = resolvedTheme === "dark" || resolvedTheme === undefined;
       if (autoTheme) {
-        // Use dark/light variant based on global theme
-        return resolvedTheme === "dark"
+        return isDark
           ? autoTheme.darkVariant || "github-dark"
           : autoTheme.lightVariant || "github";
       }
-      // Fallback if auto theme not found
-      return resolvedTheme === "dark" ? "github-dark" : "github";
+      return isDark ? "github-dark" : "github";
     }
     return themeSetting;
   }, [themeSetting, resolvedTheme]);

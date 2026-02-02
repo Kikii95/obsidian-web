@@ -6,6 +6,15 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+#### Dataview Extended Support
+- **Dataview !contains()** - Filtre négatif `WHERE !contains(file.name, "_Logs")`
+- **Dataview WHERE truthy** - Condition sans opérateur `WHERE file.tags` (vérifie existence)
+- **Dataview file.mtime/ctime** - Accès aux dates de modification/création des notes
+- **Dataview dateformat()** - Formatage dates `dateformat(file.mtime, "dd/MM HH:mm")`
+- **Dataview date(today)** - Date dynamique `date(today)`, `date(now)`, `date(yesterday)`
+- **Dataview dur()** - Durées `dur(7 days)`, `dur(1 week)` pour arithmétique dates
+- **Dataview FROM OR** - Sources multiples `FROM "Projects" OR "Learning"`
+
 #### Medium Features (13 implemented)
 - **M1: Mermaid Diagrams** - Render mermaid code blocks with lazy-loaded component
 - **M2: Math/LaTeX Support** - KaTeX rendering via remark-math + rehype-katex

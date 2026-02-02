@@ -379,6 +379,14 @@ function getFieldValue(entry: DataviewResultEntry, field: string): unknown {
   if (field === "file.inlinks") {
     return entry.frontmatter?.backlinks || [];
   }
+  if (field === "file.mtime") {
+    // Modified time from frontmatter (set by executor)
+    return entry.frontmatter?.["file.mtime"] || entry.frontmatter?.updatedAt;
+  }
+  if (field === "file.ctime") {
+    // Created time from frontmatter (set by executor)
+    return entry.frontmatter?.["file.ctime"] || entry.frontmatter?.indexedAt;
+  }
 
   // Frontmatter fields
   const parts = field.split(".");
@@ -396,7 +404,43 @@ function getFieldValue(entry: DataviewResultEntry, field: string): unknown {
 }
 
 /**
- * Get column value with function support (length, etc.)
+ * Format a date using Dataview-compatible format string
+ * Supports: dd, MM, yyyy, HH, mm, ss, etc.
+ */
+function formatDate(date: Date | string | null | undefined, format: string): string {
+  if (!date) return "—";
+
+  const d = typeof date === "string" ? new Date(date) : date;
+  if (isNaN(d.getTime())) return "—";
+
+  // Pad number to 2 digits
+  const pad = (n: number) => n.toString().padStart(2, "0");
+
+  // Replace format tokens
+  return format
+    .replace(/yyyy/g, d.getFullYear().toString())
+    .replace(/yy/g, d.getFullYear().toString().slice(-2))
+    .replace(/MMMM/g, d.toLocaleDateString("fr-FR", { month: "long" }))
+    .replace(/MMM/g, d.toLocaleDateString("fr-FR", { month: "short" }))
+    .replace(/MM/g, pad(d.getMonth() + 1))
+    .replace(/M/g, (d.getMonth() + 1).toString())
+    .replace(/dddd/g, d.toLocaleDateString("fr-FR", { weekday: "long" }))
+    .replace(/ddd/g, d.toLocaleDateString("fr-FR", { weekday: "short" }))
+    .replace(/dd/g, pad(d.getDate()))
+    .replace(/d/g, d.getDate().toString())
+    .replace(/HH/g, pad(d.getHours()))
+    .replace(/H/g, d.getHours().toString())
+    .replace(/hh/g, pad(d.getHours() % 12 || 12))
+    .replace(/h/g, (d.getHours() % 12 || 12).toString())
+    .replace(/mm/g, pad(d.getMinutes()))
+    .replace(/m/g, d.getMinutes().toString())
+    .replace(/ss/g, pad(d.getSeconds()))
+    .replace(/s/g, d.getSeconds().toString())
+    .replace(/a/g, d.getHours() >= 12 ? "PM" : "AM");
+}
+
+/**
+ * Get column value with function support (length, dateformat, etc.)
  */
 function getColumnValue(entry: DataviewResultEntry, col: TableColumn): unknown {
   const rawValue = getFieldValue(entry, col.field);
@@ -405,6 +449,10 @@ function getColumnValue(entry: DataviewResultEntry, col: TableColumn): unknown {
     if (Array.isArray(rawValue)) return rawValue.length;
     if (typeof rawValue === "string") return rawValue.length;
     return 0;
+  }
+
+  if (col.function === "dateformat" && col.format) {
+    return formatDate(rawValue as Date | string | null, col.format);
   }
 
   return rawValue;

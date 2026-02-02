@@ -7,9 +7,11 @@ import type {
   DataviewQuery,
   DataviewResult,
   DataviewResultEntry,
+  DataviewResultGroup,
   FromSource,
   WhereCondition,
   SortClause,
+  FlattenClause,
 } from "./types";
 import type { VaultIndexEntry } from "@/lib/db/schema";
 import type { VaultKey } from "@/lib/db/vault-index-queries";
@@ -29,11 +31,41 @@ export async function executeDataviewQuery(
     // Filter by FROM clause
     let filtered = filterByFrom(allEntries, query.from);
 
+    // Apply FLATTEN before WHERE (expands arrays into multiple entries)
+    if (query.flatten) {
+      filtered = flattenEntries(filtered, query.flatten);
+    }
+
     // Filter by WHERE conditions (AND logic)
     if (query.where) {
       for (const condition of query.where) {
         filtered = filterByWhere(filtered, condition);
       }
+    }
+
+    // Handle GROUP BY
+    if (query.groupBy) {
+      const groups = groupEntries(filtered, query.groupBy);
+
+      // Sort groups if needed
+      if (query.sort) {
+        sortGroups(groups, query.sort, query.columns);
+      }
+
+      // Apply limit to groups
+      const limitedGroups = query.limit ? groups.slice(0, query.limit) : groups;
+
+      // Build columns list
+      const columns = query.columns?.map((c) => c.alias || c.field);
+
+      return {
+        success: true,
+        entries: [],
+        groups: limitedGroups,
+        columns,
+        totalCount: groups.length,
+        query,
+      };
     }
 
     // Sort entries
@@ -132,7 +164,7 @@ function filterByWhere(
 }
 
 /**
- * Get field value from entry (supports file.name, file.path, and frontmatter fields)
+ * Get field value from entry (supports file.* fields and frontmatter)
  */
 function getFieldValue(entry: VaultIndexEntry, field: string): unknown {
   // Special file fields
@@ -141,6 +173,34 @@ function getFieldValue(entry: VaultIndexEntry, field: string): unknown {
   }
   if (field === "file.path") {
     return entry.filePath;
+  }
+  if (field === "file.link") {
+    return {
+      __type: "link" as const,
+      path: entry.filePath,
+      name: entry.fileName.replace(/\.md$/, ""),
+    };
+  }
+  if (field === "file.folder") {
+    const parts = entry.filePath.split("/");
+    return parts.slice(0, -1).join("/") || "/";
+  }
+  if (field === "file.tags") {
+    return entry.tags || [];
+  }
+  if (field === "file.outlinks") {
+    // Wikilinks are stored as objects with target property
+    return (entry.wikilinks || []).map((w) => w.target);
+  }
+  if (field === "file.inlinks") {
+    // Backlinks would need to be computed from the index
+    // For now, return empty array as they're not directly available
+    return [];
+  }
+  if (field === "file.tasks") {
+    // Tasks are stored as frontmatter in some vaults
+    const fm = entry.frontmatter as Record<string, unknown>;
+    return fm.tasks || [];
   }
 
   // Frontmatter fields (support nested with dot notation)
@@ -283,6 +343,114 @@ function sortEntries(
     let comparison: number;
 
     // Handle undefined values
+    if (valueA === undefined && valueB === undefined) {
+      comparison = 0;
+    } else if (valueA === undefined) {
+      comparison = 1;
+    } else if (valueB === undefined) {
+      comparison = -1;
+    } else if (typeof valueA === "number" && typeof valueB === "number") {
+      comparison = valueA - valueB;
+    } else {
+      comparison = String(valueA).localeCompare(String(valueB));
+    }
+
+    return sort.direction === "DESC" ? -comparison : comparison;
+  });
+}
+
+/**
+ * Flatten entries by expanding an array field into multiple entries
+ */
+function flattenEntries(
+  entries: VaultIndexEntry[],
+  flatten: FlattenClause
+): VaultIndexEntry[] {
+  const result: VaultIndexEntry[] = [];
+
+  for (const entry of entries) {
+    const arrayValue = getFieldValue(entry, flatten.field);
+
+    if (Array.isArray(arrayValue) && arrayValue.length > 0) {
+      for (const item of arrayValue) {
+        result.push({
+          ...entry,
+          frontmatter: {
+            ...(entry.frontmatter as Record<string, unknown>),
+            [flatten.as]: item,
+          },
+        });
+      }
+    } else {
+      // Keep entry but with undefined flattened field
+      result.push({
+        ...entry,
+        frontmatter: {
+          ...(entry.frontmatter as Record<string, unknown>),
+          [flatten.as]: arrayValue,
+        },
+      });
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Group entries by a field value
+ */
+function groupEntries(
+  entries: VaultIndexEntry[],
+  groupBy: string
+): DataviewResultGroup[] {
+  const groups = new Map<string, VaultIndexEntry[]>();
+
+  for (const entry of entries) {
+    const keyValue = getFieldValue(entry, groupBy);
+    const key = keyValue === undefined ? "undefined" : String(keyValue);
+
+    if (!groups.has(key)) {
+      groups.set(key, []);
+    }
+    groups.get(key)!.push(entry);
+  }
+
+  return Array.from(groups.entries()).map(([key, rows]) => ({
+    key: key === "undefined" ? undefined : key,
+    rows: rows.map((e) => ({
+      filePath: e.filePath,
+      fileName: e.fileName,
+      frontmatter: e.frontmatter as Record<string, unknown>,
+    })),
+  }));
+}
+
+/**
+ * Sort groups (for GROUP BY + SORT)
+ */
+function sortGroups(
+  groups: DataviewResultGroup[],
+  sort: SortClause,
+  columns?: { field: string; alias?: string; function?: string }[]
+): void {
+  // Check if sorting by length(rows)
+  const isLengthRows = sort.field === "length(rows)" ||
+    columns?.some(c => c.function === "length" && c.field === "rows");
+
+  groups.sort((a, b) => {
+    let valueA: unknown;
+    let valueB: unknown;
+
+    if (isLengthRows || sort.field === "length(rows)") {
+      valueA = a.rows.length;
+      valueB = b.rows.length;
+    } else {
+      valueA = a.key;
+      valueB = b.key;
+    }
+
+    let comparison: number;
+
     if (valueA === undefined && valueB === undefined) {
       comparison = 0;
     } else if (valueA === undefined) {

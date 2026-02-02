@@ -4,7 +4,13 @@ import { useEffect, useState, useCallback } from "react";
 import { PrefetchLink } from "@/components/ui/prefetch-link";
 import { cn } from "@/lib/utils";
 import { Loader2, Database, AlertCircle, FileText, Table, RefreshCw } from "lucide-react";
-import type { DataviewResult, DataviewResultEntry } from "@/lib/dataview/types";
+import type {
+  DataviewResult,
+  DataviewResultEntry,
+  DataviewResultGroup,
+  DataviewLink,
+  TableColumn,
+} from "@/lib/dataview/types";
 
 interface DataviewQueryProps {
   code: string;
@@ -110,7 +116,8 @@ export function DataviewQuery({ code, className }: DataviewQueryProps) {
   if (!result) return null;
 
   const queryType = result.query.type;
-  const isEmpty = result.entries.length === 0;
+  const hasGroups = result.groups && result.groups.length > 0;
+  const isEmpty = !hasGroups && result.entries.length === 0;
 
   return (
     <div className={cn("my-4 rounded-lg border border-primary/30 bg-primary/5 overflow-hidden", className)}>
@@ -138,8 +145,18 @@ export function DataviewQuery({ code, className }: DataviewQueryProps) {
       <div className="p-4">
         {isEmpty ? (
           <p className="text-sm text-muted-foreground italic">Aucun résultat</p>
+        ) : hasGroups ? (
+          <DataviewGroupedTable
+            groups={result.groups!}
+            columns={result.query.columns || []}
+            query={result.query}
+          />
         ) : queryType === "TABLE" ? (
-          <DataviewTable entries={result.entries} columns={result.columns || []} />
+          <DataviewTable
+            entries={result.entries}
+            columns={result.query.columns || []}
+            withoutId={result.query.withoutId}
+          />
         ) : (
           <DataviewList entries={result.entries} />
         )}
@@ -154,19 +171,23 @@ export function DataviewQuery({ code, className }: DataviewQueryProps) {
 function DataviewTable({
   entries,
   columns,
+  withoutId,
 }: {
   entries: DataviewResultEntry[];
-  columns: string[];
+  columns: TableColumn[];
+  withoutId?: boolean;
 }) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-primary/20">
-            <th className="text-left py-2 pr-4 text-primary font-medium">File</th>
+            {!withoutId && (
+              <th className="text-left py-2 pr-4 text-primary font-medium">File</th>
+            )}
             {columns.map((col) => (
-              <th key={col} className="text-left py-2 px-4 text-primary font-medium">
-                {col}
+              <th key={col.alias || col.field} className="text-left py-2 px-4 text-primary font-medium">
+                {col.alias || col.field}
               </th>
             ))}
           </tr>
@@ -174,12 +195,54 @@ function DataviewTable({
         <tbody>
           {entries.map((entry) => (
             <tr key={entry.filePath} className="border-b border-primary/10 hover:bg-primary/5">
-              <td className="py-2 pr-4">
-                <NoteLink entry={entry} />
-              </td>
+              {!withoutId && (
+                <td className="py-2 pr-4">
+                  <NoteLink entry={entry} />
+                </td>
+              )}
               {columns.map((col) => (
-                <td key={col} className="py-2 px-4 text-muted-foreground">
-                  <CellValue value={getFieldValue(entry, col)} />
+                <td key={col.alias || col.field} className="py-2 px-4 text-muted-foreground">
+                  <CellValue value={getColumnValue(entry, col)} />
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/**
+ * Grouped table view for GROUP BY queries
+ */
+function DataviewGroupedTable({
+  groups,
+  columns,
+  query,
+}: {
+  groups: DataviewResultGroup[];
+  columns: TableColumn[];
+  query: { groupBy?: string };
+}) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-primary/20">
+            {columns.map((col) => (
+              <th key={col.alias || col.field} className="text-left py-2 px-4 text-primary font-medium">
+                {col.alias || col.field}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {groups.map((group, idx) => (
+            <tr key={idx} className="border-b border-primary/10 hover:bg-primary/5">
+              {columns.map((col) => (
+                <td key={col.alias || col.field} className="py-2 px-4 text-muted-foreground">
+                  <CellValue value={getGroupColumnValue(group, col, query.groupBy)} />
                 </td>
               ))}
             </tr>
@@ -224,14 +287,52 @@ function NoteLink({ entry }: { entry: DataviewResultEntry }) {
 }
 
 /**
- * Render a cell value (handles arrays, objects, primitives)
+ * Check if value is a DataviewLink
+ */
+function isDataviewLink(value: unknown): value is DataviewLink {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "__type" in value &&
+    (value as DataviewLink).__type === "link"
+  );
+}
+
+/**
+ * Render a cell value (handles arrays, objects, links, primitives)
  */
 function CellValue({ value }: { value: unknown }) {
   if (value === undefined || value === null) {
     return <span className="text-muted-foreground/50">—</span>;
   }
 
+  // Handle DataviewLink (file.link)
+  if (isDataviewLink(value)) {
+    return (
+      <NoteLink
+        entry={{
+          filePath: value.path,
+          fileName: value.name + ".md",
+          frontmatter: {},
+        }}
+      />
+    );
+  }
+
   if (Array.isArray(value)) {
+    // Check if array contains links
+    if (value.length > 0 && isDataviewLink(value[0])) {
+      return (
+        <span>
+          {value.map((item, idx) => (
+            <span key={idx}>
+              {idx > 0 && ", "}
+              <CellValue value={item} />
+            </span>
+          ))}
+        </span>
+      );
+    }
     return <span>{value.join(", ")}</span>;
   }
 
@@ -247,7 +348,7 @@ function CellValue({ value }: { value: unknown }) {
 }
 
 /**
- * Get field value from entry (supports nested frontmatter)
+ * Get field value from entry (supports file.* fields and frontmatter)
  */
 function getFieldValue(entry: DataviewResultEntry, field: string): unknown {
   // Special file fields
@@ -256,6 +357,27 @@ function getFieldValue(entry: DataviewResultEntry, field: string): unknown {
   }
   if (field === "file.path") {
     return entry.filePath;
+  }
+  if (field === "file.link") {
+    return {
+      __type: "link" as const,
+      path: entry.filePath,
+      name: entry.fileName.replace(/\.md$/, ""),
+    };
+  }
+  if (field === "file.folder") {
+    const parts = entry.filePath.split("/");
+    return parts.slice(0, -1).join("/") || "/";
+  }
+  if (field === "file.tags") {
+    // Tags might be in frontmatter
+    return entry.frontmatter?.tags || [];
+  }
+  if (field === "file.outlinks") {
+    return entry.frontmatter?.outlinks || [];
+  }
+  if (field === "file.inlinks") {
+    return entry.frontmatter?.backlinks || [];
   }
 
   // Frontmatter fields
@@ -271,6 +393,57 @@ function getFieldValue(entry: DataviewResultEntry, field: string): unknown {
   }
 
   return value;
+}
+
+/**
+ * Get column value with function support (length, etc.)
+ */
+function getColumnValue(entry: DataviewResultEntry, col: TableColumn): unknown {
+  const rawValue = getFieldValue(entry, col.field);
+
+  if (col.function === "length") {
+    if (Array.isArray(rawValue)) return rawValue.length;
+    if (typeof rawValue === "string") return rawValue.length;
+    return 0;
+  }
+
+  return rawValue;
+}
+
+/**
+ * Get column value for grouped results
+ */
+function getGroupColumnValue(
+  group: DataviewResultGroup,
+  col: TableColumn,
+  groupByField?: string
+): unknown {
+  // If this column is the groupBy field, return the group key
+  if (col.field === groupByField) {
+    return group.key;
+  }
+
+  // Handle length(rows)
+  if (col.function === "length" && col.field === "rows") {
+    return group.rows.length;
+  }
+
+  // For other length functions on the group
+  if (col.function === "length") {
+    // Try to get the value from the first row
+    if (group.rows.length > 0) {
+      const firstValue = getFieldValue(group.rows[0], col.field);
+      if (Array.isArray(firstValue)) return firstValue.length;
+    }
+    return 0;
+  }
+
+  // Fallback: return value from first row
+  if (group.rows.length > 0) {
+    return getFieldValue(group.rows[0], col.field);
+  }
+
+  return undefined;
 }
 
 /**

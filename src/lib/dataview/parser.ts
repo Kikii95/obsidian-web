@@ -12,14 +12,18 @@ import type {
   WhereOperator,
   SortClause,
   TableColumn,
+  FlattenClause,
 } from "./types";
 
 // Regex patterns for parsing
-const TABLE_REGEX = /^TABLE\s+(.+?)(?:\s+FROM|\s+WHERE|\s+SORT|\s+LIMIT|$)/i;
+const TABLE_WITHOUT_ID_REGEX = /^TABLE\s+WITHOUT\s+ID\s+(.+?)(?:\s+FROM|\s+WHERE|\s+FLATTEN|\s+GROUP|\s+SORT|\s+LIMIT|$)/i;
+const TABLE_REGEX = /^TABLE\s+(.+?)(?:\s+FROM|\s+WHERE|\s+FLATTEN|\s+GROUP|\s+SORT|\s+LIMIT|$)/i;
 const LIST_REGEX = /^LIST(?:\s+|$)/i;
 const FROM_FOLDER_REGEX = /FROM\s+"([^"]+)"/i;
 const FROM_TAG_REGEX = /FROM\s+#([\w\/-]+)/i;
-const SORT_REGEX = /SORT\s+([\w.]+)\s*(ASC|DESC)?/i;
+const GROUP_BY_REGEX = /GROUP\s+BY\s+([\w.]+)/i;
+const FLATTEN_REGEX = /FLATTEN\s+([\w.]+)\s+[aA][sS]\s+(\w+)/i;
+const SORT_REGEX = /SORT\s+([\w.()]+)\s*(ASC|DESC)?/i;
 const LIMIT_REGEX = /LIMIT\s+(\d+)/i;
 
 /**
@@ -40,11 +44,21 @@ export function parseDataviewQuery(
   // Detect query type
   let type: QueryType;
   let columns: TableColumn[] | undefined;
+  let withoutId = false;
 
+  // Try TABLE WITHOUT ID first
+  const tableWithoutIdMatch = normalized.match(TABLE_WITHOUT_ID_REGEX);
   const tableMatch = normalized.match(TABLE_REGEX);
   const listMatch = normalized.match(LIST_REGEX);
 
-  if (tableMatch) {
+  if (tableWithoutIdMatch) {
+    type = "TABLE";
+    withoutId = true;
+    columns = parseTableColumns(tableWithoutIdMatch[1]);
+    if (columns.length === 0) {
+      return { error: "TABLE query requires at least one column" };
+    }
+  } else if (tableMatch && !normalized.toUpperCase().startsWith("TABLE WITHOUT")) {
     type = "TABLE";
     columns = parseTableColumns(tableMatch[1]);
     if (columns.length === 0) {
@@ -67,6 +81,12 @@ export function parseDataviewQuery(
     return whereResult;
   }
 
+  // Parse FLATTEN clause
+  const flatten = parseFlattenClause(normalized);
+
+  // Parse GROUP BY clause
+  const groupBy = parseGroupByClause(normalized);
+
   // Parse SORT clause
   const sort = parseSortClause(normalized);
 
@@ -75,9 +95,12 @@ export function parseDataviewQuery(
 
   return {
     type,
+    withoutId: withoutId || undefined,
     columns,
     from,
     where: whereResult.length > 0 ? whereResult : undefined,
+    flatten,
+    groupBy,
     sort,
     limit,
   };
@@ -85,6 +108,7 @@ export function parseDataviewQuery(
 
 /**
  * Parse TABLE columns (comma-separated field names with optional AS alias)
+ * Supports: field, field AS alias, length(field) AS alias
  */
 function parseTableColumns(columnsStr: string): TableColumn[] {
   const columns: TableColumn[] = [];
@@ -93,6 +117,17 @@ function parseTableColumns(columnsStr: string): TableColumn[] {
   const parts = columnsStr.split(",").map((p) => p.trim()).filter(Boolean);
 
   for (const part of parts) {
+    // Check for function: length(field) AS alias
+    const lengthMatch = part.match(/^length\(([\w.]+)\)(?:\s+[aA][sS]\s+["']?([^"']+)["']?)?$/i);
+    if (lengthMatch) {
+      columns.push({
+        field: lengthMatch[1].trim(),
+        alias: lengthMatch[2]?.trim() || `length(${lengthMatch[1].trim()})`,
+        function: "length",
+      });
+      continue;
+    }
+
     // Check for alias: field AS alias OR field as alias
     const aliasMatch = part.match(/^([\w.]+)\s+[aA][sS]\s+["']?([^"']+)["']?$/);
     if (aliasMatch) {
@@ -100,12 +135,13 @@ function parseTableColumns(columnsStr: string): TableColumn[] {
         field: aliasMatch[1].trim(),
         alias: aliasMatch[2].trim(),
       });
-    } else {
-      // Simple field name
-      const field = part.trim();
-      if (field && /^[\w.]+$/.test(field)) {
-        columns.push({ field });
-      }
+      continue;
+    }
+
+    // Simple field name
+    const field = part.trim();
+    if (field && /^[\w.]+$/.test(field)) {
+      columns.push({ field });
     }
   }
 
@@ -217,6 +253,27 @@ function parseLimitClause(query: string): number | undefined {
 
   const limit = parseInt(match[1], 10);
   return isNaN(limit) ? undefined : limit;
+}
+
+/**
+ * Parse FLATTEN clause: FLATTEN field AS alias
+ */
+function parseFlattenClause(query: string): FlattenClause | undefined {
+  const match = query.match(FLATTEN_REGEX);
+  if (!match) return undefined;
+
+  return {
+    field: match[1].trim(),
+    as: match[2].trim(),
+  };
+}
+
+/**
+ * Parse GROUP BY clause
+ */
+function parseGroupByClause(query: string): string | undefined {
+  const match = query.match(GROUP_BY_REGEX);
+  return match ? match[1].trim() : undefined;
 }
 
 /**

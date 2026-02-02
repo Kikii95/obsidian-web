@@ -12,6 +12,7 @@ import { PrefetchLink } from "@/components/ui/prefetch-link";
 import { CollapsibleContent } from "@/components/viewer/collapsible-content";
 import { Callout, parseCalloutSyntax } from "@/components/markdown/callout";
 import { MermaidDiagram } from "@/components/markdown/mermaid-diagram";
+import { DataviewQuery } from "@/components/markdown/dataview-query";
 import { LinkPreview } from "@/components/markdown/link-preview";
 import { ImageZoomModal, useImageZoom } from "@/components/media/image-zoom-modal";
 import { wikilinkToPath, buildNoteLookupMap, type NoteLookupMap } from "@/lib/wikilinks";
@@ -196,23 +197,7 @@ function MarkdownRendererInner({
 
             // Check for Dataview blocks
             if (className?.includes("language-dataview")) {
-              return (
-                <div className="my-4 p-4 rounded-lg border border-primary/30 bg-primary/5">
-                  <div className="flex items-center gap-2 text-primary text-sm font-medium mb-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7c-2 0-3 1-3 3z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6M12 9v6" />
-                    </svg>
-                    Dataview Query
-                  </div>
-                  <code className="text-xs text-muted-foreground font-mono block whitespace-pre-wrap">
-                    {content}
-                  </code>
-                  <p className="text-xs text-muted-foreground mt-2 italic">
-                    Les queries Dataview ne sont pas supportées en mode web.
-                  </p>
-                </div>
-              );
+              return <DataviewQuery code={content} />;
             }
 
             // Check for Tasks blocks

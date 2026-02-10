@@ -20,28 +20,20 @@ import { LogOut, Menu, PanelLeftClose, PanelLeft, Settings, User, Home, Network,
 import { useSelectionStore } from "@/lib/selection-store";
 import { ThemeSwitcher } from "@/components/theme/theme-switcher";
 import { Logo } from "@/components/ui/logo";
-import { NetworkStatus } from "@/components/ui/network-status";
 import { ResizableSidebar } from "@/components/ui/resizable-sidebar";
 import { GlobalLockStatus } from "@/components/lock/global-lock-status";
 import { HeaderDateTime } from "@/components/ui/header-date-time";
-import { QuickSwitcher } from "@/components/navigation/quick-switcher";
-import { ShortcutsModal } from "@/components/ui/shortcuts-modal";
 import { useShortcutsModal } from "@/hooks/use-shortcuts-modal";
-import { WhatsNewModal } from "@/components/ui/whats-new-modal";
 import { useWhatsNew } from "@/hooks/use-whats-new";
 import { Badge } from "@/components/ui/badge";
 import { DailyNoteButton } from "@/components/navigation/daily-note-button";
 import { ExploreRepoDialog } from "@/components/navigation/explore-repo-dialog";
-import { ScrollRestoration } from "@/components/navigation/scroll-restoration";
 import { RateLimitIndicator } from "@/components/ui/rate-limit-indicator";
 import { ScrollProgress } from "@/components/ui/scroll-progress";
-import { ScrollToTop } from "@/components/ui/scroll-to-top";
-import { DynamicPwaMeta } from "@/components/pwa/dynamic-pwa-meta";
-import { IosPwaPrompt } from "@/components/pwa/ios-pwa-prompt";
 import { useSettingsSync } from "@/hooks/use-settings-sync";
 import { useVaultConfig } from "@/hooks/use-vault-config";
 import { usePinsSync } from "@/hooks/use-pins-sync";
-import { QuickCaptureFAB } from "@/components/capture/quick-capture-fab";
+import { DashboardOverlays } from "@/components/dashboard/dashboard-overlays";
 
 export default function DashboardLayout({
   children,
@@ -329,32 +321,13 @@ export default function DashboardLayout({
         </main>
       </div>
 
-      {/* Network Status Indicator */}
-      <NetworkStatus />
-
-      {/* Quick Switcher (Ctrl+P) */}
-      <QuickSwitcher />
-
-      {/* Keyboard Shortcuts Modal (? or Ctrl+/) */}
-      <ShortcutsModal open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
-
-      {/* What's New Modal */}
-      <WhatsNewModal open={whatsNewOpen} onOpenChange={setWhatsNewOpen} />
-
-      {/* Scroll Restoration */}
-      <ScrollRestoration />
-
-      {/* Scroll to Top Button */}
-      <ScrollToTop />
-
-      {/* Dynamic PWA Meta Tags (updates on theme change) */}
-      <DynamicPwaMeta />
-
-      {/* iOS Add to Home Screen Prompt */}
-      <IosPwaPrompt />
-
-      {/* Quick Capture FAB */}
-      <QuickCaptureFAB />
+      {/* Dashboard overlays (modals, FABs, status indicators) */}
+      <DashboardOverlays
+        shortcutsOpen={shortcutsOpen}
+        setShortcutsOpen={setShortcutsOpen}
+        whatsNewOpen={whatsNewOpen}
+        setWhatsNewOpen={setWhatsNewOpen}
+      />
     </div>
   );
 }

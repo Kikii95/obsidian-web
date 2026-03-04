@@ -690,9 +690,9 @@ function processWikilinksForShare(content: string): string {
  * Syntax: > [!type] optional title
  *         > content...
  * Supports: +/- for fold state (e.g., [!note]+ or [!note]-)
+ * Supports: empty lines within callouts (both with and without > prefix)
  */
 function processCallouts(content: string): string {
-  // Split content by lines to process blockquotes
   const lines = content.split("\n");
   const result: string[] = [];
   let i = 0;
@@ -708,36 +708,45 @@ function processCallouts(content: string): string {
       const foldState = calloutStartMatch[2]; // + or - or undefined
       const title = calloutStartMatch[3]?.trim() || "";
 
-      // Determine fold attributes
       const foldable = foldState === "+" || foldState === "-";
       const defaultFolded = foldState === "-";
 
-      // Collect all content lines of this callout
       const contentLines: string[] = [];
       i++;
 
       while (i < lines.length) {
         const nextLine = lines[i];
+
         // Continue if line starts with > (part of blockquote)
         if (nextLine.match(/^>/)) {
-          // Remove the > prefix and add to content
           contentLines.push(nextLine.replace(/^>\s?/, ""));
           i++;
         } else if (nextLine.trim() === "") {
-          // Empty line might be part of callout or end it
-          // Check if next non-empty line continues the blockquote
-          if (i + 1 < lines.length && lines[i + 1].match(/^>/)) {
-            contentLines.push("");
-            i++;
+          // Empty line - look ahead to find if blockquote continues
+          // Skip consecutive empty lines and check if > follows
+          let lookAhead = i + 1;
+          let emptyCount = 1;
+
+          while (lookAhead < lines.length && lines[lookAhead].trim() === "") {
+            emptyCount++;
+            lookAhead++;
+          }
+
+          // Check if a > line follows the empty line(s)
+          if (lookAhead < lines.length && lines[lookAhead].match(/^>/)) {
+            // Add empty lines to preserve paragraph breaks
+            for (let j = 0; j < emptyCount; j++) {
+              contentLines.push("");
+            }
+            i = lookAhead; // Skip to the > line (will be processed next iteration)
           } else {
-            break;
+            break; // No continuation, end callout
           }
         } else {
-          break;
+          break; // Non-empty, non-> line ends the callout
         }
       }
 
-      // Build callout HTML
       const calloutContent = contentLines.join("\n");
       const escapedTitle = title.replace(/"/g, "&quot;");
       const escapedContent = calloutContent
@@ -745,7 +754,6 @@ function processCallouts(content: string): string {
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
 
-      // Use a custom HTML element that will be handled by rehype-raw
       result.push(
         `<div class="obsidian-callout" data-type="${type}" data-title="${escapedTitle}" data-foldable="${foldable}" data-folded="${defaultFolded}">${escapedContent}</div>`
       );

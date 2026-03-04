@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.1] - 2026-03-04
+
+### Fixed
+
+- **Callout multi-paragraphes** — Les callouts avec lignes vides internes affichent maintenant tous les paragraphes
+- **Callouts consécutifs** — Plusieurs callouts séparés par une ligne vide sont correctement rendus comme callouts distincts
+
+---
+
 ## [2.1.0] - 2026-02-02
 
 ### Added

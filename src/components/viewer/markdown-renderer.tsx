@@ -734,7 +734,11 @@ function processCallouts(content: string): string {
 
           // Check if a > line follows the empty line(s)
           if (lookAhead < lines.length && lines[lookAhead].match(/^>/)) {
-            // Add empty lines to preserve paragraph breaks
+            // BUT if it's a NEW callout (> [!type]), stop current callout
+            if (lines[lookAhead].match(/^>\s*\[!\w+\]/)) {
+              break; // New callout starts, end current one
+            }
+            // Otherwise it's a continuation - add empty lines to preserve paragraph breaks
             for (let j = 0; j < emptyCount; j++) {
               contentLines.push("");
             }

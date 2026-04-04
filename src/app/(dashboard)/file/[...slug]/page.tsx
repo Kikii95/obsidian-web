@@ -13,6 +13,7 @@ import { VideoViewer } from "@/components/viewer/video-viewer";
 import { getFileType } from "@/lib/file-types";
 import { githubClient, type BinaryFileData } from "@/services/github-client";
 import { useSettingsStore } from "@/lib/settings-store";
+import { downloadBase64File } from "@/lib/pdf-export";
 
 // Lazy load PDFViewer (react-pdf is heavy ~500kb)
 const PDFViewer = dynamic(
@@ -189,10 +190,7 @@ export default function FilePage() {
             size="sm"
             onClick={() => {
               if (!file) return;
-              const link = document.createElement("a");
-              link.href = `data:${file.mimeType};base64,${file.content}`;
-              link.download = fileName;
-              link.click();
+              downloadBase64File(file.content, file.mimeType, fileName);
             }}
             title="Télécharger"
           >

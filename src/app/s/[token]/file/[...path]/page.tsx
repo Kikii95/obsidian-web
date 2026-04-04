@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, AlertCircle, Loader2, Clock, FileText, Image as ImageIcon, FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UniversalLayout, SidebarHeader } from "@/components/layout";
 import { getFileType } from "@/lib/file-types";
+import { base64ToBlobUrl } from "@/lib/pdf-export";
 import type { ShareMode } from "@/types/shares";
 
 interface ShareMetadata {
@@ -135,6 +136,15 @@ export default function ShareFilePage() {
   const fileName = file.path.split("/").pop() || relativePath;
   const fileType = getFileType(file.path);
   const dataUrl = `data:${file.mimeType};base64,${file.content}`;
+  // Use Blob URL for PDFs to avoid massive data URLs in iframe src
+  const pdfBlobUrl = useMemo(
+    () => (fileType === "pdf" ? base64ToBlobUrl(file.content, file.mimeType) : null),
+    [fileType, file.content, file.mimeType]
+  );
+  // Clean up Blob URL on unmount
+  useEffect(() => {
+    return () => { if (pdfBlobUrl) URL.revokeObjectURL(pdfBlobUrl); };
+  }, [pdfBlobUrl]);
 
   return (
     <UniversalLayout
@@ -199,9 +209,9 @@ export default function ShareFilePage() {
                 alt={fileName}
                 className="max-w-full max-h-[70vh] object-contain rounded"
               />
-            ) : fileType === "pdf" ? (
+            ) : fileType === "pdf" && pdfBlobUrl ? (
               <iframe
-                src={dataUrl}
+                src={pdfBlobUrl}
                 title={fileName}
                 className="w-full h-[70vh] rounded"
               />

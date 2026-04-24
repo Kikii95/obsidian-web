@@ -621,7 +621,7 @@ export default function TemplatesPage() {
             className="h-7 text-xs"
             onClick={async () => {
               const content = await loadTemplateContent(template);
-              handleCopy(content, template.path);
+              await handleCopy(content, template.path);
             }}
           >
             {copied === template.path ? (

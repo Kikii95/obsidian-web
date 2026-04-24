@@ -5,18 +5,28 @@
 
 export type QueryType = "TABLE" | "LIST";
 
-export type ColumnFunction = "length" | "count" | "sum";
+export type ColumnFunction = "length" | "count" | "sum" | "dateformat";
 
 export type FromSource =
   | { type: "folder"; path: string }
   | { type: "tag"; name: string };
 
-export type WhereOperator = "=" | "!=" | ">" | "<" | ">=" | "<=" | "contains";
+export type WhereOperator = "=" | "!=" | ">" | "<" | ">=" | "<=" | "contains" | "not_contains" | "truthy";
+
+export interface DateExpression {
+  type: "date";
+  value: "today" | "now" | "yesterday" | "tomorrow";
+  offset?: {
+    amount: number;
+    unit: "days" | "weeks" | "months" | "years" | "hours" | "minutes";
+    direction: "add" | "subtract";
+  };
+}
 
 export interface WhereCondition {
   field: string;
   operator: WhereOperator;
-  value: string | number | boolean;
+  value: string | number | boolean | DateExpression;
 }
 
 export interface SortClause {
@@ -28,6 +38,7 @@ export interface TableColumn {
   field: string;
   alias?: string;
   function?: ColumnFunction;
+  format?: string; // For dateformat(field, "format")
 }
 
 export interface FlattenClause {
@@ -39,7 +50,7 @@ export interface DataviewQuery {
   type: QueryType;
   withoutId?: boolean;
   columns?: TableColumn[];
-  from?: FromSource;
+  from?: FromSource | FromSource[]; // Can be single source or array for OR
   where?: WhereCondition[];
   groupBy?: string;
   flatten?: FlattenClause;

@@ -12,10 +12,80 @@ import type {
   WhereCondition,
   SortClause,
   FlattenClause,
+  DateExpression,
 } from "./types";
 import type { VaultIndexEntry } from "@/lib/db/schema";
 import type { VaultKey } from "@/lib/db/vault-index-queries";
 import { getPublicVaultIndexEntries } from "@/lib/db/vault-index-queries";
+
+/**
+ * Check if a value is a DateExpression
+ */
+function isDateExpression(value: unknown): value is DateExpression {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "type" in value &&
+    (value as DateExpression).type === "date"
+  );
+}
+
+/**
+ * Evaluate a DateExpression to an actual Date
+ */
+function evaluateDateExpression(expr: DateExpression): Date {
+  let date: Date;
+
+  switch (expr.value) {
+    case "today":
+      date = new Date();
+      date.setHours(0, 0, 0, 0);
+      break;
+    case "now":
+      date = new Date();
+      break;
+    case "yesterday":
+      date = new Date();
+      date.setDate(date.getDate() - 1);
+      date.setHours(0, 0, 0, 0);
+      break;
+    case "tomorrow":
+      date = new Date();
+      date.setDate(date.getDate() + 1);
+      date.setHours(0, 0, 0, 0);
+      break;
+    default:
+      date = new Date();
+  }
+
+  if (expr.offset) {
+    const multiplier = expr.offset.direction === "subtract" ? -1 : 1;
+    const amount = expr.offset.amount * multiplier;
+
+    switch (expr.offset.unit) {
+      case "days":
+        date.setDate(date.getDate() + amount);
+        break;
+      case "weeks":
+        date.setDate(date.getDate() + amount * 7);
+        break;
+      case "months":
+        date.setMonth(date.getMonth() + amount);
+        break;
+      case "years":
+        date.setFullYear(date.getFullYear() + amount);
+        break;
+      case "hours":
+        date.setHours(date.getHours() + amount);
+        break;
+      case "minutes":
+        date.setMinutes(date.getMinutes() + amount);
+        break;
+    }
+  }
+
+  return date;
+}
 
 /**
  * Execute a Dataview query against the vault index
@@ -81,11 +151,15 @@ export async function executeDataviewQuery(
       filtered = filtered.slice(0, query.limit);
     }
 
-    // Transform to result entries
+    // Transform to result entries (including file.mtime and file.ctime in frontmatter)
     const entries: DataviewResultEntry[] = filtered.map((entry) => ({
       filePath: entry.filePath,
       fileName: entry.fileName,
-      frontmatter: entry.frontmatter as Record<string, unknown>,
+      frontmatter: {
+        ...(entry.frontmatter as Record<string, unknown>),
+        "file.mtime": entry.updatedAt,
+        "file.ctime": entry.indexedAt,
+      },
     }));
 
     // Build columns list for TABLE queries
@@ -110,18 +184,14 @@ export async function executeDataviewQuery(
 }
 
 /**
- * Filter entries by FROM clause (folder or tag)
+ * Filter entries by a single FROM source (folder or tag)
  */
-function filterByFrom(
+function filterBySingleSource(
   entries: VaultIndexEntry[],
-  from: FromSource | undefined
+  source: FromSource
 ): VaultIndexEntry[] {
-  if (!from) {
-    return entries;
-  }
-
-  if (from.type === "folder") {
-    const folderPath = from.path.replace(/^\//, "").replace(/\/$/, "");
+  if (source.type === "folder") {
+    const folderPath = source.path.replace(/^\//, "").replace(/\/$/, "");
     return entries.filter((entry) => {
       const entryFolder = entry.filePath
         .replace(/^\//, "")
@@ -134,8 +204,8 @@ function filterByFrom(
     });
   }
 
-  if (from.type === "tag") {
-    const tagName = from.name.replace(/^#/, "");
+  if (source.type === "tag") {
+    const tagName = source.name.replace(/^#/, "");
     return entries.filter((entry) => {
       const tags = entry.tags as string[];
       return tags?.some((t) => {
@@ -148,6 +218,40 @@ function filterByFrom(
   }
 
   return entries;
+}
+
+/**
+ * Filter entries by FROM clause (folder or tag, supports OR)
+ */
+function filterByFrom(
+  entries: VaultIndexEntry[],
+  from: FromSource | FromSource[] | undefined
+): VaultIndexEntry[] {
+  if (!from) {
+    return entries;
+  }
+
+  // Handle array of sources (OR logic)
+  if (Array.isArray(from)) {
+    // Union of all matching entries (OR)
+    const matchedPaths = new Set<string>();
+    const result: VaultIndexEntry[] = [];
+
+    for (const source of from) {
+      const matches = filterBySingleSource(entries, source);
+      for (const entry of matches) {
+        if (!matchedPaths.has(entry.filePath)) {
+          matchedPaths.add(entry.filePath);
+          result.push(entry);
+        }
+      }
+    }
+
+    return result;
+  }
+
+  // Single source
+  return filterBySingleSource(entries, from);
 }
 
 /**
@@ -202,6 +306,14 @@ function getFieldValue(entry: VaultIndexEntry, field: string): unknown {
     const fm = entry.frontmatter as Record<string, unknown>;
     return fm.tasks || [];
   }
+  if (field === "file.mtime") {
+    // Modified time - use updatedAt from index
+    return entry.updatedAt;
+  }
+  if (field === "file.ctime") {
+    // Created time - use indexedAt as approximation (true ctime not available)
+    return entry.indexedAt;
+  }
 
   // Frontmatter fields (support nested with dot notation)
   const frontmatter = entry.frontmatter as Record<string, unknown>;
@@ -225,7 +337,7 @@ function getFieldValue(entry: VaultIndexEntry, field: string): unknown {
 function evaluateCondition(
   fieldValue: unknown,
   operator: string,
-  conditionValue: string | number | boolean
+  conditionValue: string | number | boolean | DateExpression
 ): boolean {
   // Handle undefined/null
   if (fieldValue === undefined || fieldValue === null) {
@@ -233,6 +345,37 @@ function evaluateCondition(
       return true;
     }
     return false;
+  }
+
+  // Handle DateExpression comparisons
+  if (isDateExpression(conditionValue)) {
+    const targetDate = evaluateDateExpression(conditionValue);
+    const fieldDate = fieldValue instanceof Date
+      ? fieldValue
+      : new Date(fieldValue as string | number);
+
+    if (isNaN(fieldDate.getTime())) return false;
+
+    const fieldTime = fieldDate.getTime();
+    const targetTime = targetDate.getTime();
+
+    switch (operator) {
+      case "=":
+        // For date equality, compare just the date part (ignore time)
+        return fieldDate.toDateString() === targetDate.toDateString();
+      case "!=":
+        return fieldDate.toDateString() !== targetDate.toDateString();
+      case ">":
+        return fieldTime > targetTime;
+      case "<":
+        return fieldTime < targetTime;
+      case ">=":
+        return fieldTime >= targetTime;
+      case "<=":
+        return fieldTime <= targetTime;
+      default:
+        return false;
+    }
   }
 
   switch (operator) {
@@ -256,6 +399,18 @@ function evaluateCondition(
 
     case "contains":
       return compareContains(fieldValue, conditionValue);
+
+    case "not_contains":
+      return !compareContains(fieldValue, conditionValue);
+
+    case "truthy":
+      // Check if value is truthy (exists and is not empty)
+      if (fieldValue === undefined || fieldValue === null) return false;
+      if (Array.isArray(fieldValue)) return fieldValue.length > 0;
+      if (typeof fieldValue === "string") return fieldValue.length > 0;
+      if (typeof fieldValue === "boolean") return fieldValue;
+      if (typeof fieldValue === "number") return !isNaN(fieldValue);
+      return Boolean(fieldValue);
 
     default:
       return false;
@@ -420,7 +575,11 @@ function groupEntries(
     rows: rows.map((e) => ({
       filePath: e.filePath,
       fileName: e.fileName,
-      frontmatter: e.frontmatter as Record<string, unknown>,
+      frontmatter: {
+        ...(e.frontmatter as Record<string, unknown>),
+        "file.mtime": e.updatedAt,
+        "file.ctime": e.indexedAt,
+      },
     })),
   }));
 }

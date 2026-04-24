@@ -13,11 +13,13 @@ export interface PatchNote {
 
 // Plus recent en premier
 export const patchNotes: PatchNote[] = [
-  // v2.1.0 - Medium Features + Templates Enhancement
+  // v2.1.0 - Medium Features + Templates Enhancement + Dataview Extended
   {
     version: "2.1.0",
     date: "2026-02-02",
     features: [
+      // Dataview Extended Support
+      { title: "Dataview Etendu", description: "Support !contains, WHERE truthy, dateformat(), date(), dur(), FROM OR" },
       // Medium Features (13 implemented)
       { title: "Diagrammes Mermaid", description: "Rend les blocs code mermaid en graphiques interactifs" },
       { title: "Math/LaTeX", description: "Rendu KaTeX pour formules inline $...$ et block $$...$$" },
@@ -35,7 +37,9 @@ export const patchNotes: PatchNote[] = [
       { title: "Templates Avances", description: "9 built-in, variables avancees (uuid, week, quarter...), preview live, arborescence collapsible, page /templates avec guide" },
     ],
     fixes: [],
-    improvements: [],
+    improvements: [
+      { title: "Theme Code Auto", description: "Utilise les couleurs du theme global (keywords, strings, numbers harmonises)" },
+    ],
   },
   // v2.0.0 - Index PostgreSQL + Quick Wins
   {

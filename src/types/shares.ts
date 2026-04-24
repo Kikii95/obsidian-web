@@ -76,3 +76,56 @@ export interface ShareContext {
     rootPath: string;
   };
 }
+
+/**
+ * Share display data for UI (extended from DB Share)
+ */
+export interface ShareDisplayData {
+  id: string;
+  token: string;
+  shareType: ShareType;
+  folderPath: string;
+  folderName: string;
+  name: string;
+  includeSubfolders: boolean;
+  mode: ShareMode;
+  createdAt: string;
+  expiresAt: string;
+  accessCount: number;
+  isExpired: boolean;
+}
+
+/**
+ * Handlers passed to ShareCard for actions
+ */
+export interface ShareCardHandlers {
+  onDelete: (token: string) => void;
+  onCopy: (token: string) => void;
+  onRename: (token: string, newName: string) => Promise<boolean>;
+}
+
+/**
+ * State passed to ShareCard for UI feedback
+ */
+export interface ShareCardState {
+  deletingId: string | null;
+  copiedToken: string | null;
+}
+
+/**
+ * Utility functions passed to ShareCard
+ */
+export interface ShareCardUtils {
+  formatDate: (date: string) => string;
+  getTimeRemaining: (date: string) => string;
+}
+
+/**
+ * Combined props for ShareCard component
+ */
+export interface ShareCardProps {
+  share: ShareDisplayData;
+  handlers: ShareCardHandlers;
+  state: ShareCardState;
+  utils: ShareCardUtils;
+}

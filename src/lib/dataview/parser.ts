@@ -13,6 +13,7 @@ import type {
   SortClause,
   TableColumn,
   FlattenClause,
+  DateExpression,
 } from "./types";
 
 // Regex patterns for parsing
@@ -117,6 +118,18 @@ function parseTableColumns(columnsStr: string): TableColumn[] {
   const parts = columnsStr.split(",").map((p) => p.trim()).filter(Boolean);
 
   for (const part of parts) {
+    // Check for dateformat: dateformat(field, "format") AS alias
+    const dateformatMatch = part.match(/^dateformat\s*\(\s*([\w.]+)\s*,\s*["']([^"']+)["']\s*\)(?:\s+[aA][sS]\s+["']?([^"']+)["']?)?$/i);
+    if (dateformatMatch) {
+      columns.push({
+        field: dateformatMatch[1].trim(),
+        format: dateformatMatch[2].trim(),
+        alias: dateformatMatch[3]?.trim() || `dateformat(${dateformatMatch[1].trim()})`,
+        function: "dateformat",
+      });
+      continue;
+    }
+
     // Check for function: length(field) AS alias
     const lengthMatch = part.match(/^length\(([\w.]+)\)(?:\s+[aA][sS]\s+["']?([^"']+)["']?)?$/i);
     if (lengthMatch) {
@@ -149,9 +162,50 @@ function parseTableColumns(columnsStr: string): TableColumn[] {
 }
 
 /**
- * Parse FROM clause (folder path or tag)
+ * Parse FROM clause (folder path or tag, supports OR)
+ * Examples:
+ *   FROM "Projects"
+ *   FROM "Projects" OR "Learning"
+ *   FROM #tag
+ *   FROM #tag OR "Folder"
  */
-function parseFromClause(query: string): FromSource | undefined {
+function parseFromClause(query: string): FromSource | FromSource[] | undefined {
+  // Check for OR pattern first: FROM "A" OR "B" OR ...
+  const fromOrRegex = /FROM\s+(.+?)(?=\s+WHERE|\s+FLATTEN|\s+GROUP|\s+SORT|\s+LIMIT|$)/i;
+  const fromMatch = query.match(fromOrRegex);
+
+  if (!fromMatch) return undefined;
+
+  const fromPart = fromMatch[1].trim();
+
+  // Check if it contains OR
+  if (/\s+OR\s+/i.test(fromPart)) {
+    const sources: FromSource[] = [];
+    // Split by OR and parse each part
+    const parts = fromPart.split(/\s+OR\s+/i);
+
+    for (const part of parts) {
+      const trimmed = part.trim();
+
+      // Folder: "path/to/folder"
+      const folderMatch = trimmed.match(/^"([^"]+)"$/);
+      if (folderMatch) {
+        sources.push({ type: "folder", path: folderMatch[1].trim() });
+        continue;
+      }
+
+      // Tag: #tagname
+      const tagMatch = trimmed.match(/^#([\w\/-]+)$/);
+      if (tagMatch) {
+        sources.push({ type: "tag", name: tagMatch[1].trim() });
+        continue;
+      }
+    }
+
+    return sources.length > 0 ? (sources.length === 1 ? sources[0] : sources) : undefined;
+  }
+
+  // Single source (original logic)
   // Try folder first: FROM "path/to/folder"
   const folderMatch = query.match(FROM_FOLDER_REGEX);
   if (folderMatch) {
@@ -175,23 +229,84 @@ function parseFromClause(query: string): FromSource | undefined {
 
 /**
  * Parse WHERE conditions
- * Supports: field = value, field != value, field > value, etc.
+ * Supports: field = value, field != value, field > value, contains(), !contains(), truthy
  */
 function parseWhereConditions(
   query: string
 ): WhereCondition[] | DataviewParseError {
   const conditions: WhereCondition[] = [];
 
-  // Match all WHERE clauses
-  // Pattern: WHERE field operator value
+  // Pattern 1: !contains(field, "value") - NOT contains
+  const notContainsRegex = /WHERE\s+!contains\s*\(\s*([\w.]+)\s*,\s*["']([^"']+)["']\s*\)/gi;
+  let match;
+  while ((match = notContainsRegex.exec(query)) !== null) {
+    conditions.push({
+      field: match[1].trim(),
+      operator: "not_contains",
+      value: match[2].trim(),
+    });
+  }
+
+  // Pattern 2: contains(field, "value") - function syntax (alternative to field contains "value")
+  const containsFnRegex = /WHERE\s+contains\s*\(\s*([\w.]+)\s*,\s*["']([^"']+)["']\s*\)/gi;
+  while ((match = containsFnRegex.exec(query)) !== null) {
+    conditions.push({
+      field: match[1].trim(),
+      operator: "contains",
+      value: match[2].trim(),
+    });
+  }
+
+  // Pattern 3: Date expressions - field operator date(today) - dur(X days)
+  const dateExprRegex =
+    /WHERE\s+([\w.]+)\s*(=|!=|>=|<=|>|<)\s*date\s*\(\s*(\w+)\s*\)(?:\s*(-|\+)\s*dur\s*\(\s*(\d+)\s*(days?|weeks?|months?|years?|hours?|minutes?)\s*\))?/gi;
+
+  while ((match = dateExprRegex.exec(query)) !== null) {
+    const field = match[1].trim();
+    const operator = match[2].trim() as WhereOperator;
+    const dateValue = match[3].toLowerCase() as "today" | "now" | "yesterday" | "tomorrow";
+    const offsetDirection = match[4] as "-" | "+" | undefined;
+    const offsetAmount = match[5] ? parseInt(match[5], 10) : undefined;
+    const offsetUnitRaw = match[6]?.toLowerCase().replace(/s$/, "");
+
+    const dateExpr: DateExpression = {
+      type: "date",
+      value: dateValue,
+    };
+
+    if (offsetDirection && offsetAmount !== undefined && offsetUnitRaw) {
+      const unitWithS = (offsetUnitRaw + "s") as "days" | "weeks" | "months" | "years" | "hours" | "minutes";
+      dateExpr.offset = {
+        amount: offsetAmount,
+        unit: unitWithS,
+        direction: offsetDirection === "-" ? "subtract" : "add",
+      };
+    }
+
+    conditions.push({
+      field,
+      operator,
+      value: dateExpr,
+    });
+  }
+
+  // Pattern 4: Standard operators - field operator value
   const whereRegex =
     /WHERE\s+([\w.]+)\s*(=|!=|>=|<=|>|<|contains)\s*(".*?"|'.*?'|[\w\d.-]+)/gi;
 
-  let match;
   while ((match = whereRegex.exec(query)) !== null) {
     const field = match[1].trim();
     const operator = match[2].trim() as WhereOperator;
-    let rawValue = match[3].trim();
+    const rawValue = match[3].trim();
+
+    // Skip if already handled by function patterns or date expressions
+    const alreadyHandled = conditions.some(
+      (c) => c.field === field
+    );
+    if (alreadyHandled) continue;
+
+    // Skip if this looks like a date expression (would have been caught above)
+    if (rawValue.toLowerCase().startsWith("date(")) continue;
 
     // Parse value
     const value = parseValue(rawValue);
@@ -200,6 +315,27 @@ function parseWhereConditions(
       field,
       operator,
       value,
+    });
+  }
+
+  // Pattern 4: Truthy check - WHERE field (no operator, just field name)
+  // Must run AFTER other patterns to avoid false positives
+  // Match: WHERE fieldname followed by end, another clause (SORT, LIMIT, GROUP, FLATTEN, FROM), or another WHERE
+  const truthyRegex = /WHERE\s+([\w.]+)(?=\s*(?:$|SORT|LIMIT|GROUP|FLATTEN|FROM|WHERE))/gi;
+  while ((match = truthyRegex.exec(query)) !== null) {
+    const field = match[1].trim();
+
+    // Skip if this field was already captured by another pattern
+    const alreadyHandled = conditions.some((c) => c.field === field);
+    if (alreadyHandled) continue;
+
+    // Skip operator keywords that might be matched
+    if (["SORT", "LIMIT", "GROUP", "FLATTEN", "FROM", "WHERE", "AND", "OR"].includes(field.toUpperCase())) continue;
+
+    conditions.push({
+      field,
+      operator: "truthy",
+      value: true,
     });
   }
 

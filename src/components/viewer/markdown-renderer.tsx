@@ -634,7 +634,34 @@ function processCodeBlockTitles(content: string): string {
 }
 
 /**
- * Convert (hidden::visible) syntax to HTML spans for collapsible content
+ * Apply a transform only to portions of content that are OUTSIDE code regions.
+ * Skips fenced blocks (```...```) and inline code (`...`) so language syntax
+ * like C++ `Foo::Bar` inside code samples isn't matched by markdown extensions.
+ */
+function processOutsideCode(content: string, transform: (s: string) => string): string {
+  const codeRegex = /(```[\s\S]*?```|`[^`\n]*`)/g;
+  const parts: string[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = codeRegex.exec(content)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(transform(content.slice(lastIndex, match.index)));
+    }
+    parts.push(match[0]);
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < content.length) {
+    parts.push(transform(content.slice(lastIndex)));
+  }
+
+  return parts.join("");
+}
+
+/**
+ * Convert (hidden::visible) syntax to HTML spans for collapsible content.
+ * Runs only on text OUTSIDE code blocks so C++ `Foo::Bar(args)` is never matched.
  * @param content The markdown content
  */
 function processCollapsible(content: string): string {
@@ -642,17 +669,19 @@ function processCollapsible(content: string): string {
   // Supports multiline hidden content with [\s\S] instead of .
   const collapsibleRegex = /\(([^:)]+?)::([^)]+?)\)/g;
 
-  return content.replace(collapsibleRegex, (match, hidden, visible) => {
-    // Escape HTML entities to prevent XSS and rendering issues
-    const escapeHtml = (str: string) =>
-      str
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;");
+  // Escape HTML entities to prevent XSS and rendering issues
+  const escapeHtml = (str: string) =>
+    str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
 
-    return `<span class="collapsible-toggle" data-hidden="${escapeHtml(hidden.trim())}" data-visible="${escapeHtml(visible.trim())}"></span>`;
-  });
+  return processOutsideCode(content, (text) =>
+    text.replace(collapsibleRegex, (_match, hidden, visible) =>
+      `<span class="collapsible-toggle" data-hidden="${escapeHtml(hidden.trim())}" data-visible="${escapeHtml(visible.trim())}"></span>`
+    )
+  );
 }
 
 /**

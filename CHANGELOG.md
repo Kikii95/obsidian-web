@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.2] - 2026-04-24
+
+### Fixed
+
+- **Collapsible dans code blocks** — La syntaxe `(hidden::visible)` n'est plus interprétée à l'intérieur des fences ` ```lang ` ni des backticks inline. Le code C++ type `Foo::Bar(args)` reste intact en mode lecture.
+
+---
+
 ## [2.1.1] - 2026-03-04
 
 ### Fixed

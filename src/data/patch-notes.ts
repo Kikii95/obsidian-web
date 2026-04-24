@@ -13,6 +13,16 @@ export interface PatchNote {
 
 // Plus recent en premier
 export const patchNotes: PatchNote[] = [
+  // v2.1.2 - Fix collapsible dans code blocks
+  {
+    version: "2.1.2",
+    date: "2026-04-24",
+    features: [],
+    fixes: [
+      { title: "Collapsible dans code blocks", description: "La syntaxe (hidden::visible) n'est plus appliquee dans les blocs de code ni dans les backticks inline — le code C++ type Foo::Bar(args) reste intact en mode lecture" },
+    ],
+    improvements: [],
+  },
   // v2.1.0 - Medium Features + Templates Enhancement + Dataview Extended
   {
     version: "2.1.0",

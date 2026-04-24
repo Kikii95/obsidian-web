@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, AlertCircle, Loader2, Clock, Download, Github } from "lucide-react";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { UniversalLayout, SidebarHeader } from "@/components/layout";
 import type { VaultFile } from "@/types";
 import type { RateLimitInfo } from "@/lib/github";
+import { base64ToBlobUrl } from "@/lib/pdf-export";
 
 interface FileData {
   path: string;
@@ -44,6 +45,15 @@ export default function TempVaultFilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isRateLimited, setIsRateLimited] = useState(false);
+
+  // Use Blob URL for PDF iframe instead of massive data URL
+  const pdfBlobUrl = useMemo(
+    () => (file?.fileType === "pdf" ? base64ToBlobUrl(file.content, file.mimeType) : null),
+    [file?.fileType, file?.content, file?.mimeType]
+  );
+  useEffect(() => {
+    return () => { if (pdfBlobUrl) URL.revokeObjectURL(pdfBlobUrl); };
+  }, [pdfBlobUrl]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -261,9 +271,9 @@ export default function TempVaultFilePage() {
             </div>
           )}
 
-          {file.fileType === "pdf" && (
+          {file.fileType === "pdf" && pdfBlobUrl && (
             <iframe
-              src={`data:${file.mimeType};base64,${file.content}`}
+              src={pdfBlobUrl}
               className="w-full h-[80vh]"
               title={fileName}
             />

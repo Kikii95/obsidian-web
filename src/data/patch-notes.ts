@@ -13,6 +13,16 @@ export interface PatchNote {
 
 // Plus recent en premier
 export const patchNotes: PatchNote[] = [
+  // v2.1.3 - Security remediation (94 Dependabot alerts)
+  {
+    version: "2.1.3",
+    date: "2026-04-24",
+    features: [],
+    fixes: [],
+    improvements: [
+      { title: "Securite — 94 CVE patchees", description: "Bump Next.js 16.2.3, jsPDF 4.2.1, html2pdf 0.14, drizzle-orm 0.45.2 + overrides pnpm sur 18 packages transitifs (dompurify, lodash, vite, minimatch, etc.) — 3 critical / 41 high / 46 moderate fermees" },
+    ],
+  },
   // v2.1.2 - Fix collapsible dans code blocks
   {
     version: "2.1.2",

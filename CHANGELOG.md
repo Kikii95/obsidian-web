@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.3] - 2026-04-24
+
+### Security
+
+- **Remédiation 94 alertes Dependabot** — Direct deps bumpées (`next@16.2.3`, `jspdf@4.2.1`, `html2pdf.js@0.14.0`, `drizzle-orm@0.45.2`) et bloc `pnpm.overrides` ajouté pour 18 packages transitifs (`dompurify`, `vite`, `lodash`, `minimatch`, `picomatch`, `rollup`, `undici`, `serialize-javascript`, `flatted`, `immutable`, `preact`, `nanoid`, `brace-expansion`, `uuid`, `mermaid`, `esbuild`, `webpack`, `lodash-es`)
+- **3 critical + 41 high patchés** : XSS, HTML/PDF injection, path traversal, SQL injection, DoS, prototype pollution
+- Résiduel : 2 low sur `webpack@buildHttp` (feature non utilisée dans ce projet)
+
+---
+
 ## [2.1.2] - 2026-04-24
 
 ### Fixed

@@ -342,7 +342,7 @@ export default function HomePage() {
         <Card className={`${mbClass} border-primary/30 bg-primary/5`}>
           <CardContent className="py-3 px-4">
             <Link
-              href={getFileUrl(lastOpenedNotePath + ".md")}
+              href={getFileUrl(lastOpenedNotePath)}
               className="flex items-center gap-3 group"
             >
               <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
@@ -351,7 +351,7 @@ export default function HomePage() {
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-muted-foreground">Reprendre où vous en étiez</p>
                 <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
-                  {lastOpenedNotePath.split("/").pop() || lastOpenedNotePath}
+                  {(lastOpenedNotePath.split("/").pop() || lastOpenedNotePath).replace(/\.md$/, "")}
                 </p>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary shrink-0 transition-colors" />

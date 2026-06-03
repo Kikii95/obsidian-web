@@ -6,6 +6,7 @@ import {
   ViewUpdate,
 } from "@codemirror/view";
 import { RangeSetBuilder } from "@codemirror/state";
+import { isValidObsidianTag } from "@/lib/obsidian-tags";
 
 const tagDecoration = Decoration.mark({ class: "cm-obsidian-tag" });
 
@@ -47,10 +48,13 @@ function findTags(view: EditorView): DecorationSet {
           endIdx++;
         }
 
-        // Add decoration
-        const from = line.from + idx;
-        const to = line.from + endIdx;
-        builder.add(from, to, tagDecoration);
+        // Skip hex colors and numeric tokens (not real tags)
+        const tagText = text.slice(idx + 1, endIdx);
+        if (isValidObsidianTag(tagText)) {
+          const from = line.from + idx;
+          const to = line.from + endIdx;
+          builder.add(from, to, tagDecoration);
+        }
 
         pos = endIdx;
       } else {

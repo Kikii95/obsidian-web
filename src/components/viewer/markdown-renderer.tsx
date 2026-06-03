@@ -16,6 +16,7 @@ import { DataviewQuery } from "@/components/markdown/dataview-query";
 import { LinkPreview } from "@/components/markdown/link-preview";
 import { ImageZoomModal, useImageZoom } from "@/components/media/image-zoom-modal";
 import { wikilinkToPath, buildNoteLookupMap, type NoteLookupMap } from "@/lib/wikilinks";
+import { isValidObsidianTag } from "@/lib/obsidian-tags";
 import { useVaultStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { useCodeTheme } from "@/hooks/use-code-theme";
@@ -831,7 +832,9 @@ function processTags(content: string): string {
     // Replace tags with styled spans
     // Match # not preceded by # or word char, followed by word chars (and /)
     const tagRegex = /(?<![#\w])#([\w][\w/]*)/g;
-    const processed = line.replace(tagRegex, '<span class="obsidian-tag">#$1</span>');
+    const processed = line.replace(tagRegex, (match, tag: string) =>
+      isValidObsidianTag(tag) ? `<span class="obsidian-tag">#${tag}</span>` : match
+    );
     result.push(processed);
   }
 

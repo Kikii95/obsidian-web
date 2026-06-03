@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.2.1] - 2026-06-03
+
+### Fixed
+
+- **Couleurs hex prises pour des tags** — Les codes hex (`#002253`, `#F86632`, …) et les tokens 100 % numériques (`#1984`) ne sont plus stylés comme des tags Obsidian, dans le lecteur comme dans l'éditeur. Nouveau helper partagé `isValidObsidianTag()` (exclut les hex 6/8 digits + tout-numérique, conforme à la règle Obsidian « au moins un caractère non-numérique »).
+- **Lien « Reprendre où vous en étiez »** — L'URL ajoutait un `.md` en trop (`/note/…/Note.md` au lieu de `/note/…/Note`) car le chemin stocké contenait déjà l'extension. Suffixe retiré + `.md` masqué dans le titre affiché.
+
+---
+
 ## [2.2.0] - 2026-06-03
 
 ### Added

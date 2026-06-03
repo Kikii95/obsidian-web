@@ -13,6 +13,17 @@ export interface PatchNote {
 
 // Plus recent en premier
 export const patchNotes: PatchNote[] = [
+  // v2.2.1 - Fixes hex tags + lien reprendre
+  {
+    version: "2.2.1",
+    date: "2026-06-03",
+    features: [],
+    fixes: [
+      { title: "Couleurs hex non taguees", description: "Les codes couleur hex (#002253, #F86632...) et les tokens 100% numeriques ne sont plus affiches comme des tags Obsidian, en lecture comme en edition" },
+      { title: "Lien « Reprendre »", description: "Le raccourci « Reprendre ou vous en etiez » n'ajoute plus de .md parasite dans l'URL de la note" },
+    ],
+    improvements: [],
+  },
   // v2.2.0 - Partage a duree illimitee
   {
     version: "2.2.0",

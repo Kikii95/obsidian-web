@@ -31,12 +31,12 @@ export interface CreateShareInput {
   allowExport?: boolean; // allow export to PDF/MD (default: true)
 }
 
-export type ExpirationValue = "1h" | "1d" | "1w" | "1m";
+export type ExpirationValue = "1h" | "1d" | "1w" | "1m" | "never";
 
 export interface ExpirationOption {
   value: ExpirationValue;
   label: string;
-  ms: number;
+  ms: number | null; // null = no expiration (permanent share)
 }
 
 export const EXPIRATION_OPTIONS: ExpirationOption[] = [
@@ -44,11 +44,20 @@ export const EXPIRATION_OPTIONS: ExpirationOption[] = [
   { value: "1d", label: "1 jour", ms: 24 * 60 * 60 * 1000 },
   { value: "1w", label: "1 semaine", ms: 7 * 24 * 60 * 60 * 1000 },
   { value: "1m", label: "1 mois", ms: 30 * 24 * 60 * 60 * 1000 },
+  { value: "never", label: "Illimité", ms: null },
 ];
 
-export function getExpirationMs(value: ExpirationValue): number {
+const DEFAULT_EXPIRATION_MS = 7 * 24 * 60 * 60 * 1000; // 1 week
+
+/**
+ * Resolve an expiration value to a duration in ms.
+ * Returns null for permanent shares ("never"), or for unknown values
+ * the default of 1 week.
+ */
+export function getExpirationMs(value: ExpirationValue): number | null {
   const option = EXPIRATION_OPTIONS.find((o) => o.value === value);
-  return option?.ms ?? EXPIRATION_OPTIONS[2].ms; // Default 1 week
+  if (!option) return DEFAULT_EXPIRATION_MS;
+  return option.ms;
 }
 
 export interface ShareMetadata {
@@ -60,7 +69,7 @@ export interface ShareMetadata {
   includeSubfolders: boolean;
   mode: ShareMode;
   createdAt: string;
-  expiresAt: string;
+  expiresAt: string | null; // null = permanent (no expiration)
   isExpired: boolean;
   // Deposit config (only present when mode === "deposit")
   depositConfig?: DepositConfig;
@@ -90,7 +99,7 @@ export interface ShareDisplayData {
   includeSubfolders: boolean;
   mode: ShareMode;
   createdAt: string;
-  expiresAt: string;
+  expiresAt: string | null; // null = permanent (no expiration)
   accessCount: number;
   isExpired: boolean;
 }
@@ -117,7 +126,7 @@ export interface ShareCardState {
  */
 export interface ShareCardUtils {
   formatDate: (date: string) => string;
-  getTimeRemaining: (date: string) => string;
+  getTimeRemaining: (date: string | null) => string;
 }
 
 /**

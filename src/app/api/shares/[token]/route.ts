@@ -18,7 +18,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     if (!metadata) {
       // Check if share exists but is expired
       const share = await getShareByTokenRaw(token);
-      if (share && share.expiresAt < new Date()) {
+      if (share && share.expiresAt && share.expiresAt < new Date()) {
         return NextResponse.json(
           { error: "Ce lien de partage a expiré", expired: true },
           { status: 410 }

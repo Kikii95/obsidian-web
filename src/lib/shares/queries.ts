@@ -1,4 +1,4 @@
-import { eq, and, gt, lt } from "drizzle-orm";
+import { eq, and, gt, lt, or, isNull, isNotNull } from "drizzle-orm";
 import { db, shares, type Share, type NewShare } from "@/lib/db";
 import { nanoid } from "nanoid";
 import { encryptToken } from "./encryption";
@@ -26,7 +26,9 @@ export async function createShare(params: {
   allowExport?: boolean;
 }): Promise<Share> {
   const encryptedToken = await encryptToken(params.accessToken);
-  const expiresAt = new Date(Date.now() + getExpirationMs(params.expiresIn));
+  const expirationMs = getExpirationMs(params.expiresIn);
+  const expiresAt =
+    expirationMs === null ? null : new Date(Date.now() + expirationMs);
 
   const newShare: NewShare = {
     token: nanoid(21),
@@ -70,7 +72,13 @@ export async function getShareByToken(token: string): Promise<Share | null> {
   const [share] = await db
     .select()
     .from(shares)
-    .where(and(eq(shares.token, token), gt(shares.expiresAt, new Date())))
+    .where(
+      and(
+        eq(shares.token, token),
+        // Permanent shares (expiresAt IS NULL) never expire
+        or(isNull(shares.expiresAt), gt(shares.expiresAt, new Date()))
+      )
+    )
     .limit(1);
 
   return share ?? null;
@@ -164,7 +172,9 @@ export async function recordShareAccess(token: string): Promise<void> {
 export async function cleanupExpiredShares(): Promise<number> {
   const result = await db
     .delete(shares)
-    .where(lt(shares.expiresAt, new Date())) // expiresAt < now = expired
+    // Only delete dated shares that are past due; permanent shares
+    // (expiresAt IS NULL) are kept forever.
+    .where(and(isNotNull(shares.expiresAt), lt(shares.expiresAt, new Date())))
     .returning({ id: shares.id });
 
   return result.length;

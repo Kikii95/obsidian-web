@@ -22,6 +22,13 @@
       "when": 1769905985325,
       "tag": "0002_illegal_tenebrous",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1780503942112,
+      "tag": "0003_illegal_magus",
+      "breakpoints": true
     }
   ]
 }

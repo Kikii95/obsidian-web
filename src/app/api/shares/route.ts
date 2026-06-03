@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
         folderPath: share.folderPath,
         includeSubfolders: share.includeSubfolders,
         mode: share.mode,
-        expiresAt: share.expiresAt.toISOString(),
+        expiresAt: share.expiresAt ? share.expiresAt.toISOString() : null,
         createdAt: share.createdAt.toISOString(),
       },
     });
@@ -92,10 +92,10 @@ export async function GET() {
         name: share.name || folderName, // Use custom name or default to folder/note name
         includeSubfolders: share.includeSubfolders,
         mode: share.mode,
-        expiresAt: share.expiresAt.toISOString(),
+        expiresAt: share.expiresAt ? share.expiresAt.toISOString() : null,
         createdAt: share.createdAt.toISOString(),
         accessCount: share.accessCount,
-        isExpired: share.expiresAt < new Date(),
+        isExpired: share.expiresAt ? share.expiresAt < new Date() : false,
       };
     });
 

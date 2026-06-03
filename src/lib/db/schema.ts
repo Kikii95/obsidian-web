@@ -48,7 +48,7 @@ export const shares = pgTable(
 
     // Lifecycle
     createdAt: timestamp("created_at").defaultNow().notNull(),
-    expiresAt: timestamp("expires_at").notNull(),
+    expiresAt: timestamp("expires_at"), // null = permanent share (no expiration)
     lastAccessedAt: timestamp("last_accessed_at"),
     accessCount: integer("access_count").default(0).notNull(),
   },

@@ -13,7 +13,7 @@ import type { ShareMode } from "@/types/shares";
 interface ShareMetadata {
   folderPath: string;
   folderName: string;
-  expiresAt: string;
+  expiresAt: string | null;
   mode: ShareMode;
   allowCopy: boolean;
   allowExport: boolean;
@@ -156,7 +156,7 @@ export default function ShareFilePage() {
         folderPath: metadata.folderPath,
         folderName: metadata.folderName,
         shareMode: metadata.mode,
-        expiresAt: new Date(metadata.expiresAt),
+        expiresAt: metadata.expiresAt ? new Date(metadata.expiresAt) : null,
         allowCopy: metadata.allowCopy,
         allowExport: metadata.allowExport,
         ownerName: "",

@@ -13,6 +13,16 @@ export interface PatchNote {
 
 // Plus recent en premier
 export const patchNotes: PatchNote[] = [
+  // v2.2.0 - Partage a duree illimitee
+  {
+    version: "2.2.0",
+    date: "2026-06-03",
+    features: [
+      { title: "Partage illimite", description: "Nouvelle option d'expiration « Illimite » a la creation d'un lien de partage — le lien reste actif indefiniment jusqu'a suppression manuelle, en plus des durees 1h / 1j / 1 semaine / 1 mois" },
+    ],
+    fixes: [],
+    improvements: [],
+  },
   // v2.1.3 - Security remediation (94 Dependabot alerts)
   {
     version: "2.1.3",

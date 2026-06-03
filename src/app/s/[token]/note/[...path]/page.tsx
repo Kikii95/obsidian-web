@@ -17,7 +17,7 @@ import type { ShareMode } from "@/types/shares";
 interface ShareMetadata {
   folderPath: string;
   folderName: string;
-  expiresAt: string;
+  expiresAt: string | null;
   shareType: "folder" | "note";
   mode: ShareMode;
   allowCopy: boolean;
@@ -223,7 +223,7 @@ export default function ShareNotePage() {
         folderPath: displayFolderPath,
         folderName: displayFolderName,
         shareMode: metadata.mode,
-        expiresAt: new Date(metadata.expiresAt),
+        expiresAt: metadata.expiresAt ? new Date(metadata.expiresAt) : null,
         allowCopy: metadata.allowCopy,
         allowExport: metadata.allowExport,
         ownerName: "",

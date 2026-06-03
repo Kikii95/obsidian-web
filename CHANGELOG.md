@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.2.0] - 2026-06-03
+
+### Added
+
+- **Partage à durée illimitée** — Nouvelle option d'expiration « Illimité » lors de la création d'un lien de partage (dossier ou note). Le lien reste actif indéfiniment jusqu'à suppression manuelle, en complément des durées existantes (1h, 1 jour, 1 semaine, 1 mois).
+
+### Changed
+
+- `shares.expires_at` est désormais nullable (`null` = partage permanent). Les requêtes d'accès acceptent `expires_at IS NULL`, et le nettoyage des partages expirés (`cleanupExpiredShares`) ignore les partages permanents.
+
+### Migration
+
+- `drizzle/0003_illegal_magus.sql` : `ALTER TABLE "shares" ALTER COLUMN "expires_at" DROP NOT NULL` — non destructif. À appliquer en prod via `pnpm db:push`.
+
+---
+
 ## [2.1.3] - 2026-04-24
 
 ### Security

@@ -105,7 +105,8 @@ export default function SharesPage() {
           minute: "2-digit",
         });
       },
-      getTimeRemaining: (expiresAt: string) => {
+      getTimeRemaining: (expiresAt: string | null) => {
+        if (!expiresAt) return "Illimité";
         const now = new Date();
         const expires = new Date(expiresAt);
         const diff = expires.getTime() - now.getTime();

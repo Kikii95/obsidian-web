@@ -42,7 +42,7 @@ interface ShareAnalytics {
     folderPath: string;
     mode: string;
     createdAt: string;
-    expiresAt: string;
+    expiresAt: string | null;
     accessCount: number;
   };
   analytics: {
@@ -185,7 +185,11 @@ export default function ShareAnalyticsDetailPage() {
         />
         <StatCard
           label="Expire dans"
-          value={formatDistanceToNow(new Date(share.expiresAt), { locale: fr })}
+          value={
+            share.expiresAt
+              ? formatDistanceToNow(new Date(share.expiresAt), { locale: fr })
+              : "Illimité"
+          }
           icon={<Clock className="h-4 w-4" />}
         />
       </div>

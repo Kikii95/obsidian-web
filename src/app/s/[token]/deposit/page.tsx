@@ -11,7 +11,7 @@ interface DepositMetadata {
   folderPath: string;
   folderName: string;
   mode: ShareMode;
-  expiresAt: string;
+  expiresAt: string | null;
   isExpired: boolean;
   depositConfig?: DepositConfig;
 }
@@ -67,7 +67,8 @@ export default function DepositPage() {
   }, [token]);
 
   // Format expiration date
-  const formatExpiration = (dateStr: string) => {
+  const formatExpiration = (dateStr: string | null) => {
+    if (!dateStr) return "Sans expiration";
     const date = new Date(dateStr);
     const now = new Date();
     const diffMs = date.getTime() - now.getTime();

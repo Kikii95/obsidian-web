@@ -199,7 +199,9 @@ export function ShareFolderDialog({
               </SelectContent>
             </Select>
             <p className="text-sm text-muted-foreground">
-              Le lien cessera de fonctionner après cette période
+              {expiresIn === "never"
+                ? "Le lien restera actif indéfiniment, jusqu'à suppression manuelle"
+                : "Le lien cessera de fonctionner après cette période"}
             </p>
           </div>
 

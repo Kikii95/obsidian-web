@@ -37,7 +37,7 @@ interface ShareMetadata {
   includeSubfolders: boolean;
   mode: ShareMode;
   createdAt: string;
-  expiresAt: string;
+  expiresAt: string | null;
   isExpired: boolean;
   allowCopy: boolean;
   allowExport: boolean;
@@ -243,7 +243,7 @@ export default function ShareViewerPage() {
           folderPath: displayFolderPath,
           folderName: displayFolderName,
           shareMode: metadata.mode,
-          expiresAt: new Date(metadata.expiresAt),
+          expiresAt: metadata.expiresAt ? new Date(metadata.expiresAt) : null,
           allowCopy: metadata.allowCopy,
           allowExport: metadata.allowExport,
           ownerName: "", // Not available in this context

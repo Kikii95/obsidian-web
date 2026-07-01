@@ -2,13 +2,15 @@
 
 import { useMemo, useState } from "react";
 import Fuse from "fuse.js";
-import { Camera, Orbit, RotateCcw, Route, Search, Sparkles } from "lucide-react";
+import { Camera, Flame, History, Orbit, RotateCcw, Route, Search, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SCREENSHOT_FILENAME } from "@/lib/graph/constants";
+import type { TimeExtent } from "@/lib/graph/temporal";
 import { useSettingsStore } from "@/lib/settings-store";
 import type { ClusterBy, ClusterInfo, GraphLink, GraphNode } from "@/lib/graph/types";
 import { GraphLegend } from "./graph-legend";
+import { TimeSlider } from "./time-slider";
 import { useGraphViewStore } from "./graph-view-store";
 
 interface GraphHudProps {
@@ -16,6 +18,7 @@ interface GraphHudProps {
   links: GraphLink[];
   clusters: ClusterInfo[];
   truncated: boolean;
+  timeExtent: TimeExtent;
 }
 
 const CLUSTER_CYCLE: ClusterBy[] = ["folder", "tag", "community", "none"];
@@ -27,7 +30,7 @@ const CLUSTER_LABELS: Record<ClusterBy, string> = {
 };
 const MAX_DEPTH = 3;
 
-export function GraphHud({ nodes, links, clusters, truncated }: GraphHudProps) {
+export function GraphHud({ nodes, links, clusters, truncated, timeExtent }: GraphHudProps) {
   const { settings, updateSettings } = useSettingsStore();
   const pick = useGraphViewStore((state) => state.pick);
   const clearFocus = useGraphViewStore((state) => state.clearFocus);
@@ -37,6 +40,9 @@ export function GraphHud({ nodes, links, clusters, truncated }: GraphHudProps) {
   const pathMode = useGraphViewStore((state) => state.pathMode);
   const pathStart = useGraphViewStore((state) => state.pathStart);
   const togglePathMode = useGraphViewStore((state) => state.togglePathMode);
+  const timeCursor = useGraphViewStore((state) => state.timeCursor);
+  const setTimeCursor = useGraphViewStore((state) => state.setTimeCursor);
+  const hasDates = timeExtent.dated >= 2;
   const [query, setQuery] = useState("");
 
   const fuse = useMemo(
@@ -134,6 +140,28 @@ export function GraphHud({ nodes, links, clusters, truncated }: GraphHudProps) {
           <Route className="mr-1 h-3.5 w-3.5" />
           Chemin
         </Button>
+        {hasDates && (
+          <>
+            <Button
+              size="sm"
+              variant={settings.graph3dHeat ? "default" : "secondary"}
+              onClick={() => updateSettings({ graph3dHeat: !settings.graph3dHeat })}
+              title="Colorer les notes par récence (récent = chaud)"
+            >
+              <Flame className="mr-1 h-3.5 w-3.5" />
+              Chaleur
+            </Button>
+            <Button
+              size="sm"
+              variant={timeCursor !== null ? "default" : "secondary"}
+              onClick={() => setTimeCursor(timeCursor !== null ? null : timeExtent.max)}
+              title="Rejouer la croissance du vault dans le temps"
+            >
+              <History className="mr-1 h-3.5 w-3.5" />
+              Temps
+            </Button>
+          </>
+        )}
         <Button
           size="sm"
           variant={settings.graph3dReducedEffects ? "secondary" : "default"}
@@ -151,6 +179,8 @@ export function GraphHud({ nodes, links, clusters, truncated }: GraphHudProps) {
           Reset
         </Button>
       </div>
+
+      {timeCursor !== null && <TimeSlider extent={timeExtent} />}
 
       <GraphLegend
         nodeCount={nodes.length}

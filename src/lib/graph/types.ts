@@ -13,6 +13,8 @@ export interface GraphNode {
   folder: string;
   type?: string;
   status?: string;
+  /** Authoring date (epoch ms) derived from frontmatter, or undefined if undated. */
+  date?: number;
   cluster: string;
   clusterIndex: number;
   kind: GraphNodeKind;

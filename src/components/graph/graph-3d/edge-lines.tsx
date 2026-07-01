@@ -13,6 +13,8 @@ interface EdgeLinesProps {
   positions: MutableRefObject<Float32Array | null>;
   palette: GraphPalette;
   flow: boolean;
+  /** Time-lapse gate by node index: an edge touching a hidden node is dropped. */
+  hidden: Uint8Array | null;
 }
 
 const EDGE_OPACITY = 0.26;
@@ -40,7 +42,7 @@ void main() {
   gl_FragColor = vec4(color, uOpacity + glow * 0.5);
 }`;
 
-export function EdgeLines({ links, indexOf, positions, palette, flow }: EdgeLinesProps) {
+export function EdgeLines({ links, indexOf, positions, palette, flow, hidden }: EdgeLinesProps) {
   const geometryRef = useRef<THREE.BufferGeometry>(null);
 
   const endpoints = useMemo(() => {
@@ -87,7 +89,15 @@ export function EdgeLines({ links, indexOf, positions, palette, flow }: EdgeLine
     const geometry = geometryRef.current;
     if (!pos || !geometry) return;
     for (let i = 0; i < endpoints.length; i += 1) {
-      const offset = endpoints[i] * 3;
+      const nodeIndex = endpoints[i];
+      if (hidden && hidden[nodeIndex]) {
+        // NaN vertices make WebGL discard the whole segment (time-lapse cut).
+        vertices[i * 3] = NaN;
+        vertices[i * 3 + 1] = NaN;
+        vertices[i * 3 + 2] = NaN;
+        continue;
+      }
+      const offset = nodeIndex * 3;
       vertices[i * 3] = pos[offset] || 0;
       vertices[i * 3 + 1] = pos[offset + 1] || 0;
       vertices[i * 3 + 2] = pos[offset + 2] || 0;

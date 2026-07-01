@@ -82,6 +82,14 @@ export const BLOOM_INTENSITY = 1.1;
 export const FLOW_SPEED = 0.6;
 export const FLOW_DENSITY = 6;
 
+// Recency heat gradient (cold = oldest note, warm = newest note)
+export const HEAT_COLD = "#1e3a8a"; // deep blue
+export const HEAT_WARM = "#f97316"; // hot orange
+
+// Time-lapse playback: number of slider steps + ms between auto-advance frames
+export const TIME_LAPSE_STEPS = 240;
+export const TIME_LAPSE_INTERVAL_MS = 90;
+
 // Low-end / auto-fallback thresholds
 export const LOW_END_CORES = 4;
 export const LOW_END_MEMORY_GB = 4;
@@ -103,6 +111,7 @@ export interface Graph3dDefaults {
   graph3dShowTags: boolean;
   graph3dEdgeFlow: boolean;
   graph3dOrphanNebula: boolean;
+  graph3dHeat: boolean;
 }
 
 export const GRAPH_3D_DEFAULTS: Graph3dDefaults = {
@@ -118,4 +127,5 @@ export const GRAPH_3D_DEFAULTS: Graph3dDefaults = {
   graph3dShowTags: false,
   graph3dEdgeFlow: true,
   graph3dOrphanNebula: true,
+  graph3dHeat: false,
 };

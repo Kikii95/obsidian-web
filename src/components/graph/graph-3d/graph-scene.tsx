@@ -6,11 +6,12 @@ import { CameraRig } from "./camera-rig";
 import { EdgeLines } from "./edge-lines";
 import { GraphLabels } from "./graph-labels";
 import { GraphPostprocessing } from "./graph-postprocessing";
-import { NodeInstances } from "./node-instances";
+import { NodeInstances, type NodeDisplay } from "./node-instances";
 import { SceneCapture } from "./scene-capture";
 import { Starfield } from "./starfield";
 import { useGraphViewStore } from "./graph-view-store";
 import { GIZMO_MARGIN } from "@/lib/graph/constants";
+import type { TimeExtent } from "@/lib/graph/temporal";
 import type { GraphLink, GraphNode } from "@/lib/graph/types";
 import type { LabelDensity } from "@/lib/graph/constants";
 import type { GraphPalette } from "@/hooks/use-theme-colors";
@@ -27,6 +28,8 @@ interface GraphSceneProps {
   bloom: boolean;
   bloomIntensity: number;
   edgeFlow: boolean;
+  heat: boolean;
+  timeExtent: TimeExtent;
 }
 
 export function GraphScene({
@@ -41,6 +44,8 @@ export function GraphScene({
   bloom,
   bloomIntensity,
   edgeFlow,
+  heat,
+  timeExtent,
 }: GraphSceneProps) {
   const setHovered = useGraphViewStore((state) => state.setHovered);
   const pick = useGraphViewStore((state) => state.pick);
@@ -48,6 +53,22 @@ export function GraphScene({
   const neighborIds = useGraphViewStore((state) => state.neighborIds);
   const clusterFilter = useGraphViewStore((state) => state.clusterFilter);
   const pathIds = useGraphViewStore((state) => state.pathIds);
+  const timeCursor = useGraphViewStore((state) => state.timeCursor);
+
+  const hidden = useMemo(() => {
+    if (timeCursor === null) return null;
+    const gate = new Uint8Array(nodes.length);
+    for (let i = 0; i < nodes.length; i += 1) {
+      const date = nodes[i].date;
+      gate[i] = date !== undefined && date > timeCursor ? 1 : 0;
+    }
+    return gate;
+  }, [nodes, timeCursor]);
+
+  const display = useMemo<NodeDisplay>(
+    () => ({ focusId, neighborIds, clusterFilter, pathIds, hidden, heat, extent: timeExtent }),
+    [focusId, neighborIds, clusterFilter, pathIds, hidden, heat, timeExtent]
+  );
 
   const fogArgs = useMemo(
     () => [palette.background, 220, 900] as [string, number, number],
@@ -75,10 +96,7 @@ export function GraphScene({
         positions={positions}
         sizes={sizes}
         palette={palette}
-        focusId={focusId}
-        neighborIds={neighborIds}
-        clusterFilter={clusterFilter}
-        pathIds={pathIds}
+        display={display}
         onHover={setHovered}
         onSelect={handleSelect}
       />
@@ -88,6 +106,7 @@ export function GraphScene({
         positions={positions}
         palette={palette}
         flow={edgeFlow}
+        hidden={hidden}
       />
       <GraphLabels
         nodes={nodes}

@@ -9,6 +9,7 @@ import { NodeInfoCard } from "./node-info-card";
 import { useGraphWorker } from "@/hooks/use-graph-worker";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { buildIndexMap, buildSizes } from "@/lib/graph/graph-model";
+import { timeExtent } from "@/lib/graph/temporal";
 import {
   CAMERA_FOV,
   CAMERA_MAX_DISTANCE,
@@ -44,6 +45,7 @@ export function Graph3D({ data, reducedEffects, onFallback }: Graph3DProps) {
     () => buildSizes(data.nodes, settings.graph3dNodeSize),
     [data.nodes, settings.graph3dNodeSize]
   );
+  const extent = useMemo(() => timeExtent(data.nodes), [data.nodes]);
 
   const { positions, failed } = useGraphWorker(data.nodes, data.links, forces);
 
@@ -83,6 +85,8 @@ export function Graph3D({ data, reducedEffects, onFallback }: Graph3DProps) {
           bloom={premium}
           bloomIntensity={settings.graph3dBloomIntensity}
           edgeFlow={edgeFlow}
+          heat={settings.graph3dHeat}
+          timeExtent={extent}
         />
       </Canvas>
       <GraphHud
@@ -90,6 +94,7 @@ export function Graph3D({ data, reducedEffects, onFallback }: Graph3DProps) {
         links={data.links}
         clusters={data.clusters}
         truncated={data.truncated}
+        timeExtent={extent}
       />
       <NodeInfoCard nodes={data.nodes} links={data.links} onOpen={openNote} />
     </div>

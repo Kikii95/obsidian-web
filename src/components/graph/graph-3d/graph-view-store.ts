@@ -14,6 +14,7 @@ interface GraphViewState {
   pathMode: boolean;
   pathStart: GraphNode | null;
   pathIds: Set<string>;
+  timeCursor: number | null;
   setHovered: (node: GraphNode | null) => void;
   pick: (node: GraphNode, links: GraphLink[]) => void;
   setQuery: (query: string) => void;
@@ -22,6 +23,7 @@ interface GraphViewState {
   setClusterFilter: (index: number | null) => void;
   setFocusDepth: (depth: number) => void;
   togglePathMode: () => void;
+  setTimeCursor: (cursor: number | null) => void;
 }
 
 const EMPTY = new Set<string>();
@@ -38,6 +40,7 @@ export const useGraphViewStore = create<GraphViewState>((set, get) => ({
   pathMode: false,
   pathStart: null,
   pathIds: EMPTY,
+  timeCursor: null,
 
   setHovered: (node) => set({ hovered: node }),
 
@@ -91,4 +94,6 @@ export const useGraphViewStore = create<GraphViewState>((set, get) => ({
 
   togglePathMode: () =>
     set((state) => ({ pathMode: !state.pathMode, pathStart: null, pathIds: EMPTY })),
+
+  setTimeCursor: (cursor) => set({ timeCursor: cursor }),
 }));

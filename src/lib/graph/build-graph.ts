@@ -6,6 +6,7 @@ import { computeDegrees, dedupeAndWeightLinks, type RawLink } from "./edges";
 import { capByDegree } from "./neighborhood";
 import { cleanWikilinkTarget, deriveNodeId } from "./resolve";
 import { buildTagNodes } from "./tag-nodes";
+import { deriveNoteDate } from "./temporal";
 import type { GraphBuildOptions, GraphData, GraphNode } from "./types";
 
 function noteNode(entry: VaultIndexEntry): GraphNode {
@@ -20,6 +21,7 @@ function noteNode(entry: VaultIndexEntry): GraphNode {
     folder: deriveFolder(entry.filePath),
     type,
     status,
+    date: deriveNoteDate(entry.frontmatter),
     cluster: "",
     clusterIndex: 0,
     kind: "note",

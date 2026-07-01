@@ -13,6 +13,19 @@ export interface PatchNote {
 
 // Plus recent en premier
 export const patchNotes: PatchNote[] = [
+  // v2.7.0 - Graph godmode : temps
+  {
+    version: "2.7.0",
+    date: "2026-07-01",
+    features: [
+      { title: "Frise temporelle (time-lapse)", description: "Nouveau bouton « Temps » dans le graph 3D : une frise apparaît pour rejouer la croissance du vault — glisse le curseur ou lance la lecture, les notes apparaissent au fil de leur date (dérivée du frontmatter created/updated/date)" },
+      { title: "Carte de chaleur par récence", description: "Bouton « Chaleur » : les notes se colorent du bleu (anciennes) à l'orange (récentes) pour repérer d'un coup d'œil ce que tu as travaillé dernièrement" },
+    ],
+    fixes: [],
+    improvements: [
+      { title: "Couverture des dates transparente", description: "La frise affiche le nombre de notes datées sur le total — les notes sans date restent toujours visibles plutôt que masquées arbitrairement" },
+    ],
+  },
   // v2.6.0 - Graph godmode : navigation
   {
     version: "2.6.0",

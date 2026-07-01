@@ -13,6 +13,16 @@ export interface PatchNote {
 
 // Plus recent en premier
 export const patchNotes: PatchNote[] = [
+  // v2.4.1 - Fix indexation bloquée
+  {
+    version: "2.4.1",
+    date: "2026-07-01",
+    features: [],
+    fixes: [
+      { title: "Indexation qui restait bloquée", description: "Correction du blocage à mi-parcours : les lots de fichiers sont maintenant traités en parallèle avec une marge de temps (maxDuration 60s) + réessais, et une indexation morte ne verrouille plus le vault (reprise auto au bout de 2 min ou via Rebuild)" },
+    ],
+    improvements: [],
+  },
   // v2.4.0 - Indexation complète + arrière-plan
   {
     version: "2.4.0",

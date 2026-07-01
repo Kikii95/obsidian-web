@@ -16,6 +16,13 @@ import {
   type CommitActivityData,
 } from "@/lib/db/vault-index-queries";
 
+// Serverless timeout headroom for the planning step (tree walk + commit sync).
+export const maxDuration = 60;
+
+// An "indexing" status whose progress hasn't advanced in this long is treated as
+// a dead/abandoned run, so a new refresh can take over instead of being blocked.
+const INDEXING_STALE_MS = 120_000;
+
 // Helper to fetch and store commit activity during indexing
 async function syncCommitActivity(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -134,9 +141,14 @@ export async function POST(request: Request) {
       branch: vaultConfig.branch,
     };
 
-    // Check if already indexing
+    // Check if already indexing — but recover from a dead run whose progress has
+    // gone stale (previously this left the vault stuck at "already_indexing").
     const currentStatus = await getVaultIndexStatus(vaultKey);
-    if (currentStatus?.status === "indexing" && !rebuild) {
+    const lastUpdate = currentStatus?.updatedAt
+      ? new Date(currentStatus.updatedAt).getTime()
+      : 0;
+    const isStaleLock = Date.now() - lastUpdate > INDEXING_STALE_MS;
+    if (currentStatus?.status === "indexing" && !rebuild && !isStaleLock) {
       return NextResponse.json({
         status: "already_indexing",
         message: "Indexation déjà en cours",

@@ -5,6 +5,8 @@ import { create } from "zustand";
 const BATCH_SIZE = 10;
 const POLL_INTERVAL_MS = 5000;
 const POLL_MAX_ATTEMPTS = 240; // 20 min ceiling for the "another tab is indexing" case
+const BATCH_RETRY_ATTEMPTS = 3;
+const BATCH_RETRY_BASE_MS = 800;
 
 export interface IndexStatus {
   status: "none" | "pending" | "indexing" | "completed" | "failed";
@@ -136,6 +138,28 @@ async function planIndexing(rebuild: boolean, signal: AbortSignal): Promise<Plan
   return { kind: "run", files: (data.files as FileToIndex[]) ?? [], stats };
 }
 
+// Retry a batch across transient failures (serverless cold start, 504, network)
+// so one blip doesn't abort the whole run.
+async function postBatchWithRetry(
+  files: FileToIndex[],
+  totalFiles: number,
+  currentIndex: number,
+  signal: AbortSignal
+): Promise<{ isComplete: boolean }> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < BATCH_RETRY_ATTEMPTS; attempt += 1) {
+    if (signal.aborted) throw new DOMException("Aborted", "AbortError");
+    try {
+      return await postBatch(files, totalFiles, currentIndex, signal);
+    } catch (error) {
+      if (isAbortError(error)) throw error;
+      lastError = error;
+      await delay(BATCH_RETRY_BASE_MS * (attempt + 1));
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("Batch processing failed");
+}
+
 async function runBatches(
   files: FileToIndex[],
   signal: AbortSignal,
@@ -145,7 +169,7 @@ async function runBatches(
   while (index < files.length) {
     if (signal.aborted) return;
     const batch = files.slice(index, index + BATCH_SIZE);
-    const result = await postBatch(batch, files.length, index, signal);
+    const result = await postBatchWithRetry(batch, files.length, index, signal);
     index += batch.length;
     onProgress(index);
     if (result.isComplete) return;

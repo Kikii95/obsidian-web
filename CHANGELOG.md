@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.4.1] - 2026-07-01
+
+### Fixed
+
+- **Indexation bloquée à mi-parcours** — Cause : sur serverless, un lot de 10 fichiers traités séquentiellement (fetch GitHub + écriture DB) pouvait dépasser le timeout par défaut de la fonction → la fonction était tuée → la boucle client mourait → le statut DB restait figé sur `"indexing"`, si bien que chaque Refresh retombait sur `already_indexing` et *pollait un run mort* (bloqué ex. 30/372). Corrections :
+  - `export const maxDuration = 60` sur les routes `/api/vault/index` et `/batch`.
+  - Traitement **parallèle** des fichiers d'un lot (`Promise.allSettled`), retry ×1 des échecs → un lot s'exécute en ~1 fetch au lieu de 10.
+  - **Récupération de verrou mort** : un statut `"indexing"` sans progression depuis > 2 min est considéré abandonné → un nouveau Refresh reprend (au lieu de rester coincé). Rebuild forçait déjà le passage.
+  - Retry côté client au niveau du lot (3 tentatives, backoff) pour absorber un 504/coupure réseau transitoire.
+
 ## [2.4.0] - 2026-07-01
 
 ### Added

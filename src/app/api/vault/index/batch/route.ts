@@ -17,36 +17,42 @@ interface BatchRequest {
   currentIndex: number;
 }
 
-// Index a list of files, retrying transient failures once before giving up so a
-// rate-limit blip doesn't silently drop notes from the index.
+// Serverless functions default to a short timeout; a batch of GitHub fetches +
+// DB writes needs headroom (Vercel Hobby allows up to 60s).
+export const maxDuration = 60;
+
+// Index a batch's files concurrently (fast, avoids timeouts), then retry the
+// transient failures once so a rate-limit blip doesn't drop notes.
 async function indexBatch(
   octokit: Parameters<typeof indexNoteFile>[0],
   vaultConfig: Parameters<typeof indexNoteFile>[1],
   vaultKey: VaultKey,
   files: IndexableFile[]
 ): Promise<{ indexed: number; failed: number }> {
-  const failedFirstPass: IndexableFile[] = [];
-  let indexed = 0;
-
-  for (const file of files) {
-    try {
-      await indexNoteFile(octokit, vaultConfig, vaultKey, file);
-      indexed += 1;
-    } catch (error) {
-      console.error(`Failed to index ${file.path}:`, error);
-      failedFirstPass.push(file);
+  const first = await Promise.allSettled(
+    files.map((file) => indexNoteFile(octokit, vaultConfig, vaultKey, file))
+  );
+  const retryFiles = files.filter((_, i) => first[i].status === "rejected");
+  first.forEach((result, i) => {
+    if (result.status === "rejected") {
+      console.error(`Failed to index ${files[i].path}:`, result.reason);
     }
-  }
+  });
 
+  let indexed = files.length - retryFiles.length;
   let failed = 0;
-  for (const file of failedFirstPass) {
-    try {
-      await indexNoteFile(octokit, vaultConfig, vaultKey, file);
-      indexed += 1;
-    } catch (error) {
-      console.error(`Retry failed for ${file.path}:`, error);
-      failed += 1;
-    }
+  if (retryFiles.length > 0) {
+    const retry = await Promise.allSettled(
+      retryFiles.map((file) => indexNoteFile(octokit, vaultConfig, vaultKey, file))
+    );
+    retry.forEach((result, i) => {
+      if (result.status === "fulfilled") {
+        indexed += 1;
+      } else {
+        failed += 1;
+        console.error(`Retry failed for ${retryFiles[i].path}:`, result.reason);
+      }
+    });
   }
 
   return { indexed, failed };

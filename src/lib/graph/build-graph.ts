@@ -103,7 +103,7 @@ export function buildGraph(
     visibleLinks = visibleLinks.concat(tagLinks);
   }
 
-  const clusters = assignClusters(visible, options.clusterBy);
+  const clusters = assignClusters(visible, options.clusterBy, visibleLinks);
 
   const graph: GraphData = {
     nodes: visible,

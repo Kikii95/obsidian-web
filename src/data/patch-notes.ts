@@ -13,6 +13,17 @@ export interface PatchNote {
 
 // Plus recent en premier
 export const patchNotes: PatchNote[] = [
+  // v2.5.0 - Graph godmode (couleurs + groupes)
+  {
+    version: "2.5.0",
+    date: "2026-07-01",
+    features: [
+      { title: "Palette au choix", description: "Nouveau réglage « Palette » dans le graph : couleurs vives dédiées (par défaut, bien distinctes) ou couleurs du thème. Fini les couleurs d'amas qui se confondaient avec le thème" },
+      { title: "Regroupement par communautés", description: "Nouvelle option « Groupes » : détection automatique des communautés de notes (sujets émergents) par propagation de labels — bien plus parlant que le simple dossier/tag, chaque groupe nommé d'après sa note centrale" },
+    ],
+    fixes: [],
+    improvements: [],
+  },
   // v2.4.2 - Fix crash réglages graph
   {
     version: "2.4.2",

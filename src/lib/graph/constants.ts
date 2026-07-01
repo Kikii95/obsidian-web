@@ -13,6 +13,27 @@ export const MIN_TAG_COUNT_FOR_NODE = 3;
 // Palette (mapped to --chart-1..5 in the scene)
 export const CLUSTER_PALETTE_SIZE = 5;
 
+// Dedicated high-contrast cluster palette (theme-independent). Used when the
+// color mode is "vivid" — more distinct hues than the 5 theme chart colours,
+// which matters for community detection that can produce many groups.
+export const VIVID_CLUSTER_PALETTE = [
+  "#f43f5e", // rose
+  "#f97316", // orange
+  "#eab308", // amber
+  "#22c55e", // green
+  "#14b8a6", // teal
+  "#06b6d4", // cyan
+  "#3b82f6", // blue
+  "#8b5cf6", // violet
+  "#d946ef", // fuchsia
+  "#ec4899", // pink
+  "#84cc16", // lime
+  "#f59e0b", // gold
+];
+
+// Community detection (label propagation) — number of passes over the graph.
+export const COMMUNITY_PASSES = 8;
+
 // Node sizing from connectivity: clamp(BASE + K * sqrt(degree), MIN, MAX)
 export const NODE_SIZE_MIN = 0.6;
 export const NODE_SIZE_MAX = 4.5;
@@ -64,12 +85,14 @@ export const LOW_END_MEMORY_GB = 4;
 
 export type LabelDensity = "low" | "medium" | "high";
 export type GraphViewMode = "2d" | "3d" | "auto";
+export type GraphColorMode = "theme" | "vivid";
 
 export interface Graph3dDefaults {
   graphViewMode: GraphViewMode;
   graph3dBloomIntensity: number;
   graph3dNodeSize: number;
   graph3dClusterBy: ClusterBy;
+  graph3dColorMode: GraphColorMode;
   graph3dAutoOrbit: boolean;
   graph3dLabelDensity: LabelDensity;
   graph3dNodeCap: number;
@@ -83,6 +106,7 @@ export const GRAPH_3D_DEFAULTS: Graph3dDefaults = {
   graph3dBloomIntensity: BLOOM_INTENSITY,
   graph3dNodeSize: 1,
   graph3dClusterBy: "folder",
+  graph3dColorMode: "vivid",
   graph3dAutoOrbit: false,
   graph3dLabelDensity: "medium",
   graph3dNodeCap: NODE_CAP_DESKTOP,

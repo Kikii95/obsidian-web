@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import {
   GRAPH_3D_DEFAULTS,
+  type GraphColorMode,
   type GraphViewMode,
   type LabelDensity,
 } from "@/lib/graph/constants";
@@ -72,7 +73,8 @@ export interface UserSettings {
   graphViewMode: GraphViewMode; // 2d | 3d | auto (device-aware)
   graph3dBloomIntensity: number; // neon glow strength
   graph3dNodeSize: number; // node size multiplier
-  graph3dClusterBy: ClusterBy; // folder | tag | none
+  graph3dClusterBy: ClusterBy; // folder | tag | none | community
+  graph3dColorMode: GraphColorMode; // theme palette vs dedicated vivid palette
   graph3dAutoOrbit: boolean; // idle camera auto-rotation
   graph3dLabelDensity: LabelDensity; // low | medium | high
   graph3dNodeCap: number; // max rendered nodes before expand-on-click

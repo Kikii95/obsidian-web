@@ -19,10 +19,11 @@ interface GraphHudProps {
   truncated: boolean;
 }
 
-const CLUSTER_CYCLE: ClusterBy[] = ["folder", "tag", "none"];
+const CLUSTER_CYCLE: ClusterBy[] = ["folder", "tag", "community", "none"];
 const CLUSTER_LABELS: Record<ClusterBy, string> = {
   folder: "dossier",
   tag: "tag",
+  community: "groupes",
   none: "aucune",
 };
 

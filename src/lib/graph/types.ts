@@ -1,6 +1,6 @@
 export type GraphNodeKind = "note" | "tag" | "ghost";
 
-export type ClusterBy = "folder" | "tag" | "none";
+export type ClusterBy = "folder" | "tag" | "none" | "community";
 
 export interface GraphNode {
   id: string;

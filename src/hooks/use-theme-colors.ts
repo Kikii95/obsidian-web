@@ -2,8 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { cssColorToHex } from "@/lib/css-color";
-import { CLUSTER_PALETTE_SIZE } from "@/lib/graph/constants";
+import {
+  CLUSTER_PALETTE_SIZE,
+  VIVID_CLUSTER_PALETTE,
+  type GraphColorMode,
+} from "@/lib/graph/constants";
 import { useTheme } from "@/hooks/use-theme";
+import { useSettingsStore } from "@/lib/settings-store";
 
 export interface GraphPalette {
   primary: string;
@@ -29,10 +34,15 @@ const FALLBACK: GraphPalette = {
   mode: "dark",
 };
 
-function readPalette(mode: "dark" | "light"): GraphPalette {
-  const clusters: string[] = [];
-  for (let i = 0; i < CLUSTER_PALETTE_SIZE; i += 1) {
-    clusters.push(cssColorToHex(`--chart-${i + 1}`, FALLBACK_CLUSTERS[i]));
+function readPalette(mode: "dark" | "light", colorMode: GraphColorMode): GraphPalette {
+  let clusters: string[];
+  if (colorMode === "vivid") {
+    clusters = VIVID_CLUSTER_PALETTE;
+  } else {
+    clusters = [];
+    for (let i = 0; i < CLUSTER_PALETTE_SIZE; i += 1) {
+      clusters.push(cssColorToHex(`--chart-${i + 1}`, FALLBACK_CLUSTERS[i]));
+    }
   }
   return {
     primary: cssColorToHex("--primary", FALLBACK.primary),
@@ -55,17 +65,18 @@ function readPalette(mode: "dark" | "light"): GraphPalette {
  */
 export function useThemeColors(): GraphPalette {
   const { theme, mode } = useTheme();
+  const colorMode = useSettingsStore((state) => state.settings.graph3dColorMode) ?? "vivid";
   const [palette, setPalette] = useState<GraphPalette>(FALLBACK);
 
   const refresh = useCallback(() => {
     requestAnimationFrame(() =>
-      requestAnimationFrame(() => setPalette(readPalette(mode)))
+      requestAnimationFrame(() => setPalette(readPalette(mode, colorMode)))
     );
-  }, [mode]);
+  }, [mode, colorMode]);
 
   useEffect(() => {
     refresh();
-  }, [theme, refresh]);
+  }, [theme, colorMode, refresh]);
 
   useEffect(() => {
     const observer = new MutationObserver(refresh);

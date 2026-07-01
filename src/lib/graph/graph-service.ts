@@ -22,7 +22,7 @@ const NEEDS_INDEX_RESPONSE: GraphData = {
 };
 
 function parseClusterBy(value: string | null): ClusterBy {
-  return value === "tag" || value === "none" ? value : "folder";
+  return value === "tag" || value === "none" || value === "community" ? value : "folder";
 }
 
 export function parseGraphOptions(searchParams: URLSearchParams): GraphBuildOptions {

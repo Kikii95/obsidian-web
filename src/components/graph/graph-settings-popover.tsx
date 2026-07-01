@@ -14,12 +14,17 @@ import { cn } from "@/lib/utils";
 import { useSettingsStore } from "@/lib/settings-store";
 import { GRAPH_3D_DEFAULTS } from "@/lib/graph/constants";
 import type { ClusterBy } from "@/lib/graph/types";
-import type { LabelDensity } from "@/lib/graph/constants";
+import type { GraphColorMode, LabelDensity } from "@/lib/graph/constants";
 
 const CLUSTER_OPTIONS: { value: ClusterBy; label: string }[] = [
   { value: "folder", label: "Dossier" },
   { value: "tag", label: "Tag" },
+  { value: "community", label: "Groupes" },
   { value: "none", label: "Aucune" },
+];
+const COLOR_MODE_OPTIONS: { value: GraphColorMode; label: string }[] = [
+  { value: "vivid", label: "Vives" },
+  { value: "theme", label: "Thème" },
 ];
 const DENSITY_OPTIONS: { value: LabelDensity; label: string }[] = [
   { value: "low", label: "Peu" },
@@ -65,11 +70,19 @@ function Graph3dControls() {
     <div className="space-y-4 border-t border-border pt-3">
       <p className="text-xs font-medium text-muted-foreground">Vue 3D</p>
       <div className="space-y-2">
-        <Label className="text-xs">Couleur des amas</Label>
+        <Label className="text-xs">Regrouper par</Label>
         <Segmented
           value={g.graph3dClusterBy}
           options={CLUSTER_OPTIONS}
           onChange={(value) => updateSettings({ graph3dClusterBy: value })}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label className="text-xs">Palette</Label>
+        <Segmented
+          value={g.graph3dColorMode}
+          options={COLOR_MODE_OPTIONS}
+          onChange={(value) => updateSettings({ graph3dColorMode: value })}
         />
       </div>
       <div className="space-y-2">

@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.5.0] - 2026-07-01
+
+### Added
+
+- **Graph — palette au choix** (`graph3dColorMode` : `vivid` par défaut / `theme`). Les couleurs d'amas suivaient les variables de thème (`--chart-1..5`) et se confondaient avec l'UI ; on peut désormais choisir une **palette vive dédiée de 12 teintes distinctes** (théme-indépendante) ou rester sur les couleurs du thème. Réglable dans le popover (« Palette »).
+- **Graph — regroupement par communautés** (`clusterBy: "community"`). Détection de communautés par **propagation de labels** (déterministe, `src/lib/graph/communities.ts`, O(passes·arêtes)) → fait émerger les vrais groupes de sujets sans dépendre des dossiers/tags. Chaque groupe est nommé d'après sa note la plus connectée. Option « Groupes » dans le popover et le cycle du HUD. La palette vive (12 couleurs) accompagne les nombreux groupes possibles.
+
 ## [2.4.2] - 2026-07-01
 
 ### Fixed

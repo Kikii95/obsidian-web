@@ -13,6 +13,18 @@ export interface PatchNote {
 
 // Plus recent en premier
 export const patchNotes: PatchNote[] = [
+  // v2.8.2 - Graph godmode : fix sélection
+  {
+    version: "2.8.2",
+    date: "2026-07-01",
+    fixes: [
+      { title: "Nœuds non détectés au clic/survol", description: "Beaucoup de nœuds du graph 3D ne réagissaient ni au clic ni au survol : la sphère de détection (raycast) était figée sur la disposition initiale et ne suivait plus les nœuds qui s'éloignaient → des régions entières devenaient insélectionnables. Elle est maintenant recalculée à chaque frame" },
+    ],
+    features: [],
+    improvements: [
+      { title: "Petits nœuds plus faciles à viser", description: "Les nœuds peu connectés et les orphelines (très petits) disposent désormais d'une zone de clic invisible plus large, sans changer leur taille visuelle — fini de devoir viser au pixel près" },
+    ],
+  },
   // v2.8.1 - Graph godmode : peaufinage
   {
     version: "2.8.1",

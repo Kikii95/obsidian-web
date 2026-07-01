@@ -3,7 +3,7 @@
 import { type MutableRefObject, useEffect, useMemo, useRef } from "react";
 import { type ThreeEvent, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { HEAT_COLD, HEAT_WARM } from "@/lib/graph/constants";
+import { HEAT_COLD, HEAT_WARM, PICK_MIN_RADIUS } from "@/lib/graph/constants";
 import { recency, type TimeExtent } from "@/lib/graph/temporal";
 import type { GraphNode } from "@/lib/graph/types";
 import type { GraphPalette } from "@/hooks/use-theme-colors";
@@ -67,6 +67,7 @@ export function NodeInstances({
   onSelect,
 }: NodeInstancesProps) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
+  const pickRef = useRef<THREE.InstancedMesh>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const color = useMemo(() => new THREE.Color(), []);
   const cold = useMemo(() => new THREE.Color(HEAT_COLD), []);
@@ -88,20 +89,31 @@ export function NodeInstances({
 
   useFrame(() => {
     const mesh = meshRef.current;
+    const pick = pickRef.current;
     const pos = positions.current;
-    if (!mesh || !pos) return;
+    if (!mesh || !pick || !pos) return;
     for (let i = 0; i < count; i += 1) {
-      if (hidden && hidden[i]) {
-        dummy.scale.setScalar(0);
-      } else {
-        const faded = isFaded(nodes[i], display);
-        dummy.scale.setScalar((sizes[i] || 1) * (faded ? DIM_OPACITY * 4 : 1));
-      }
       dummy.position.set(pos[i * 3] || 0, pos[i * 3 + 1] || 0, pos[i * 3 + 2] || 0);
+      const gone = hidden ? hidden[i] : 0;
+      const base = sizes[i] || 1;
+      const faded = !gone && isFaded(nodes[i], display);
+      dummy.scale.setScalar(gone ? 0 : base * (faded ? DIM_OPACITY * 4 : 1));
       dummy.updateMatrix();
       mesh.setMatrixAt(i, dummy.matrix);
+      // Invisible pick proxy: larger min radius so tiny/orphan nodes stay hittable.
+      dummy.scale.setScalar(gone ? 0 : Math.max(base, PICK_MIN_RADIUS));
+      dummy.updateMatrix();
+      pick.setMatrixAt(i, dummy.matrix);
     }
     mesh.instanceMatrix.needsUpdate = true;
+    pick.instanceMatrix.needsUpdate = true;
+    // Instances animate every frame as the layout expands; THREE caches the
+    // InstancedMesh bounding sphere on first raycast and never refreshes it, so
+    // a stale (initial, tight) sphere makes rays miss any node that drifted out
+    // of it → hover/click silently ignore whole regions. Invalidate both so each
+    // raycast recomputes against current positions.
+    mesh.boundingSphere = null;
+    pick.boundingSphere = null;
   });
 
   const handleMove = (event: ThreeEvent<PointerEvent>) => {
@@ -118,17 +130,28 @@ export function NodeInstances({
   };
 
   return (
-    <instancedMesh
-      key={count}
-      ref={meshRef}
-      args={[undefined, undefined, count]}
-      frustumCulled={false}
-      onPointerMove={handleMove}
-      onPointerOut={() => onHover(null)}
-      onClick={handleClick}
-    >
-      <icosahedronGeometry args={[1, 2]} />
-      <meshBasicMaterial toneMapped={false} />
-    </instancedMesh>
+    <>
+      <instancedMesh
+        key={count}
+        ref={meshRef}
+        args={[undefined, undefined, count]}
+        frustumCulled={false}
+      >
+        <icosahedronGeometry args={[1, 2]} />
+        <meshBasicMaterial toneMapped={false} />
+      </instancedMesh>
+      <instancedMesh
+        key={`pick-${count}`}
+        ref={pickRef}
+        args={[undefined, undefined, count]}
+        frustumCulled={false}
+        onPointerMove={handleMove}
+        onPointerOut={() => onHover(null)}
+        onClick={handleClick}
+      >
+        <icosahedronGeometry args={[1, 1]} />
+        <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+      </instancedMesh>
+    </>
   );
 }

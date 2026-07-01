@@ -42,6 +42,9 @@ export const NODE_SIZE_MIN = 0.6;
 export const NODE_SIZE_MAX = 4.5;
 export const NODE_SIZE_BASE = 0.9;
 export const NODE_SIZE_K = 0.4;
+// Minimum raycast hit radius (invisible pick proxy) so tiny/orphan nodes stay
+// small visually but remain reliably clickable/hoverable.
+export const PICK_MIN_RADIUS = 1.8;
 
 // Force layout / worker
 export const ALPHA_MIN = 0.005;

@@ -1,5 +1,10 @@
 import { Octokit } from "@octokit/rest";
 import type { VaultFile } from "@/types";
+import {
+  toVaultFiles,
+  walkTreeByDirectory,
+  type RawTreeEntry,
+} from "@/lib/github-tree";
 
 // ═══════════════════════════════════════════════
 // VAULT CONFIG TYPE
@@ -292,7 +297,12 @@ export async function searchInVault(
 }
 
 /**
- * Get recursive tree for the entire vault
+ * Get the full tree for the entire vault.
+ *
+ * Uses the recursive Git Trees API for speed, but detects GitHub's `truncated`
+ * flag (set for large repos, ~100k entries / 7MB) and falls back to a
+ * directory-by-directory walk so the ENTIRE vault is always covered.
+ *
  * @param includeHidden - Include hidden files like .gitkeep (default false)
  */
 export async function getFullVaultTree(
@@ -307,64 +317,36 @@ export async function getFullVaultTree(
       repo,
       ref: `heads/${branch}`,
     });
+    const rootSha = ref.object.sha;
 
     const { data: tree } = await octokit.git.getTree({
       owner,
       repo,
-      tree_sha: ref.object.sha,
+      tree_sha: rootSha,
       recursive: "true",
     });
 
-    const files: VaultFile[] = tree.tree
-      .filter((item) => {
-        if (!item.path) return false;
-        if (item.path.includes("node_modules")) return false;
-
-        // If rootPath is set, only include files within that directory
-        if (rootPath) {
-          if (!item.path.startsWith(rootPath + "/") && item.path !== rootPath) {
-            return false;
-          }
-        }
-
-        // Filter hidden files unless includeHidden is true
-        // But always include .gitkeep for folder operations
-        if (!includeHidden) {
-          const fileName = item.path.split("/").pop() || "";
-          if (fileName === ".gitkeep") {
-            // Always include .gitkeep
-          } else {
-            // Get the path relative to rootPath for hidden check
-            // This allows rootPath like ".obsidian" to work
-            let pathToCheck = item.path;
-            if (rootPath && pathToCheck.startsWith(rootPath + "/")) {
-              pathToCheck = pathToCheck.slice(rootPath.length + 1);
-            }
-            // Now check if the RELATIVE path is hidden
-            if (pathToCheck.startsWith(".") || pathToCheck.includes("/.")) {
-              return false;
-            }
-          }
-        }
-        return true;
-      })
-      .map((item) => {
-        // Remove rootPath prefix from path for display
-        let displayPath = item.path || "";
-        if (rootPath && displayPath.startsWith(rootPath + "/")) {
-          displayPath = displayPath.slice(rootPath.length + 1);
-        }
-        return {
-          name: item.path?.split("/").pop() || "",
-          path: displayPath,
-          type: (item.type === "tree" ? "dir" : "file") as "file" | "dir",
+    let raw: RawTreeEntry[];
+    if (tree.truncated) {
+      console.warn(
+        "[github] Recursive tree truncated for %s/%s — walking per-directory to cover the whole vault",
+        owner,
+        repo
+      );
+      raw = await walkTreeByDirectory(octokit, owner, repo, rootSha, rootPath);
+    } else {
+      raw = [];
+      for (const item of tree.tree) {
+        if (!item.path || !item.sha) continue;
+        raw.push({
+          path: item.path,
+          type: item.type === "tree" ? "tree" : "blob",
           sha: item.sha,
-        };
-      })
-      // Filter out the root directory itself if it was included
-      .filter(item => item.path !== "");
+        });
+      }
+    }
 
-    return files;
+    return toVaultFiles(raw, rootPath, includeHidden);
   } catch (error) {
     console.error("Error fetching full vault tree:", error);
     throw error;

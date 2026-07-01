@@ -165,6 +165,23 @@ export async function POST(request: Request) {
     // Create a map of current GitHub files
     const githubFilesMap = new Map(mdFiles.map((f) => [f.path, f.sha]));
 
+    // Existing index SHAs (used for the smart refresh + the safety guard below)
+    const existingShas = await getVaultIndexShas(vaultKey);
+
+    // Safety: a previously-indexed vault should never resolve to zero markdown
+    // files. If it does, the tree fetch failed/was incomplete — abort rather
+    // than wipe the whole index (which delete-stale/rebuild would otherwise do).
+    if (mdFiles.length === 0 && existingShas.size > 0) {
+      return NextResponse.json(
+        {
+          status: "error",
+          message:
+            "Arbre du vault vide ou incomplet — indexation annulée pour éviter une suppression de l'index",
+        },
+        { status: 409 }
+      );
+    }
+
     // If rebuild, clear existing index and index all files
     if (rebuild) {
       await deleteAllVaultIndexEntries(vaultKey);
@@ -193,8 +210,6 @@ export async function POST(request: Request) {
     }
 
     // SMART REFRESH: Compare SHA to find changes
-    const existingShas = await getVaultIndexShas(vaultKey);
-
     const newFiles: typeof mdFiles = [];
     const modifiedFiles: typeof mdFiles = [];
     const unchangedFiles: string[] = [];

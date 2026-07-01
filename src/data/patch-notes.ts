@@ -13,6 +13,21 @@ export interface PatchNote {
 
 // Plus recent en premier
 export const patchNotes: PatchNote[] = [
+  // v2.4.0 - Indexation complète + arrière-plan
+  {
+    version: "2.4.0",
+    date: "2026-07-01",
+    features: [
+      { title: "Indexation en arrière-plan", description: "L'indexation continue quand tu quittes la page Paramètres ; une pastille de progression flottante suit l'avancement et un pop-up confirme la fin (ou signale une erreur)" },
+    ],
+    fixes: [
+      { title: "Vault indexé en entier", description: "Sur les gros vaults, l'arbre GitHub était tronqué (>100k entrees / 7 Mo) et des notes manquaient : bascule automatique en parcours dossier-par-dossier pour tout couvrir" },
+      { title: "Plus de suppression accidentelle", description: "Un arbre vide ou incomplet ne peut plus vider l'index — garde-fou anti-perte de donnees en refresh et rebuild" },
+      { title: "Compteurs d'indexation exacts", description: "Correction d'une priorite d'operateur qui faussait le total de fichiers indexes / en echec" },
+      { title: "Moins de fichiers manques", description: "Nouvelle tentative automatique sur echec transitoire (rate-limit GitHub) avant de compter un fichier comme echoue" },
+    ],
+    improvements: [],
+  },
   // v2.3.0 - Graph 3D (Personal Knowledge Graph)
   {
     version: "2.3.0",

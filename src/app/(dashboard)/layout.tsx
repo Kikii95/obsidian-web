@@ -34,6 +34,7 @@ import { useSettingsSync } from "@/hooks/use-settings-sync";
 import { useVaultConfig } from "@/hooks/use-vault-config";
 import { usePinsSync } from "@/hooks/use-pins-sync";
 import { DashboardOverlays } from "@/components/dashboard/dashboard-overlays";
+import { IndexingIndicator } from "@/components/indexing/indexing-indicator";
 
 export default function DashboardLayout({
   children,
@@ -328,6 +329,9 @@ export default function DashboardLayout({
         whatsNewOpen={whatsNewOpen}
         setWhatsNewOpen={setWhatsNewOpen}
       />
+
+      {/* Background indexing progress + completion pop-up (persists across navigation) */}
+      <IndexingIndicator />
     </div>
   );
 }

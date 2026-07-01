@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.4.0] - 2026-07-01
+
+### Added
+
+- **Indexation en arrière-plan** — L'indexation ne bloque plus sur la page Paramètres : le moteur (boucle de batch) vit désormais dans un store global (`src/lib/indexing-store.ts`), hors du cycle de vie React, donc il **survit à la navigation**. Une pastille flottante persistante (`IndexingIndicator`, montée dans le layout dashboard) affiche la progression en direct (X / Y · %) avec bouton Annuler, puis un **pop-up de fin** (succès/erreur) qui s'auto-efface. Ré-hydratation depuis `/status` au montage (couvre reload + autre onglet).
+
+### Fixed
+
+- **Couverture complète du vault** — `getFullVaultTree` ignorait le flag `truncated` de l'API Git Trees de GitHub : sur un gros vault (>100k entrées / 7 Mo) l'arbre récursif est tronqué et toutes les notes au-delà de la limite étaient **silencieusement perdues**. Ajout d'un repli **parcours dossier-par-dossier** (BFS non-récursif, `src/lib/github-tree.ts`) déclenché quand l'arbre est tronqué → tout le vault est couvert.
+- **Suppression accidentelle de l'index** — en mode refresh, un arbre tronqué/vide marquait des notes réellement présentes comme « supprimées » et les retirait de l'index. Ajout d'un garde-fou : un vault déjà indexé qui retourne 0 fichier markdown fait échouer l'indexation (409) au lieu de vider l'index.
+- **Compteurs faussés** — `status?.indexedFiles || 0 + indexedCount` : la précédence `||`/`+` écrasait le total courant. Corrigé en `(status?.indexedFiles || 0) + indexedCount`.
+- **Fichiers manqués sur erreur transitoire** — un échec ponctuel (rate-limit GitHub) comptait le fichier comme perdu sans réessai. Le batch **retente une fois** chaque fichier en échec avant de le compter comme échoué.
+
+### Changed
+
+- Logique par-fichier extraite de la route batch vers `src/lib/vault-indexer.ts` (`indexNoteFile`) ; la route délègue et ne fait plus le parsing inline. Le hook `useVaultIndex` devient un mince wrapper au-dessus du store global (API publique inchangée).
+
 ## [2.3.0] - 2026-07-01
 
 ### Added

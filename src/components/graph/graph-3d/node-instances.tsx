@@ -13,8 +13,23 @@ interface NodeInstancesProps {
   palette: GraphPalette;
   focusId: string | null;
   neighborIds: Set<string>;
+  clusterFilter: number | null;
+  pathIds: Set<string>;
   onHover: (node: GraphNode | null) => void;
   onSelect: (node: GraphNode) => void;
+}
+
+function isFaded(
+  node: GraphNode,
+  focusId: string | null,
+  neighborIds: Set<string>,
+  clusterFilter: number | null,
+  pathIds: Set<string>
+): boolean {
+  if (pathIds.size > 0) return !pathIds.has(node.id);
+  if (clusterFilter !== null) return node.clusterIndex !== clusterFilter;
+  if (focusId !== null) return node.id !== focusId && !neighborIds.has(node.id);
+  return false;
 }
 
 const DIM_OPACITY = 0.12;
@@ -32,6 +47,8 @@ export function NodeInstances({
   palette,
   focusId,
   neighborIds,
+  clusterFilter,
+  pathIds,
   onHover,
   onSelect,
 }: NodeInstancesProps) {
@@ -54,10 +71,9 @@ export function NodeInstances({
     const mesh = meshRef.current;
     const pos = positions.current;
     if (!mesh || !pos) return;
-    const dimming = focusId !== null;
     for (let i = 0; i < count; i += 1) {
       const node = nodes[i];
-      const faded = dimming && node.id !== focusId && !neighborIds.has(node.id);
+      const faded = isFaded(node, focusId, neighborIds, clusterFilter, pathIds);
       const scale = (sizes[i] || 1) * (faded ? DIM_OPACITY * 4 : 1);
       dummy.position.set(pos[i * 3] || 0, pos[i * 3 + 1] || 0, pos[i * 3 + 2] || 0);
       dummy.scale.setScalar(scale);

@@ -3,7 +3,9 @@ import {
   buildEdgeArrays,
   buildIndexMap,
   buildSizes,
+  neighborsAtDepth,
   neighborsOf,
+  shortestPath,
   sizeForDegree,
 } from "./graph-model";
 import { NODE_SIZE_MAX, NODE_SIZE_MIN } from "./constants";
@@ -68,5 +70,42 @@ describe("neighborsOf", () => {
 
   it("returns just the node when it has no links", () => {
     expect(neighborsOf("Z", links)).toEqual(new Set(["Z"]));
+  });
+});
+
+describe("neighborsAtDepth", () => {
+  const links = [link("A", "B"), link("B", "C"), link("C", "D"), link("X", "Y")];
+
+  it("returns only the node itself at depth 0", () => {
+    expect(neighborsAtDepth("A", links, 0)).toEqual(new Set(["A"]));
+  });
+
+  it("collects direct neighbours at depth 1", () => {
+    expect(neighborsAtDepth("B", links, 1)).toEqual(new Set(["B", "A", "C"]));
+  });
+
+  it("expands transitively with depth and stops at the component boundary", () => {
+    expect(neighborsAtDepth("A", links, 2)).toEqual(new Set(["A", "B", "C"]));
+    expect(neighborsAtDepth("A", links, 10)).toEqual(new Set(["A", "B", "C", "D"]));
+    expect(neighborsAtDepth("A", links, 10).has("X")).toBe(false);
+  });
+});
+
+describe("shortestPath", () => {
+  const links = [link("A", "B"), link("B", "C"), link("A", "D"), link("D", "C")];
+
+  it("returns the ordered shortest path between two nodes", () => {
+    const path = shortestPath("A", "C", links);
+    expect(path[0]).toBe("A");
+    expect(path[path.length - 1]).toBe("C");
+    expect(path).toHaveLength(3);
+  });
+
+  it("returns a single node when source equals target", () => {
+    expect(shortestPath("A", "A", links)).toEqual(["A"]);
+  });
+
+  it("returns an empty path for disconnected nodes", () => {
+    expect(shortestPath("A", "Z", [...links, link("Y", "Z")])).toEqual([]);
   });
 });

@@ -91,7 +91,7 @@ export function Graph3D({ data, reducedEffects, onFallback }: Graph3DProps) {
         clusters={data.clusters}
         truncated={data.truncated}
       />
-      <NodeInfoCard onOpen={openNote} />
+      <NodeInfoCard nodes={data.nodes} links={data.links} onOpen={openNote} />
     </div>
   );
 }

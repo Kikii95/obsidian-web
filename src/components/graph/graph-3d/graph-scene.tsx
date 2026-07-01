@@ -11,7 +11,6 @@ import { SceneCapture } from "./scene-capture";
 import { Starfield } from "./starfield";
 import { useGraphViewStore } from "./graph-view-store";
 import { GIZMO_MARGIN } from "@/lib/graph/constants";
-import { neighborsOf } from "@/lib/graph/graph-model";
 import type { GraphLink, GraphNode } from "@/lib/graph/types";
 import type { LabelDensity } from "@/lib/graph/constants";
 import type { GraphPalette } from "@/hooks/use-theme-colors";
@@ -44,9 +43,11 @@ export function GraphScene({
   edgeFlow,
 }: GraphSceneProps) {
   const setHovered = useGraphViewStore((state) => state.setHovered);
-  const select = useGraphViewStore((state) => state.select);
+  const pick = useGraphViewStore((state) => state.pick);
   const focusId = useGraphViewStore((state) => state.focusId);
   const neighborIds = useGraphViewStore((state) => state.neighborIds);
+  const clusterFilter = useGraphViewStore((state) => state.clusterFilter);
+  const pathIds = useGraphViewStore((state) => state.pathIds);
 
   const fogArgs = useMemo(
     () => [palette.background, 220, 900] as [string, number, number],
@@ -62,7 +63,7 @@ export function GraphScene({
     [palette]
   );
 
-  const handleSelect = (node: GraphNode) => select(node, neighborsOf(node.id, links));
+  const handleSelect = (node: GraphNode) => pick(node, links);
 
   return (
     <>
@@ -76,6 +77,8 @@ export function GraphScene({
         palette={palette}
         focusId={focusId}
         neighborIds={neighborIds}
+        clusterFilter={clusterFilter}
+        pathIds={pathIds}
         onHover={setHovered}
         onSelect={handleSelect}
       />

@@ -2,14 +2,13 @@
 
 import { useMemo, useState } from "react";
 import Fuse from "fuse.js";
-import { Camera, Orbit, RotateCcw, Search, Sparkles } from "lucide-react";
+import { Camera, Orbit, RotateCcw, Route, Search, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SCREENSHOT_FILENAME } from "@/lib/graph/constants";
-import { neighborsOf } from "@/lib/graph/graph-model";
 import { useSettingsStore } from "@/lib/settings-store";
-import { useThemeColors } from "@/hooks/use-theme-colors";
 import type { ClusterBy, ClusterInfo, GraphLink, GraphNode } from "@/lib/graph/types";
+import { GraphLegend } from "./graph-legend";
 import { useGraphViewStore } from "./graph-view-store";
 
 interface GraphHudProps {
@@ -26,13 +25,18 @@ const CLUSTER_LABELS: Record<ClusterBy, string> = {
   community: "groupes",
   none: "aucune",
 };
+const MAX_DEPTH = 3;
 
 export function GraphHud({ nodes, links, clusters, truncated }: GraphHudProps) {
   const { settings, updateSettings } = useSettingsStore();
-  const select = useGraphViewStore((state) => state.select);
+  const pick = useGraphViewStore((state) => state.pick);
   const clearFocus = useGraphViewStore((state) => state.clearFocus);
   const capture = useGraphViewStore((state) => state.capture);
-  const palette = useThemeColors();
+  const focusDepth = useGraphViewStore((state) => state.focusDepth);
+  const setFocusDepth = useGraphViewStore((state) => state.setFocusDepth);
+  const pathMode = useGraphViewStore((state) => state.pathMode);
+  const pathStart = useGraphViewStore((state) => state.pathStart);
+  const togglePathMode = useGraphViewStore((state) => state.togglePathMode);
   const [query, setQuery] = useState("");
 
   const fuse = useMemo(
@@ -49,8 +53,8 @@ export function GraphHud({ nodes, links, clusters, truncated }: GraphHudProps) {
     updateSettings({ graph3dClusterBy: next });
   };
 
-  const pick = (node: GraphNode) => {
-    select(node, neighborsOf(node.id, links));
+  const choose = (node: GraphNode) => {
+    pick(node, links);
     setQuery("");
   };
 
@@ -62,6 +66,12 @@ export function GraphHud({ nodes, links, clusters, truncated }: GraphHudProps) {
     link.download = SCREENSHOT_FILENAME;
     link.click();
   };
+
+  const pathHint = pathMode
+    ? pathStart
+      ? `Chemin : choisis la note d'arrivée (départ : ${pathStart.name})`
+      : "Chemin : choisis la note de départ"
+    : null;
 
   return (
     <>
@@ -81,12 +91,17 @@ export function GraphHud({ nodes, links, clusters, truncated }: GraphHudProps) {
               <button
                 key={node.id}
                 type="button"
-                onClick={() => pick(node)}
+                onClick={() => choose(node)}
                 className="block w-full truncate px-3 py-1.5 text-left text-xs hover:bg-accent hover:text-accent-foreground"
               >
                 {node.name}
               </button>
             ))}
+          </div>
+        )}
+        {pathHint && (
+          <div className="mt-1 rounded-md border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs text-foreground">
+            {pathHint}
           </div>
         )}
       </div>
@@ -100,6 +115,25 @@ export function GraphHud({ nodes, links, clusters, truncated }: GraphHudProps) {
           <Orbit className="mr-1 h-3.5 w-3.5" />
           Orbite
         </Button>
+        <Button size="sm" variant="secondary" onClick={cycleCluster}>
+          Couleur : {CLUSTER_LABELS[settings.graph3dClusterBy]}
+        </Button>
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => setFocusDepth((focusDepth % MAX_DEPTH) + 1)}
+          title="Profondeur du focus (voisins)"
+        >
+          Voisins : {focusDepth}
+        </Button>
+        <Button
+          size="sm"
+          variant={pathMode ? "default" : "secondary"}
+          onClick={togglePathMode}
+        >
+          <Route className="mr-1 h-3.5 w-3.5" />
+          Chemin
+        </Button>
         <Button
           size="sm"
           variant={settings.graph3dReducedEffects ? "secondary" : "default"}
@@ -107,9 +141,6 @@ export function GraphHud({ nodes, links, clusters, truncated }: GraphHudProps) {
         >
           <Sparkles className="mr-1 h-3.5 w-3.5" />
           Néon
-        </Button>
-        <Button size="sm" variant="secondary" onClick={cycleCluster}>
-          Couleur : {CLUSTER_LABELS[settings.graph3dClusterBy]}
         </Button>
         <Button size="sm" variant="secondary" onClick={downloadScreenshot}>
           <Camera className="mr-1 h-3.5 w-3.5" />
@@ -121,24 +152,12 @@ export function GraphHud({ nodes, links, clusters, truncated }: GraphHudProps) {
         </Button>
       </div>
 
-      <div className="pointer-events-none absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-md border border-border bg-card/80 px-3 py-2 text-xs text-muted-foreground backdrop-blur">
-        <div>
-          {nodes.length} nœuds · {links.length} liens{truncated ? " (limité)" : ""}
-        </div>
-        {clusters.length > 0 && (
-          <div className="mt-1.5 flex max-w-[220px] flex-wrap gap-x-2 gap-y-1">
-            {clusters.slice(0, 6).map((cluster) => (
-              <span key={cluster.id} className="flex items-center gap-1">
-                <span
-                  className="inline-block h-2 w-2 rounded-full"
-                  style={{ background: palette.clusters[cluster.index % palette.clusters.length] }}
-                />
-                {cluster.label || "—"}
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
+      <GraphLegend
+        nodeCount={nodes.length}
+        linkCount={links.length}
+        truncated={truncated}
+        clusters={clusters}
+      />
     </>
   );
 }

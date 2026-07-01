@@ -13,6 +13,19 @@ export interface PatchNote {
 
 // Plus recent en premier
 export const patchNotes: PatchNote[] = [
+  // v2.6.0 - Graph godmode : navigation
+  {
+    version: "2.6.0",
+    date: "2026-07-01",
+    features: [
+      { title: "Chemin entre deux notes", description: "Nouveau mode « Chemin » dans le graph 3D : choisis une note de départ puis une d'arrivée, le plus court chemin de liens s'illumine (le reste du graphe s'estompe) — « comment ces deux idées sont-elles reliées ? »" },
+      { title: "Focus par profondeur", description: "Le bouton « Voisins : N » élargit le focus de 1 à 3 sauts autour de la note sélectionnée — voir non seulement ses liens directs mais aussi les voisins des voisins" },
+      { title: "Liens cliquables dans la fiche", description: "La fiche d'une note liste maintenant ses notes liées en puces cliquables : un clic saute de note en note sans quitter le graphe" },
+      { title: "Légende-filtre", description: "Clique sur une pastille de couleur dans la légende pour isoler ce groupe (les autres s'estompent) ; re-clique pour tout réafficher" },
+    ],
+    fixes: [],
+    improvements: [],
+  },
   // v2.5.0 - Graph godmode (couleurs + groupes)
   {
     version: "2.5.0",

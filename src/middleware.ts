@@ -23,6 +23,8 @@ export default withAuth(
           // Temp vault reader (public repos, no auth required)
           path.startsWith("/t/") ||
           path.startsWith("/api/temp/") ||
+          // Read-only vault digest for the web-home newtab extension (shared-secret guarded)
+          path.startsWith("/api/vault-feed") ||
           path === "/offline"
         ) {
           return true;

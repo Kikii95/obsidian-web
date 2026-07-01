@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Pause, Play, X } from "lucide-react";
+import { Pause, Play, Repeat, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TIME_LAPSE_INTERVAL_MS, TIME_LAPSE_STEPS } from "@/lib/graph/constants";
 import type { TimeExtent } from "@/lib/graph/temporal";
+import { useSettingsStore } from "@/lib/settings-store";
 import { useGraphViewStore } from "./graph-view-store";
 
 interface TimeSliderProps {
@@ -19,10 +20,12 @@ function formatDate(epoch: number): string {
   });
 }
 
-/** Time-lapse strip: scrub or auto-play the vault's growth over time. */
+/** Time-lapse strip: scrub, auto-play (optionally looping) the vault's growth. */
 export function TimeSlider({ extent }: TimeSliderProps) {
   const timeCursor = useGraphViewStore((state) => state.timeCursor);
   const setTimeCursor = useGraphViewStore((state) => state.setTimeCursor);
+  const { settings, updateSettings } = useSettingsStore();
+  const loop = settings.graph3dTimeLoop;
   const [playing, setPlaying] = useState(false);
 
   const span = extent.max - extent.min;
@@ -36,14 +39,18 @@ export function TimeSlider({ extent }: TimeSliderProps) {
       const current = useGraphViewStore.getState().timeCursor ?? extent.max;
       const next = current + step;
       if (next >= extent.max) {
-        setTimeCursor(extent.max);
-        setPlaying(false);
+        if (useSettingsStore.getState().settings.graph3dTimeLoop) {
+          setTimeCursor(extent.min);
+        } else {
+          setTimeCursor(extent.max);
+          setPlaying(false);
+        }
       } else {
         setTimeCursor(next);
       }
     }, TIME_LAPSE_INTERVAL_MS);
     return () => clearInterval(id);
-  }, [playing, span, extent.max, setTimeCursor]);
+  }, [playing, span, extent.min, extent.max, setTimeCursor]);
 
   const togglePlay = () => {
     if (!playing && cursor >= extent.max) setTimeCursor(extent.min);
@@ -58,13 +65,22 @@ export function TimeSlider({ extent }: TimeSliderProps) {
 
   const close = () => {
     setPlaying(false);
-    setTimeCursor(null);
+    updateSettings({ graph3dTimeLapse: false });
   };
 
   return (
-    <div className="pointer-events-auto absolute bottom-20 left-1/2 z-10 flex w-80 max-w-[86vw] items-center gap-2 rounded-lg border border-border bg-card/90 px-3 py-2 shadow-lg backdrop-blur -translate-x-1/2">
+    <div className="pointer-events-auto flex w-80 max-w-[86vw] items-center gap-2 rounded-lg border border-border bg-card/90 px-3 py-2 shadow-lg backdrop-blur">
       <Button size="icon" variant="secondary" className="h-8 w-8 shrink-0" onClick={togglePlay}>
         {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+      </Button>
+      <Button
+        size="icon"
+        variant={loop ? "default" : "secondary"}
+        className="h-8 w-8 shrink-0"
+        onClick={() => updateSettings({ graph3dTimeLoop: !loop })}
+        title="Lecture en boucle"
+      >
+        <Repeat className="h-4 w-4" />
       </Button>
       <div className="min-w-0 flex-1">
         <input

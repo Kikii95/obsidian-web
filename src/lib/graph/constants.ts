@@ -73,6 +73,9 @@ export const FOCUS_DISTANCE = 70;
 export const FOCUS_LERP = 0.86;
 export const FOCUS_ARRIVE_EPS = 2;
 
+// Focus highlight: how many link-hops of neighbours to light up around a picked node
+export const FOCUS_DEPTH_MAX = 3;
+
 // Cinematic idle tour: auto-visit the biggest hubs when the user stops interacting
 export const TOUR_LERP = 0.965; // gentler than focus fly-to
 export const TOUR_IDLE_SECONDS = 3.5; // idle time before the tour starts
@@ -119,6 +122,9 @@ export interface Graph3dDefaults {
   graph3dOrphanNebula: boolean;
   graph3dHeat: boolean;
   graph3dCinematic: boolean;
+  graph3dTimeLapse: boolean;
+  graph3dTimeLoop: boolean;
+  graph3dFocusDepth: number;
 }
 
 export const GRAPH_3D_DEFAULTS: Graph3dDefaults = {
@@ -136,4 +142,7 @@ export const GRAPH_3D_DEFAULTS: Graph3dDefaults = {
   graph3dOrphanNebula: true,
   graph3dHeat: false,
   graph3dCinematic: false,
+  graph3dTimeLapse: false,
+  graph3dTimeLoop: false,
+  graph3dFocusDepth: 1,
 };

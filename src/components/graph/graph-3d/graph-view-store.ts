@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { neighborsAtDepth, shortestPath } from "@/lib/graph/graph-model";
+import { useSettingsStore } from "@/lib/settings-store";
 import type { GraphLink, GraphNode } from "@/lib/graph/types";
 
 interface GraphViewState {
@@ -10,7 +11,6 @@ interface GraphViewState {
   query: string;
   capture: (() => string) | null;
   clusterFilter: number | null;
-  focusDepth: number;
   pathMode: boolean;
   pathStart: GraphNode | null;
   pathIds: Set<string>;
@@ -21,7 +21,6 @@ interface GraphViewState {
   clearFocus: () => void;
   setCapture: (capture: (() => string) | null) => void;
   setClusterFilter: (index: number | null) => void;
-  setFocusDepth: (depth: number) => void;
   togglePathMode: () => void;
   setTimeCursor: (cursor: number | null) => void;
 }
@@ -36,7 +35,6 @@ export const useGraphViewStore = create<GraphViewState>((set, get) => ({
   query: "",
   capture: null,
   clusterFilter: null,
-  focusDepth: 1,
   pathMode: false,
   pathStart: null,
   pathIds: EMPTY,
@@ -45,7 +43,8 @@ export const useGraphViewStore = create<GraphViewState>((set, get) => ({
   setHovered: (node) => set({ hovered: node }),
 
   pick: (node, links) => {
-    const { pathMode, pathStart, focusDepth } = get();
+    const { pathMode, pathStart } = get();
+    const focusDepth = useSettingsStore.getState().settings.graph3dFocusDepth;
     if (pathMode) {
       if (!pathStart) {
         set({ pathStart: node, pathIds: EMPTY, selected: node });
@@ -89,8 +88,6 @@ export const useGraphViewStore = create<GraphViewState>((set, get) => ({
       neighborIds: EMPTY,
       pathIds: EMPTY,
     })),
-
-  setFocusDepth: (depth) => set({ focusDepth: depth }),
 
   togglePathMode: () =>
     set((state) => ({ pathMode: !state.pathMode, pathStart: null, pathIds: EMPTY })),

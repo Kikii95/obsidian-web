@@ -13,6 +13,21 @@ export interface PatchNote {
 
 // Plus recent en premier
 export const patchNotes: PatchNote[] = [
+  // v2.8.1 - Graph godmode : peaufinage
+  {
+    version: "2.8.1",
+    date: "2026-07-01",
+    features: [
+      { title: "Time-lapse en boucle", description: "Nouveau bouton boucle sur la frise temporelle : la lecture recommence automatiquement à zéro à la fin" },
+    ],
+    fixes: [
+      { title: "Frise temporelle masquée par la légende", description: "La frise « Temps » et la légende des groupes se chevauchaient en bas de l'écran : elles sont désormais empilées proprement" },
+    ],
+    improvements: [
+      { title: "Réglages du graph mémorisés", description: "Les modes Temps, Cinéma, Chaleur et la profondeur « Voisins » sont maintenant sauvegardés et rechargés automatiquement à l'arrivée sur la page (comme les autres réglages)" },
+      { title: "Bouton « Voisins » plus clair", description: "Info-bulle explicite : au clic sur une note, éclaire ses voisins jusqu'à N liens de distance (1 = liens directs, 2 = voisins des voisins…)" },
+    ],
+  },
   // v2.8.0 - Graph godmode : immersion
   {
     version: "2.8.0",

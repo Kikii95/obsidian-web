@@ -6,6 +6,7 @@ import { Canvas } from "@react-three/fiber";
 import { GraphScene } from "./graph-scene";
 import { GraphHud } from "./graph-hud";
 import { NodeInfoCard } from "./node-info-card";
+import { useGraphViewStore } from "./graph-view-store";
 import { useGraphWorker } from "@/hooks/use-graph-worker";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { buildIndexMap, buildSizes } from "@/lib/graph/graph-model";
@@ -52,6 +53,16 @@ export function Graph3D({ data, reducedEffects, onFallback }: Graph3DProps) {
   useEffect(() => {
     if (failed) onFallback?.();
   }, [failed, onFallback]);
+
+  // Restore/sync the time-lapse frise from the persisted setting.
+  useEffect(() => {
+    const { timeCursor, setTimeCursor } = useGraphViewStore.getState();
+    if (settings.graph3dTimeLapse && extent.dated >= 2) {
+      if (timeCursor === null) setTimeCursor(extent.max);
+    } else if (timeCursor !== null) {
+      setTimeCursor(null);
+    }
+  }, [settings.graph3dTimeLapse, extent.dated, extent.max]);
 
   const openNote = (node: GraphNode) => {
     if (node.kind !== "note") return;

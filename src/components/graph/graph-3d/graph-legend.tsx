@@ -18,7 +18,7 @@ export function GraphLegend({ nodeCount, linkCount, truncated, clusters }: Graph
   const setClusterFilter = useGraphViewStore((state) => state.setClusterFilter);
 
   return (
-    <div className="pointer-events-auto absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-md border border-border bg-card/80 px-3 py-2 text-xs text-muted-foreground backdrop-blur">
+    <div className="pointer-events-auto rounded-md border border-border bg-card/80 px-3 py-2 text-xs text-muted-foreground backdrop-blur">
       <div>
         {nodeCount} nœuds · {linkCount} liens{truncated ? " (limité)" : ""}
       </div>

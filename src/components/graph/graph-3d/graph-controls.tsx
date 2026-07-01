@@ -2,7 +2,7 @@
 
 import { Camera, Clapperboard, Flame, History, Orbit, RotateCcw, Route, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SCREENSHOT_FILENAME } from "@/lib/graph/constants";
+import { FOCUS_DEPTH_MAX, SCREENSHOT_FILENAME } from "@/lib/graph/constants";
 import type { TimeExtent } from "@/lib/graph/temporal";
 import { useSettingsStore } from "@/lib/settings-store";
 import type { ClusterBy } from "@/lib/graph/types";
@@ -19,19 +19,15 @@ const CLUSTER_LABELS: Record<ClusterBy, string> = {
   community: "groupes",
   none: "aucune",
 };
-const MAX_DEPTH = 3;
 
 /** Bottom-left toggle row: camera, colouring, navigation, effects, export. */
 export function GraphControls({ timeExtent }: GraphControlsProps) {
   const { settings, updateSettings } = useSettingsStore();
   const clearFocus = useGraphViewStore((state) => state.clearFocus);
   const capture = useGraphViewStore((state) => state.capture);
-  const focusDepth = useGraphViewStore((state) => state.focusDepth);
-  const setFocusDepth = useGraphViewStore((state) => state.setFocusDepth);
   const pathMode = useGraphViewStore((state) => state.pathMode);
   const togglePathMode = useGraphViewStore((state) => state.togglePathMode);
-  const timeCursor = useGraphViewStore((state) => state.timeCursor);
-  const setTimeCursor = useGraphViewStore((state) => state.setTimeCursor);
+  const focusDepth = settings.graph3dFocusDepth;
   const hasDates = timeExtent.dated >= 2;
 
   const cycleCluster = () => {
@@ -73,8 +69,8 @@ export function GraphControls({ timeExtent }: GraphControlsProps) {
       <Button
         size="sm"
         variant="secondary"
-        onClick={() => setFocusDepth((focusDepth % MAX_DEPTH) + 1)}
-        title="Profondeur du focus (voisins)"
+        onClick={() => updateSettings({ graph3dFocusDepth: (focusDepth % FOCUS_DEPTH_MAX) + 1 })}
+        title="Au clic sur une note, éclaire ses voisins jusqu'à N liens de distance (1 = liens directs, 2 = voisins des voisins…)"
       >
         Voisins : {focusDepth}
       </Button>
@@ -95,8 +91,8 @@ export function GraphControls({ timeExtent }: GraphControlsProps) {
           </Button>
           <Button
             size="sm"
-            variant={timeCursor !== null ? "default" : "secondary"}
-            onClick={() => setTimeCursor(timeCursor !== null ? null : timeExtent.max)}
+            variant={settings.graph3dTimeLapse ? "default" : "secondary"}
+            onClick={() => updateSettings({ graph3dTimeLapse: !settings.graph3dTimeLapse })}
             title="Rejouer la croissance du vault dans le temps"
           >
             <History className="mr-1 h-3.5 w-3.5" />

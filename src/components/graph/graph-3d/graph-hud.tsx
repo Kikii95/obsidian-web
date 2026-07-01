@@ -81,14 +81,15 @@ export function GraphHud({ nodes, links, clusters, truncated, timeExtent }: Grap
 
       <GraphControls timeExtent={timeExtent} />
 
-      {timeCursor !== null && <TimeSlider extent={timeExtent} />}
-
-      <GraphLegend
-        nodeCount={nodes.length}
-        linkCount={links.length}
-        truncated={truncated}
-        clusters={clusters}
-      />
+      <div className="pointer-events-none absolute bottom-4 left-1/2 z-10 flex max-w-[90vw] -translate-x-1/2 flex-col items-center gap-2">
+        {timeCursor !== null && <TimeSlider extent={timeExtent} />}
+        <GraphLegend
+          nodeCount={nodes.length}
+          linkCount={links.length}
+          truncated={truncated}
+          clusters={clusters}
+        />
+      </div>
     </>
   );
 }

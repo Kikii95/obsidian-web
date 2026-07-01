@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.8.2] - 2026-07-01
+
+### Fixed
+
+- **Graph 3D — nœuds non détectés au clic/survol.** `InstancedMesh.raycast` (three 0.185.1, `InstancedMesh.js` L270-275) calcule la `boundingSphere` **une seule fois puis la cache à vie** ; or les matrices d'instances sont animées à chaque frame (le worker étale les nœuds loin de l'origine) → la sphère figée sur le layout initial faisait un `return` anticipé → des régions entières de nœuds n'étaient jamais testées. Fix : `mesh.boundingSphere = null` dans le `useFrame` → recalcul lazy à chaque raycast contre les positions courantes.
+
+### Changed
+
+- **Graph 3D — zone de clic des petits nœuds.** Ajout d'un **pick proxy invisible** (2ᵉ InstancedMesh `opacity 0`, `depthWrite false`) portant les handlers pointer, échelle `max(size, PICK_MIN_RADIUS=1.8)` → nœuds peu connectés et orphelines cliquables/survolables sans grossir visuellement ; le mesh visible n'a plus de handlers.
+
+## [2.8.1] - 2026-07-01
+
+### Added
+
+- **Graph 3D — time-lapse en boucle** (`graph3dTimeLoop` + bouton Repeat sur la frise) : la lecture repart de zéro à la fin.
+
+### Fixed
+
+- **Graph 3D — frise Temps masquée par la légende.** Les deux étaient ancrées bas-centre et se chevauchaient ; elles sont désormais empilées dans une colonne unique (frise au-dessus, légende en dessous), `TimeSlider`/`GraphLegend` rendus non-absolus.
+
+### Changed
+
+- **Graph 3D — réglages Temps/Voisins persistés.** Étaient de l'état volatile (`graph-view-store`) → passés en réglages `settings-store` (localStorage + cloud) : `graph3dTimeLapse`, `graph3dTimeLoop`, `graph3dFocusDepth`. `focusDepth` retiré du view-store ; `pick(node,links)` lit la profondeur via `useSettingsStore.getState()` ; effet dans `graph-3d.tsx` restaure la frise au montage. Info-bulle « Voisins » explicitée (profondeur BFS d'éclairage au clic).
+
 ## [2.8.0] - 2026-07-01
 
 ### Added

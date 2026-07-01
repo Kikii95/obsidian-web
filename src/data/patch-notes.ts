@@ -13,6 +13,17 @@ export interface PatchNote {
 
 // Plus recent en premier
 export const patchNotes: PatchNote[] = [
+  // v2.2.2 - Security remediation + CI hardening
+  {
+    version: "2.2.2",
+    date: "2026-07-01",
+    features: [],
+    fixes: [],
+    improvements: [
+      { title: "Securite — vulnerabilites fermees", description: "Bump Next.js 16.2.9, vitest 4.1, undici 7.28, webpack 5.108, jsdom 28.1, @excalidraw/excalidraw 0.18.1 + overrides pnpm actualises (ws, fast-uri, postcss, babel, mermaid, dompurify, js-yaml) — 1 critical / 15 high / 23 moderate fermees, 0 vulnerabilite restante" },
+      { title: "CI + Dependabot", description: "Nouveau pipeline GitHub Actions (typecheck, tests, build + audit prod bloquant sur high) et config Dependabot hebdomadaire groupee pour eviter la re-derive des dependances" },
+    ],
+  },
   // v2.2.1 - Fixes hex tags + lien reprendre
   {
     version: "2.2.1",

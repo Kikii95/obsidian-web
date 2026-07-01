@@ -2,6 +2,10 @@
   "name": "obsidian-web",
   "version": "2.0.0",
   "private": true,
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -21,7 +25,7 @@
     "@codemirror/theme-one-dark": "^6.1.3",
     "@codemirror/view": "^6.39.12",
     "@ducanh2912/next-pwa": "^10.2.9",
-    "@excalidraw/excalidraw": "^0.18.0",
+    "@excalidraw/excalidraw": "^0.18.1",
     "@octokit/rest": "^22.0.1",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-avatar": "^1.1.11",
@@ -63,7 +67,7 @@
     "lucide-react": "^0.555.0",
     "mermaid": "^11.12.2",
     "nanoid": "^5.1.6",
-    "next": "16.2.3",
+    "next": "16.2.9",
     "next-auth": "^4.24.13",
     "next-themes": "^0.4.6",
     "react": "19.2.0",
@@ -92,28 +96,30 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^5.1.4",
-    "@vitest/coverage-v8": "^4.0.18",
+    "@vitest/coverage-v8": "^4.1.0",
     "dotenv": "^17.2.3",
     "drizzle-kit": "^0.31.8",
     "eslint": "^9",
-    "eslint-config-next": "16.0.5",
+    "eslint-config-next": "16.2.9",
     "jsdom": "^28.0.0",
     "sharp": "^0.34.5",
     "tailwindcss": "^4",
     "tw-animate-css": "^1.4.0",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.18"
+    "vite": "^7.3.6",
+    "vitest": "^4.1.0",
+    "webpack": "^5.108.0"
   },
   "pnpm": {
     "overrides": {
-      "dompurify": "^3.4.0",
-      "vite": "^7.3.2",
+      "dompurify": ">=3.4.11",
+      "vite": "^7.3.6",
       "lodash": "^4.17.24",
       "lodash-es": "^4.17.24",
       "minimatch": "^9.0.7",
       "picomatch": "^4.0.4",
       "rollup": "^4.59.0",
-      "undici": "^7.24.0",
+      "undici": ">=7.28.0 <8",
       "serialize-javascript": "^7.0.5",
       "flatted": "^3.4.2",
       "immutable": "^4.3.8",
@@ -121,9 +127,17 @@
       "nanoid": "^5.0.9",
       "brace-expansion": "^2.0.3",
       "uuid": "^14.0.0",
-      "mermaid": "^11.12.2",
+      "mermaid": ">=11.15.0",
       "esbuild": "^0.25.0",
-      "webpack": ">=5.104.1"
+      "webpack": "^5.108.0",
+      "ws": ">=8.21.0",
+      "fast-uri": "^3.1.2",
+      "postcss": ">=8.5.10",
+      "@babel/core": ">=7.29.6",
+      "@babel/plugin-transform-modules-systemjs": ">=7.29.4",
+      "@excalidraw/mermaid-to-excalidraw": ">=1.1.3",
+      "js-yaml": ">=4.2.0 <5",
+      "gray-matter>js-yaml": "3.15.0"
     }
   }
 }

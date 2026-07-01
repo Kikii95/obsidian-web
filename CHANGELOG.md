@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.2.2] - 2026-07-01
+
+### Security
+
+- **Remédiation des vulnérabilités de dépendances** — Toutes les alertes ré-apparues sur `main` sont fermées : `1 critical / 15 high / 23 moderate → 0` (audit prod **et** dev à zéro). Principaux mouvements : `next` 16.2.3 → 16.2.9 (dont le RCE React Flight), `vitest` → 4.1.9, `undici` → 7.28.0 (borné `<8` pour rester compatible jsdom), `webpack` → 5.108.3, `jsdom` → 28.1.0, `@excalidraw/excalidraw` → 0.18.1. Overrides pnpm actualisés/ajoutés : `ws`, `fast-uri`, `postcss`, `@babel/*`, `mermaid`, `dompurify`, `js-yaml` (scopé `gray-matter` en 3.15.0 vs `>=4.2.0` ailleurs).
+
+### Added
+
+- **Pipeline CI GitHub Actions** (`.github/workflows/ci.yml`) — jobs `quality` (typecheck + tests + build) et `security` (audit `pnpm audit --prod --audit-level=high`, **bloquant**). Lint exécuté en non-bloquant (dette legacy).
+- **Configuration Dependabot** (`.github/dependabot.yml`) — mises à jour npm + github-actions hebdomadaires (lundi), groupées minor/patch, pour empêcher la re-dérive des dépendances.
+
+---
+
 ## [2.2.1] - 2026-06-03
 
 ### Fixed

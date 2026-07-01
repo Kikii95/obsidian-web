@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Typecheck · Test · Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm exec tsc --noEmit
+
+      - name: Lint (non-blocking — legacy debt)
+        run: pnpm lint
+        continue-on-error: true
+
+      - name: Test
+        run: pnpm test:run
+
+      - name: Build
+        run: pnpm build
+        env:
+          NODE_ENV: production
+          # Placeholder build-time values — no real secrets, build must not depend on them.
+          NEXTAUTH_URL: http://localhost:3000
+          NEXTAUTH_SECRET: ci-placeholder-secret-not-used-at-runtime
+          GITHUB_CLIENT_ID: ci-placeholder
+          GITHUB_CLIENT_SECRET: ci-placeholder
+          GITHUB_ID: ci-placeholder
+          GITHUB_SECRET: ci-placeholder
+          GITHUB_REPO_OWNER: ci-owner
+          GITHUB_REPO_NAME: ci-repo
+          GITHUB_BRANCH: main
+          ALLOWED_USERS: ci@example.com
+          ENCRYPTION_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
+          POSTGRES_URL: postgres://ci:ci@localhost:5432/ci
+
+  security:
+    name: Security audit (prod, high+)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit production dependencies
+        run: pnpm audit --prod --audit-level=high

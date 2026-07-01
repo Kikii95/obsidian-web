@@ -11,7 +11,15 @@ import {
 
 const COMMIT_PAGES = 4;
 const TASK_CAP = 50;
-const PROJECT_CAP = 30;
+const PROJECT_CAP = 200;
+
+interface ProjectEntry {
+  name: string;
+  category: string;
+  path: string;
+  notes: number;
+  lastCommit: string | null;
+}
 
 function corsHeaders(origin: string | null): Record<string, string> {
   return {
@@ -44,9 +52,23 @@ function buildProjects(tree: Awaited<ReturnType<typeof getFullVaultTree>>, root:
     counts.set(key, entry);
   }
   return [...counts.entries()]
-    .map(([key, v]) => ({ name: key.split("/")[1], category: v.category, path: `${root}/${key}`, notes: v.notes }))
+    .map(([key, v]): ProjectEntry => ({ name: key.split("/")[1], category: v.category, path: `${root}/${key}`, notes: v.notes, lastCommit: null }))
     .sort((a, b) => b.notes - a.notes)
     .slice(0, PROJECT_CAP);
+}
+
+async function buildProjectDates(octokit: Octokit, config: VaultConfig, projects: ProjectEntry[]) {
+  const { owner, repo, branch } = config;
+  await Promise.all(
+    projects.map(async (p) => {
+      try {
+        const { data } = await octokit.repos.listCommits({ owner, repo, sha: branch, path: p.path, per_page: 1 });
+        p.lastCommit = data[0]?.commit.author?.date || data[0]?.commit.committer?.date || null;
+      } catch {
+        p.lastCommit = null;
+      }
+    }),
+  );
 }
 
 async function buildTasks(octokit: Octokit, config: VaultConfig) {
@@ -101,6 +123,7 @@ export async function GET(request: NextRequest) {
     const tree = await getFullVaultTree(octokit, false, config);
     const [tasks, activity] = await Promise.all([buildTasks(octokit, config), buildActivity(octokit, config)]);
     const projects = buildProjects(tree, root);
+    await buildProjectDates(octokit, config, projects);
 
     return NextResponse.json({ tasks, projects, activity, generatedAt: new Date().toISOString() }, { headers });
   } catch (error) {

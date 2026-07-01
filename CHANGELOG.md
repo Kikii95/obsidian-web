@@ -2,6 +2,36 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.8.0] - 2026-07-01
+
+### Added
+
+- **Graph — mode Cinéma (visite guidée)** (`graph3dCinematic`, défaut off). Quand l'utilisateur est inactif (> `TOUR_IDLE_SECONDS`), la caméra dérive automatiquement d'un pôle à l'autre (top-degré, `TOUR_HUB_COUNT`) via une interpolation douce (`TOUR_LERP`), en s'attardant `TOUR_DWELL_SECONDS` sur chacun. L'événement `start` d'OrbitControls réarme le compteur d'inactivité → la moindre interaction met la visite en pause. Bouton « Cinéma » dans le HUD. Fly-to focus et tour partagent un helper `easeToward` unique.
+
+### Changed
+
+- **HUD du graph scindé** — la barre d'outils (`graph-hud.tsx`) dépassait la limite de 150 lignes/composant avec les nouveaux modes ; la rangée de boutons est extraite dans `graph-controls.tsx`, le HUD garde recherche + frise + légende.
+
+## [2.7.0] - 2026-07-01
+
+### Added
+
+- **Graph — frise temporelle (time-lapse)** (bouton « Temps »). Rejoue la croissance du vault : un curseur (ou la lecture auto, `TIME_LAPSE_STEPS`/`TIME_LAPSE_INTERVAL_MS`) révèle les notes au fil de leur date. Les dates sont dérivées du frontmatter (`updated`/`modified`/`date`/`created`/`mtime`, `src/lib/graph/temporal.ts`, pur + testé) — nombres traités comme secondes ou ms selon un seuil. Les nœuds postérieurs au curseur sont masqués (échelle 0), leurs arêtes coupées (sommets NaN → segment ignoré par WebGL). Les notes **sans date restent toujours visibles** ; la frise affiche la couverture (`N/M datées`).
+- **Graph — carte de chaleur par récence** (`graph3dHeat`, défaut off, bouton « Chaleur »). Recolore les nœuds d'un dégradé froid→chaud (`HEAT_COLD`→`HEAT_WARM`) selon `recency(date, extent)` (0 = plus ancien, 1 = plus récent). Les notes non datées prennent la teinte neutre.
+
+### Changed
+
+- `GraphNode` gagne un champ optionnel `date` (epoch ms). Les props de rendu des nœuds sont regroupées dans un objet `NodeDisplay` (focus, filtres, gate time-lapse, heat, extent) pour rester sous la limite d'interface.
+
+## [2.6.0] - 2026-07-01
+
+### Added
+
+- **Graph — chemin entre deux notes** (mode « Chemin »). Choisis une note de départ puis une d'arrivée → BFS du plus court chemin (`shortestPath`, `src/lib/graph/graph-model.ts`) ; le chemin s'illumine, le reste s'estompe.
+- **Graph — focus par profondeur** (bouton « Voisins : N », 1→3). BFS `neighborsAtDepth` : élargit le halo de focus aux voisins des voisins.
+- **Graph — liens cliquables dans la fiche note.** La `NodeInfoCard` liste les notes liées (`MAX_BACKLINKS`) en puces cliquables → saut de note en note sans quitter le graphe.
+- **Graph — légende-filtre.** Un clic sur une pastille de couleur isole ce groupe (les autres s'estompent) ; re-clic pour tout réafficher (`graph-legend.tsx`).
+
 ## [2.5.0] - 2026-07-01
 
 ### Added

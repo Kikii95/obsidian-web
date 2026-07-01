@@ -73,6 +73,12 @@ export const FOCUS_DISTANCE = 70;
 export const FOCUS_LERP = 0.86;
 export const FOCUS_ARRIVE_EPS = 2;
 
+// Cinematic idle tour: auto-visit the biggest hubs when the user stops interacting
+export const TOUR_LERP = 0.965; // gentler than focus fly-to
+export const TOUR_IDLE_SECONDS = 3.5; // idle time before the tour starts
+export const TOUR_DWELL_SECONDS = 4.5; // time spent easing toward each hub
+export const TOUR_HUB_COUNT = 10; // number of top-degree hubs on the itinerary
+
 // Compass gizmo + screenshot export
 export const GIZMO_MARGIN: [number, number] = [72, 72];
 export const SCREENSHOT_FILENAME = "knowledge-graph.png";
@@ -112,6 +118,7 @@ export interface Graph3dDefaults {
   graph3dEdgeFlow: boolean;
   graph3dOrphanNebula: boolean;
   graph3dHeat: boolean;
+  graph3dCinematic: boolean;
 }
 
 export const GRAPH_3D_DEFAULTS: Graph3dDefaults = {
@@ -128,4 +135,5 @@ export const GRAPH_3D_DEFAULTS: Graph3dDefaults = {
   graph3dEdgeFlow: true,
   graph3dOrphanNebula: true,
   graph3dHeat: false,
+  graph3dCinematic: false,
 };

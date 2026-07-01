@@ -10,7 +10,7 @@ import { NodeInstances, type NodeDisplay } from "./node-instances";
 import { SceneCapture } from "./scene-capture";
 import { Starfield } from "./starfield";
 import { useGraphViewStore } from "./graph-view-store";
-import { GIZMO_MARGIN } from "@/lib/graph/constants";
+import { GIZMO_MARGIN, TOUR_HUB_COUNT } from "@/lib/graph/constants";
 import type { TimeExtent } from "@/lib/graph/temporal";
 import type { GraphLink, GraphNode } from "@/lib/graph/types";
 import type { LabelDensity } from "@/lib/graph/constants";
@@ -30,6 +30,7 @@ interface GraphSceneProps {
   edgeFlow: boolean;
   heat: boolean;
   timeExtent: TimeExtent;
+  cinematic: boolean;
 }
 
 export function GraphScene({
@@ -46,6 +47,7 @@ export function GraphScene({
   edgeFlow,
   heat,
   timeExtent,
+  cinematic,
 }: GraphSceneProps) {
   const setHovered = useGraphViewStore((state) => state.setHovered);
   const pick = useGraphViewStore((state) => state.pick);
@@ -69,6 +71,14 @@ export function GraphScene({
     () => ({ focusId, neighborIds, clusterFilter, pathIds, hidden, heat, extent: timeExtent }),
     [focusId, neighborIds, clusterFilter, pathIds, hidden, heat, timeExtent]
   );
+
+  const hubs = useMemo(() => {
+    return nodes
+      .map((node, index) => ({ index, degree: node.degree }))
+      .sort((a, b) => b.degree - a.degree)
+      .slice(0, TOUR_HUB_COUNT)
+      .map((hub) => hub.index);
+  }, [nodes]);
 
   const fogArgs = useMemo(
     () => [palette.background, 220, 900] as [string, number, number],
@@ -120,6 +130,8 @@ export function GraphScene({
         focusId={focusId}
         indexOf={indexOf}
         positions={positions}
+        cinematic={cinematic}
+        hubs={hubs}
       />
       <GizmoHelper alignment="bottom-right" margin={GIZMO_MARGIN}>
         <GizmoViewport axisColors={axisColors} labelColor={palette.background} />

@@ -13,6 +13,18 @@ export interface PatchNote {
 
 // Plus recent en premier
 export const patchNotes: PatchNote[] = [
+  // v2.8.0 - Graph godmode : immersion
+  {
+    version: "2.8.0",
+    date: "2026-07-01",
+    features: [
+      { title: "Mode Cinéma (visite guidée)", description: "Nouveau bouton « Cinéma » dans le graph 3D : quand tu ne touches à rien, la caméra dérive automatiquement d'un gros pôle à l'autre, comme une visite guidée de ton cerveau numérique. Reprends la main à tout moment, la visite se met en pause" },
+    ],
+    fixes: [],
+    improvements: [
+      { title: "HUD du graph réorganisé", description: "La barre d'outils du graph 3D a été scindée pour rester lisible avec les nouveaux modes (Cinéma, Chaleur, Temps)" },
+    ],
+  },
   // v2.7.0 - Graph godmode : temps
   {
     version: "2.7.0",

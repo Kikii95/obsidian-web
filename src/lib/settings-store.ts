@@ -83,6 +83,7 @@ export interface UserSettings {
   graph3dEdgeFlow: boolean; // animated directional edge flow
   graph3dOrphanNebula: boolean; // show orphan notes as an outer nebula (3D desktop)
   graph3dHeat: boolean; // colour nodes by recency (heat) instead of cluster
+  graph3dCinematic: boolean; // idle auto-tour of the biggest hubs
 
   // Header
   showDateTime: boolean; // Show date/time in header

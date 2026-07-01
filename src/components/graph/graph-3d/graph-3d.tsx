@@ -87,6 +87,7 @@ export function Graph3D({ data, reducedEffects, onFallback }: Graph3DProps) {
           edgeFlow={edgeFlow}
           heat={settings.graph3dHeat}
           timeExtent={extent}
+          cinematic={settings.graph3dCinematic}
         />
       </Canvas>
       <GraphHud

@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { useSettingsStore } from "@/lib/settings-store";
+import { GRAPH_3D_DEFAULTS } from "@/lib/graph/constants";
 import type { ClusterBy } from "@/lib/graph/types";
 import type { LabelDensity } from "@/lib/graph/constants";
 
@@ -58,13 +59,15 @@ function Segmented<T extends string>({
 
 function Graph3dControls() {
   const { settings, updateSettings } = useSettingsStore();
+  // Fall back to defaults for any field missing from older persisted settings.
+  const g = { ...GRAPH_3D_DEFAULTS, ...settings };
   return (
     <div className="space-y-4 border-t border-border pt-3">
       <p className="text-xs font-medium text-muted-foreground">Vue 3D</p>
       <div className="space-y-2">
         <Label className="text-xs">Couleur des amas</Label>
         <Segmented
-          value={settings.graph3dClusterBy}
+          value={g.graph3dClusterBy}
           options={CLUSTER_OPTIONS}
           onChange={(value) => updateSettings({ graph3dClusterBy: value })}
         />
@@ -72,7 +75,7 @@ function Graph3dControls() {
       <div className="space-y-2">
         <Label className="text-xs">Densité des labels</Label>
         <Segmented
-          value={settings.graph3dLabelDensity}
+          value={g.graph3dLabelDensity}
           options={DENSITY_OPTIONS}
           onChange={(value) => updateSettings({ graph3dLabelDensity: value })}
         />
@@ -81,11 +84,11 @@ function Graph3dControls() {
         <div className="flex items-center justify-between">
           <Label className="text-xs">Intensité néon</Label>
           <span className="font-mono text-xs text-muted-foreground">
-            {settings.graph3dBloomIntensity.toFixed(1)}
+            {g.graph3dBloomIntensity.toFixed(1)}
           </span>
         </div>
         <Slider
-          value={[settings.graph3dBloomIntensity * 10]}
+          value={[g.graph3dBloomIntensity * 10]}
           onValueChange={([value]) => updateSettings({ graph3dBloomIntensity: value / 10 })}
           min={0}
           max={30}
@@ -96,11 +99,11 @@ function Graph3dControls() {
         <div className="flex items-center justify-between">
           <Label className="text-xs">Taille des nœuds</Label>
           <span className="font-mono text-xs text-muted-foreground">
-            {settings.graph3dNodeSize.toFixed(1)}
+            {g.graph3dNodeSize.toFixed(1)}
           </span>
         </div>
         <Slider
-          value={[settings.graph3dNodeSize * 10]}
+          value={[g.graph3dNodeSize * 10]}
           onValueChange={([value]) => updateSettings({ graph3dNodeSize: value / 10 })}
           min={5}
           max={30}
@@ -110,21 +113,21 @@ function Graph3dControls() {
       <div className="flex items-center justify-between">
         <Label className="text-xs">Tags comme nœuds</Label>
         <Switch
-          checked={settings.graph3dShowTags}
+          checked={g.graph3dShowTags}
           onCheckedChange={(checked) => updateSettings({ graph3dShowTags: checked })}
         />
       </div>
       <div className="flex items-center justify-between">
         <Label className="text-xs">Arêtes animées</Label>
         <Switch
-          checked={settings.graph3dEdgeFlow}
+          checked={g.graph3dEdgeFlow}
           onCheckedChange={(checked) => updateSettings({ graph3dEdgeFlow: checked })}
         />
       </div>
       <div className="flex items-center justify-between">
         <Label className="text-xs">Effets réduits</Label>
         <Switch
-          checked={settings.graph3dReducedEffects}
+          checked={g.graph3dReducedEffects}
           onCheckedChange={(checked) => updateSettings({ graph3dReducedEffects: checked })}
         />
       </div>

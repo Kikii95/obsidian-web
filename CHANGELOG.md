@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.4.2] - 2026-07-01
+
+### Fixed
+
+- **Crash à l'ouverture des réglages du graph** — `Cannot read properties of undefined (reading 'toFixed')`. Les réglages sont persistés (localStorage + cloud GitHub) ; pour un utilisateur dont les préférences dataient d'avant la vue 3D, la réhydratation Zustand `persist` (merge superficiel par défaut) **remplaçait tout l'objet `settings`** → les clés `graph3d*` disparaissaient → `undefined.toFixed()`. Corrections : (1) `merge` personnalisé dans `persist` qui **fusionne en profondeur** les settings persistés par-dessus les défauts ; (2) `loadFromCloud` base la fusion sur les défauts ; (3) le popover retombe sur `GRAPH_3D_DEFAULTS` pour toute clé manquante.
+
 ## [2.4.1] - 2026-07-01
 
 ### Fixed

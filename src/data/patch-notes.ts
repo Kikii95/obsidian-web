@@ -13,6 +13,16 @@ export interface PatchNote {
 
 // Plus recent en premier
 export const patchNotes: PatchNote[] = [
+  // v2.4.2 - Fix crash réglages graph
+  {
+    version: "2.4.2",
+    date: "2026-07-01",
+    features: [],
+    fixes: [
+      { title: "Réglages du graph qui plantaient", description: "Correction du crash « Cannot read properties of undefined » à l'ouverture des réglages du graph : les préférences enregistrées avant la vue 3D récupèrent maintenant les valeurs par défaut manquantes au lieu de planter" },
+    ],
+    improvements: [],
+  },
   // v2.4.1 - Fix indexation bloquée
   {
     version: "2.4.1",

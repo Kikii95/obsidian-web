@@ -321,9 +321,10 @@ export const useSettingsStore = create<SettingsState>()(
           const data = await response.json();
 
           if (data.exists && data.settings) {
-            // Merge cloud settings with local (cloud takes priority)
+            // Merge cloud settings over defaults + local (cloud takes priority);
+            // defaults as the base guarantee newer keys are never undefined.
             set((state) => ({
-              settings: { ...state.settings, ...data.settings },
+              settings: { ...defaultSettings, ...state.settings, ...data.settings },
               cloudSha: data.sha,
               isSyncing: false,
               hasLoadedFromCloud: true,
@@ -386,6 +387,17 @@ export const useSettingsStore = create<SettingsState>()(
       partialize: (state) => ({
         settings: state.settings,
       }),
+      // Deep-merge persisted settings OVER the defaults so keys added in newer
+      // versions (e.g. graph3d*) are never missing for existing users — the
+      // default shallow merge would replace the whole `settings` object.
+      merge: (persisted, current) => {
+        const state = persisted as Partial<SettingsState> | undefined;
+        return {
+          ...current,
+          ...state,
+          settings: { ...current.settings, ...(state?.settings ?? {}) },
+        };
+      },
     }
   )
 );

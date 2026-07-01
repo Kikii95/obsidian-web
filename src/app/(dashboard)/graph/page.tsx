@@ -15,7 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { githubClient } from "@/services/github-client";
 import { isMobileDevice, useSettingsStore } from "@/lib/settings-store";
-import { LOW_END_CORES, type GraphViewMode } from "@/lib/graph/constants";
+import { LOW_END_CORES, NODE_CAP_3D, type GraphViewMode } from "@/lib/graph/constants";
 import type { GraphData } from "@/lib/graph/types";
 import { GraphSettingsPopover } from "@/components/graph/graph-settings-popover";
 
@@ -76,10 +76,15 @@ export default function GraphPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await githubClient.getGraph(settings.showOrphanNotes, {
+      // On a 3D-capable desktop, pull the whole vault (orphans included) so the
+      // outer nebula can show every note; mobile / forced-2D stays capped.
+      const cores = typeof navigator !== "undefined" ? navigator.hardwareConcurrency ?? 8 : 8;
+      const wants3d = settings.graphViewMode !== "2d" && !force2d && cores > 4;
+      const nebula = wants3d && settings.graph3dOrphanNebula;
+      const data = await githubClient.getGraph(settings.showOrphanNotes || nebula, {
         clusterBy: settings.graph3dClusterBy,
         tagNodes: settings.graph3dShowTags,
-        maxNodes: settings.graph3dNodeCap,
+        maxNodes: nebula ? NODE_CAP_3D : settings.graph3dNodeCap,
       });
       setGraphData(data);
     } catch (err) {
@@ -92,6 +97,9 @@ export default function GraphPage() {
     settings.graph3dClusterBy,
     settings.graph3dShowTags,
     settings.graph3dNodeCap,
+    settings.graphViewMode,
+    settings.graph3dOrphanNebula,
+    force2d,
   ]);
 
   useEffect(() => {

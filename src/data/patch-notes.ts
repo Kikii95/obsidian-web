@@ -20,6 +20,7 @@ export const patchNotes: PatchNote[] = [
     features: [
       { title: "Palette au choix", description: "Nouveau réglage « Palette » dans le graph : couleurs vives dédiées (par défaut, bien distinctes) ou couleurs du thème. Fini les couleurs d'amas qui se confondaient avec le thème" },
       { title: "Regroupement par communautés", description: "Nouvelle option « Groupes » : détection automatique des communautés de notes (sujets émergents) par propagation de labels — bien plus parlant que le simple dossier/tag, chaque groupe nommé d'après sa note centrale" },
+      { title: "Nébuleuse d'orphelines", description: "En 3D sur desktop, les notes sans aucun lien s'affichent en halo externe (au lieu d'être masquées) → tout ton vault visible d'un coup. Désactivable dans les réglages du graph" },
     ],
     fixes: [],
     improvements: [],

@@ -8,6 +8,9 @@ export const GHOST_NODE_PREFIX = "ghost:";
 export const DEFAULT_MAX_NODES = 1500;
 export const NODE_CAP_DESKTOP = 1500;
 export const NODE_CAP_MOBILE = 600;
+// The 3D InstancedMesh renders in a single draw call, so it can show far more
+// than the 2D SVG — used when the orphan nebula is on so nothing is trimmed.
+export const NODE_CAP_3D = 6000;
 export const MIN_TAG_COUNT_FOR_NODE = 3;
 
 // Palette (mapped to --chart-1..5 in the scene)
@@ -99,6 +102,7 @@ export interface Graph3dDefaults {
   graph3dReducedEffects: boolean;
   graph3dShowTags: boolean;
   graph3dEdgeFlow: boolean;
+  graph3dOrphanNebula: boolean;
 }
 
 export const GRAPH_3D_DEFAULTS: Graph3dDefaults = {
@@ -113,4 +117,5 @@ export const GRAPH_3D_DEFAULTS: Graph3dDefaults = {
   graph3dReducedEffects: false,
   graph3dShowTags: false,
   graph3dEdgeFlow: true,
+  graph3dOrphanNebula: true,
 };

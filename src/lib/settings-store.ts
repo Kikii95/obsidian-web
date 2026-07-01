@@ -81,6 +81,7 @@ export interface UserSettings {
   graph3dReducedEffects: boolean; // disable bloom/flow (auto-on mobile)
   graph3dShowTags: boolean; // render tags as hub nodes
   graph3dEdgeFlow: boolean; // animated directional edge flow
+  graph3dOrphanNebula: boolean; // show orphan notes as an outer nebula (3D desktop)
 
   // Header
   showDateTime: boolean; // Show date/time in header

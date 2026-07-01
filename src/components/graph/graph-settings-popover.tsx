@@ -124,6 +124,13 @@ function Graph3dControls() {
         />
       </div>
       <div className="flex items-center justify-between">
+        <Label className="text-xs">Nébuleuse d&apos;orphelines</Label>
+        <Switch
+          checked={g.graph3dOrphanNebula}
+          onCheckedChange={(checked) => updateSettings({ graph3dOrphanNebula: checked })}
+        />
+      </div>
+      <div className="flex items-center justify-between">
         <Label className="text-xs">Tags comme nœuds</Label>
         <Switch
           checked={g.graph3dShowTags}

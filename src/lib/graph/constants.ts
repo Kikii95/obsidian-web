@@ -22,6 +22,8 @@ export const NODE_SIZE_K = 0.4;
 // Force layout / worker
 export const ALPHA_MIN = 0.005;
 export const TICKS_PER_POST = 2;
+export const CLUSTER_SPHERE_RADIUS = 120;
+export const CLUSTER_FORCE_STRENGTH = 0.16;
 export const FORCE_CHARGE_MIN = -1200;
 export const FORCE_CHARGE_MAX = -10;
 export const LINK_DISTANCE_MIN = 10;
@@ -41,6 +43,15 @@ export const CAMERA_MIN_DISTANCE = 4;
 export const CAMERA_MAX_DISTANCE = 4000;
 export const DPR_MIN = 1;
 export const DPR_MAX = 1.75;
+
+// Fly-to focus (cinematic ease toward a selected node)
+export const FOCUS_DISTANCE = 70;
+export const FOCUS_LERP = 0.86;
+export const FOCUS_ARRIVE_EPS = 2;
+
+// Compass gizmo + screenshot export
+export const GIZMO_MARGIN: [number, number] = [72, 72];
+export const SCREENSHOT_FILENAME = "knowledge-graph.png";
 
 // Effects
 export const BLOOM_INTENSITY = 1.1;

@@ -7,10 +7,12 @@ interface GraphViewState {
   focusId: string | null;
   neighborIds: Set<string>;
   query: string;
+  capture: (() => string) | null;
   setHovered: (node: GraphNode | null) => void;
   select: (node: GraphNode | null, neighborIds?: Set<string>) => void;
   setQuery: (query: string) => void;
   clearFocus: () => void;
+  setCapture: (capture: (() => string) | null) => void;
 }
 
 const EMPTY = new Set<string>();
@@ -21,6 +23,7 @@ export const useGraphViewStore = create<GraphViewState>((set) => ({
   focusId: null,
   neighborIds: EMPTY,
   query: "",
+  capture: null,
   setHovered: (node) => set({ hovered: node }),
   select: (node, neighborIds) =>
     set({
@@ -30,4 +33,5 @@ export const useGraphViewStore = create<GraphViewState>((set) => ({
     }),
   setQuery: (query) => set({ query }),
   clearFocus: () => set({ selected: null, focusId: null, neighborIds: EMPTY }),
+  setCapture: (capture) => set({ capture }),
 }));

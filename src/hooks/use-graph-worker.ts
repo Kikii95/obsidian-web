@@ -75,18 +75,27 @@ export function useGraphWorker(
     const indexOf = buildIndexMap(nodes);
     const edges = buildEdgeArrays(links, indexOf);
     const config = buildForceConfig(forces);
+    const clusterIndex = new Uint16Array(nodes.length);
+    let clusterCount = 1;
+    nodes.forEach((node, i) => {
+      clusterIndex[i] = node.clusterIndex;
+      clusterCount = Math.max(clusterCount, node.clusterIndex + 1);
+    });
     worker.postMessage(
       {
         type: "init",
         nodeCount: nodes.length,
         edgeSource: edges.source,
         edgeTarget: edges.target,
+        clusterIndex,
+        clusterCount,
+        constellation: true,
         charge: config.charge,
         linkDistance: config.linkDistance,
         gravity: config.gravity,
         collision: config.collision,
       },
-      [edges.source.buffer, edges.target.buffer]
+      [edges.source.buffer, edges.target.buffer, clusterIndex.buffer]
     );
 
     return () => {

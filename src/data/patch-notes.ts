@@ -21,7 +21,11 @@ export const patchNotes: PatchNote[] = [
       { title: "Graph 3D interactif", description: "La vue Graph propose un rendu 3D (three.js) avec un toggle 2D/3D/Auto ; le 2D reste le fallback leger, choisi automatiquement sur mobile" },
       { title: "Amas colores par dossier/tag", description: "Les noeuds se regroupent et se colorent par dossier ou tag (palette du theme), taille selon la connectivite" },
       { title: "Recherche + focus voisins", description: "Recherche floue dans le graphe ; cliquer un noeud isole ses voisins et affiche sa fiche (tags, connexions, ouvrir la note)" },
+      { title: "Vol camera au focus", description: "Cliquer un noeud declenche un vol de camera cinematique qui vient le cadrer, puis rend la main a la navigation" },
+      { title: "Constellations", description: "Les amas (dossiers/tags) se separent en galaxies distinctes grace a une force de regroupement dans le worker de layout" },
+      { title: "Aretes animees dirigees", description: "Un flux lumineux parcourt les liens de la source vers la cible (shader), pour lire le sens des connexions ; desactivable" },
       { title: "Effets neon", description: "Bloom/glow, halo au survol, fond etoile ; desactivables (effets reduits, auto sur mobile)" },
+      { title: "Boussole 3D + capture PNG", description: "Un gizmo d'orientation en bas a droite et un bouton Capture qui exporte la vue courante en image PNG" },
     ],
     fixes: [
       { title: "Identifiants de notes", description: "Correction du retrait d'extension .md qui pouvait tronquer certains chemins (a.mdx.md, dossiers contenant .md)" },

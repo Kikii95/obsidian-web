@@ -52,3 +52,13 @@ export function buildSizes(nodes: GraphNode[], scale = 1): Float32Array {
   });
   return sizes;
 }
+
+/** Set of a node's direct neighbours (including itself) for focus/isolation. */
+export function neighborsOf(id: string, links: GraphLink[]): Set<string> {
+  const set = new Set<string>([id]);
+  for (const link of links) {
+    if (link.source === id) set.add(link.target);
+    else if (link.target === id) set.add(link.source);
+  }
+  return set;
+}

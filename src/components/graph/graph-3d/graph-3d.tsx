@@ -56,14 +56,20 @@ export function Graph3D({ data, reducedEffects, onFallback }: Graph3DProps) {
     router.push(`/note/${encodePathSegments(node.id)}`);
   };
 
-  const bloom = !reducedEffects && !settings.graph3dReducedEffects;
+  const premium = !reducedEffects && !settings.graph3dReducedEffects;
+  const edgeFlow = premium && settings.graph3dEdgeFlow;
 
   return (
     <div className="relative h-full w-full" style={{ touchAction: "none" }}>
       <Canvas
         dpr={[DPR_MIN, DPR_MAX]}
         camera={{ position: [0, 0, 220], fov: CAMERA_FOV, near: 0.1, far: CAMERA_MAX_DISTANCE }}
-        gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
+        gl={{
+          antialias: true,
+          alpha: false,
+          powerPreference: "high-performance",
+          preserveDrawingBuffer: true,
+        }}
       >
         <GraphScene
           nodes={data.nodes}
@@ -74,8 +80,9 @@ export function Graph3D({ data, reducedEffects, onFallback }: Graph3DProps) {
           palette={palette}
           labelDensity={settings.graph3dLabelDensity}
           autoOrbit={settings.graph3dAutoOrbit}
-          bloom={bloom}
+          bloom={premium}
           bloomIntensity={settings.graph3dBloomIntensity}
+          edgeFlow={edgeFlow}
         />
       </Canvas>
       <GraphHud

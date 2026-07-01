@@ -10,7 +10,11 @@ All notable changes to this project will be documented in this file.
   - **Layout dans un Web Worker** (`d3-force-3d`), positions streamées en `Float32Array` transférable (double-buffer) → zéro re-render React par tick.
   - **Rendu à ~3-5 draw calls** : un seul `InstancedMesh` pour tous les nœuds (taille par connectivité, couleur par amas), un seul `LineSegments` pour toutes les arêtes.
   - **Effets premium** : bloom néon sélectif + vignette (gated mobile/reduced-motion), fond étoilé/nébuleuse, brouillard de profondeur.
-  - **Interactions** : survol (halo + carte d'info), clic = focus + isolation des voisins, recherche floue in-graph (fuse.js), labels LOD (top-degré, cull par distance), orbite auto, contrôles 3D dans le popover (amas par dossier/tag, densité labels, néon, taille des nœuds, tags-en-nœuds).
+  - **Constellations** : une force de regroupement par amas (centres sur une sphère de Fibonacci) dans le worker sépare dossiers/tags en galaxies lisibles.
+  - **Arêtes animées dirigées** : un `ShaderMaterial` fait circuler une impulsion lumineuse source→cible (uniforme `uTime`, couleur d'accent du thème), révélant le sens des liens ; désactivable (toggle « Arêtes animées », off en effets réduits).
+  - **Vol caméra au focus** : sélectionner un nœud déclenche un fly-to cinématique (ease frame-rate-independent) qui le cadre puis rend la main à OrbitControls.
+  - **Boussole 3D** (gizmo drei aligné bas-droite, teinté par la palette) + **capture PNG** de la vue courante (`preserveDrawingBuffer` + `toDataURL`).
+  - **Interactions** : survol (halo + carte d'info), clic = focus + isolation des voisins, recherche floue in-graph (fuse.js), labels LOD (top-degré, cull par distance), orbite auto, contrôles 3D dans le popover (amas par dossier/tag, densité labels, néon, taille des nœuds, tags-en-nœuds, arêtes animées).
   - **Thème réactif** : les 36 thèmes oklch pilotent la palette WebGL via un bridge oklch→hex partagé (`cssColorToHex`) + `MutationObserver` sur `data-theme` (re-teinte sans reconstruction).
 - **API graphe enrichie** (rétro-compatible) : `GET /api/github/graph` renvoie tags, dossier, degré, amas (`cluster`/`clusterIndex`), liens pondérés/dédupliqués/dirigés ; nouveau `GET /api/github/graph/expand` (voisinage BFS, expand-on-click) ; option tags-en-nœuds.
 

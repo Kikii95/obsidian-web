@@ -1,13 +1,17 @@
 "use client";
 
 import { type MutableRefObject, useMemo } from "react";
+import { GizmoHelper, GizmoViewport } from "@react-three/drei";
 import { CameraRig } from "./camera-rig";
 import { EdgeLines } from "./edge-lines";
 import { GraphLabels } from "./graph-labels";
 import { GraphPostprocessing } from "./graph-postprocessing";
 import { NodeInstances } from "./node-instances";
+import { SceneCapture } from "./scene-capture";
 import { Starfield } from "./starfield";
 import { useGraphViewStore } from "./graph-view-store";
+import { GIZMO_MARGIN } from "@/lib/graph/constants";
+import { neighborsOf } from "@/lib/graph/graph-model";
 import type { GraphLink, GraphNode } from "@/lib/graph/types";
 import type { LabelDensity } from "@/lib/graph/constants";
 import type { GraphPalette } from "@/hooks/use-theme-colors";
@@ -23,15 +27,7 @@ interface GraphSceneProps {
   autoOrbit: boolean;
   bloom: boolean;
   bloomIntensity: number;
-}
-
-function neighborsOf(id: string, links: GraphLink[]): Set<string> {
-  const set = new Set<string>([id]);
-  for (const link of links) {
-    if (link.source === id) set.add(link.target);
-    else if (link.target === id) set.add(link.source);
-  }
-  return set;
+  edgeFlow: boolean;
 }
 
 export function GraphScene({
@@ -45,6 +41,7 @@ export function GraphScene({
   autoOrbit,
   bloom,
   bloomIntensity,
+  edgeFlow,
 }: GraphSceneProps) {
   const setHovered = useGraphViewStore((state) => state.setHovered);
   const select = useGraphViewStore((state) => state.select);
@@ -54,6 +51,15 @@ export function GraphScene({
   const fogArgs = useMemo(
     () => [palette.background, 220, 900] as [string, number, number],
     [palette.background]
+  );
+
+  const axisColors = useMemo<[string, string, string]>(
+    () => [
+      palette.clusters[0] ?? palette.primary,
+      palette.clusters[1] ?? palette.accent,
+      palette.clusters[2] ?? palette.foreground,
+    ],
+    [palette]
   );
 
   const handleSelect = (node: GraphNode) => select(node, neighborsOf(node.id, links));
@@ -73,7 +79,13 @@ export function GraphScene({
         onHover={setHovered}
         onSelect={handleSelect}
       />
-      <EdgeLines links={links} indexOf={indexOf} positions={positions} palette={palette} />
+      <EdgeLines
+        links={links}
+        indexOf={indexOf}
+        positions={positions}
+        palette={palette}
+        flow={edgeFlow}
+      />
       <GraphLabels
         nodes={nodes}
         sizes={sizes}
@@ -81,7 +93,16 @@ export function GraphScene({
         density={labelDensity}
         color={palette.foreground}
       />
-      <CameraRig autoOrbit={autoOrbit} />
+      <CameraRig
+        autoOrbit={autoOrbit}
+        focusId={focusId}
+        indexOf={indexOf}
+        positions={positions}
+      />
+      <GizmoHelper alignment="bottom-right" margin={GIZMO_MARGIN}>
+        <GizmoViewport axisColors={axisColors} labelColor={palette.background} />
+      </GizmoHelper>
+      <SceneCapture />
       <GraphPostprocessing enabled={bloom} intensity={bloomIntensity} />
     </>
   );

@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { buildEdgeArrays, buildIndexMap, buildSizes, sizeForDegree } from "./graph-model";
+import {
+  buildEdgeArrays,
+  buildIndexMap,
+  buildSizes,
+  neighborsOf,
+  sizeForDegree,
+} from "./graph-model";
 import { NODE_SIZE_MAX, NODE_SIZE_MIN } from "./constants";
 import type { GraphLink, GraphNode } from "./types";
 
@@ -49,5 +55,18 @@ describe("buildSizes", () => {
     const sizes = buildSizes([node("A", 0), node("B", 5)]);
     expect(sizes).toHaveLength(2);
     expect(sizes[1]).toBeGreaterThan(sizes[0]);
+  });
+});
+
+describe("neighborsOf", () => {
+  const links = [link("A", "B"), link("A", "C"), link("D", "E")];
+
+  it("includes the node itself and both link directions", () => {
+    expect(neighborsOf("A", links)).toEqual(new Set(["A", "B", "C"]));
+    expect(neighborsOf("E", links)).toEqual(new Set(["E", "D"]));
+  });
+
+  it("returns just the node when it has no links", () => {
+    expect(neighborsOf("Z", links)).toEqual(new Set(["Z"]));
   });
 });

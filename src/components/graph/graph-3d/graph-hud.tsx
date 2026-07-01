@@ -2,9 +2,11 @@
 
 import { useMemo, useState } from "react";
 import Fuse from "fuse.js";
-import { Orbit, RotateCcw, Search, Sparkles } from "lucide-react";
+import { Camera, Orbit, RotateCcw, Search, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SCREENSHOT_FILENAME } from "@/lib/graph/constants";
+import { neighborsOf } from "@/lib/graph/graph-model";
 import { useSettingsStore } from "@/lib/settings-store";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import type { ClusterBy, ClusterInfo, GraphLink, GraphNode } from "@/lib/graph/types";
@@ -24,19 +26,11 @@ const CLUSTER_LABELS: Record<ClusterBy, string> = {
   none: "aucune",
 };
 
-function neighborsOf(id: string, links: GraphLink[]): Set<string> {
-  const set = new Set<string>([id]);
-  for (const link of links) {
-    if (link.source === id) set.add(link.target);
-    else if (link.target === id) set.add(link.source);
-  }
-  return set;
-}
-
 export function GraphHud({ nodes, links, clusters, truncated }: GraphHudProps) {
   const { settings, updateSettings } = useSettingsStore();
   const select = useGraphViewStore((state) => state.select);
   const clearFocus = useGraphViewStore((state) => state.clearFocus);
+  const capture = useGraphViewStore((state) => state.capture);
   const palette = useThemeColors();
   const [query, setQuery] = useState("");
 
@@ -57,6 +51,15 @@ export function GraphHud({ nodes, links, clusters, truncated }: GraphHudProps) {
   const pick = (node: GraphNode) => {
     select(node, neighborsOf(node.id, links));
     setQuery("");
+  };
+
+  const downloadScreenshot = () => {
+    const url = capture?.();
+    if (!url) return;
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = SCREENSHOT_FILENAME;
+    link.click();
   };
 
   return (
@@ -107,13 +110,17 @@ export function GraphHud({ nodes, links, clusters, truncated }: GraphHudProps) {
         <Button size="sm" variant="secondary" onClick={cycleCluster}>
           Couleur : {CLUSTER_LABELS[settings.graph3dClusterBy]}
         </Button>
+        <Button size="sm" variant="secondary" onClick={downloadScreenshot}>
+          <Camera className="mr-1 h-3.5 w-3.5" />
+          Capture
+        </Button>
         <Button size="sm" variant="secondary" onClick={clearFocus}>
           <RotateCcw className="mr-1 h-3.5 w-3.5" />
           Reset
         </Button>
       </div>
 
-      <div className="pointer-events-none absolute bottom-4 right-4 z-10 rounded-md border border-border bg-card/80 px-3 py-2 text-xs text-muted-foreground backdrop-blur">
+      <div className="pointer-events-none absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-md border border-border bg-card/80 px-3 py-2 text-xs text-muted-foreground backdrop-blur">
         <div>
           {nodes.length} nœuds · {links.length} liens{truncated ? " (limité)" : ""}
         </div>

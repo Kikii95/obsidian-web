@@ -115,6 +115,13 @@ function Graph3dControls() {
         />
       </div>
       <div className="flex items-center justify-between">
+        <Label className="text-xs">Arêtes animées</Label>
+        <Switch
+          checked={settings.graph3dEdgeFlow}
+          onCheckedChange={(checked) => updateSettings({ graph3dEdgeFlow: checked })}
+        />
+      </div>
+      <div className="flex items-center justify-between">
         <Label className="text-xs">Effets réduits</Label>
         <Switch
           checked={settings.graph3dReducedEffects}

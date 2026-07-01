@@ -13,6 +13,23 @@ export interface PatchNote {
 
 // Plus recent en premier
 export const patchNotes: PatchNote[] = [
+  // v2.3.0 - Graph 3D (Personal Knowledge Graph)
+  {
+    version: "2.3.0",
+    date: "2026-07-01",
+    features: [
+      { title: "Graph 3D interactif", description: "La vue Graph propose un rendu 3D (three.js) avec un toggle 2D/3D/Auto ; le 2D reste le fallback leger, choisi automatiquement sur mobile" },
+      { title: "Amas colores par dossier/tag", description: "Les noeuds se regroupent et se colorent par dossier ou tag (palette du theme), taille selon la connectivite" },
+      { title: "Recherche + focus voisins", description: "Recherche floue dans le graphe ; cliquer un noeud isole ses voisins et affiche sa fiche (tags, connexions, ouvrir la note)" },
+      { title: "Effets neon", description: "Bloom/glow, halo au survol, fond etoile ; desactivables (effets reduits, auto sur mobile)" },
+    ],
+    fixes: [
+      { title: "Identifiants de notes", description: "Correction du retrait d'extension .md qui pouvait tronquer certains chemins (a.mdx.md, dossiers contenant .md)" },
+    ],
+    improvements: [
+      { title: "Graphe plus rapide et plus juste", description: "Calcul du layout dans un worker (hors thread principal), resolution des liens optimisee, et API enrichie (degre, amas, liens ponderes)" },
+    ],
+  },
   // v2.2.2 - Security remediation + CI hardening
   {
     version: "2.2.2",

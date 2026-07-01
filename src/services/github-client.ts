@@ -4,6 +4,7 @@
  */
 
 import type { VaultFile } from "@/types";
+import type { ClusterBy, GraphData } from "@/lib/graph/types";
 import { useRateLimitStore } from "@/lib/rate-limit-store";
 
 // Rate limit info from API responses
@@ -23,11 +24,10 @@ interface NoteData {
   isLocked?: boolean;
 }
 
-interface GraphData {
-  nodes: Array<{ id: string; name: string; path: string; linkCount: number }>;
-  links: Array<{ source: string; target: string }>;
-  totalNotes: number;
-  connectedNotes: number;
+interface GraphQueryOptions {
+  clusterBy?: ClusterBy;
+  tagNodes?: boolean;
+  maxNodes?: number;
 }
 
 interface ActivityData {
@@ -140,11 +140,29 @@ export const githubClient = {
   /**
    * Get graph data (nodes + links)
    */
-  async getGraph(includeOrphans = false): Promise<GraphData> {
-    const url = includeOrphans
-      ? "/api/github/graph?includeOrphans=true"
-      : "/api/github/graph";
-    return apiFetch<GraphData>(url);
+  async getGraph(
+    includeOrphans = false,
+    options?: GraphQueryOptions
+  ): Promise<GraphData> {
+    const params = new URLSearchParams();
+    if (includeOrphans) params.set("includeOrphans", "true");
+    if (options?.clusterBy) params.set("clusterBy", options.clusterBy);
+    if (options?.tagNodes) params.set("tagNodes", "true");
+    if (options?.maxNodes) params.set("maxNodes", String(options.maxNodes));
+    const query = params.toString();
+    return apiFetch<GraphData>(`/api/github/graph${query ? `?${query}` : ""}`);
+  },
+
+  /**
+   * Get the k-hop neighbourhood of a node (expand-on-click for large graphs)
+   */
+  async getGraphNeighborhood(nodeId: string, depth = 1): Promise<GraphData> {
+    const params = new URLSearchParams({
+      node: nodeId,
+      depth: String(depth),
+      includeOrphans: "true",
+    });
+    return apiFetch<GraphData>(`/api/github/graph/expand?${params.toString()}`);
   },
 
   /**

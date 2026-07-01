@@ -663,7 +663,7 @@ function StatItem({
   loading,
   color,
 }: {
-  icon: React.ElementType;
+  icon: React.ComponentType<{ className?: string }>;
   value: number;
   label: string;
   loading: boolean;

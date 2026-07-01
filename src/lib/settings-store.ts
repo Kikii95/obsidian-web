@@ -1,5 +1,11 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import {
+  GRAPH_3D_DEFAULTS,
+  type GraphViewMode,
+  type LabelDensity,
+} from "@/lib/graph/constants";
+import type { ClusterBy } from "@/lib/graph/types";
 
 // Detect if running on mobile device
 export function isMobileDevice(): boolean {
@@ -61,6 +67,18 @@ export interface UserSettings {
   graphLinkDistance: number; // 10 to 200
   graphGravityStrength: number; // 0 to 0.2 (pull toward center)
   graphDefaultZoom: number; // 0.1 to 2 (saved zoom level)
+
+  // Graph 3D (Personal Knowledge Graph)
+  graphViewMode: GraphViewMode; // 2d | 3d | auto (device-aware)
+  graph3dBloomIntensity: number; // neon glow strength
+  graph3dNodeSize: number; // node size multiplier
+  graph3dClusterBy: ClusterBy; // folder | tag | none
+  graph3dAutoOrbit: boolean; // idle camera auto-rotation
+  graph3dLabelDensity: LabelDensity; // low | medium | high
+  graph3dNodeCap: number; // max rendered nodes before expand-on-click
+  graph3dReducedEffects: boolean; // disable bloom/flow (auto-on mobile)
+  graph3dShowTags: boolean; // render tags as hub nodes
+  graph3dEdgeFlow: boolean; // animated directional edge flow
 
   // Header
   showDateTime: boolean; // Show date/time in header
@@ -146,6 +164,9 @@ const defaultSettings: UserSettings = {
   graphLinkDistance: 80,
   graphGravityStrength: 0.05,
   graphDefaultZoom: 0.8,
+
+  // Graph 3D
+  ...GRAPH_3D_DEFAULTS,
 
   // Header
   showDateTime: false,

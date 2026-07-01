@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.3.0] - 2026-07-01
+
+### Added
+
+- **Graph 3D — Personal Knowledge Graph** — La vue `/graph` propose un rendu 3D interactif (react-three-fiber + three.js) via un **toggle 2D/3D/Auto** dans l'en-tête ; le rendu 2D D3 reste le fallback léger (sélectionné automatiquement en mode Auto sur mobile / matériel modeste). Le mode est persisté et synchronisé.
+  - **Layout dans un Web Worker** (`d3-force-3d`), positions streamées en `Float32Array` transférable (double-buffer) → zéro re-render React par tick.
+  - **Rendu à ~3-5 draw calls** : un seul `InstancedMesh` pour tous les nœuds (taille par connectivité, couleur par amas), un seul `LineSegments` pour toutes les arêtes.
+  - **Effets premium** : bloom néon sélectif + vignette (gated mobile/reduced-motion), fond étoilé/nébuleuse, brouillard de profondeur.
+  - **Interactions** : survol (halo + carte d'info), clic = focus + isolation des voisins, recherche floue in-graph (fuse.js), labels LOD (top-degré, cull par distance), orbite auto, contrôles 3D dans le popover (amas par dossier/tag, densité labels, néon, taille des nœuds, tags-en-nœuds).
+  - **Thème réactif** : les 36 thèmes oklch pilotent la palette WebGL via un bridge oklch→hex partagé (`cssColorToHex`) + `MutationObserver` sur `data-theme` (re-teinte sans reconstruction).
+- **API graphe enrichie** (rétro-compatible) : `GET /api/github/graph` renvoie tags, dossier, degré, amas (`cluster`/`clusterIndex`), liens pondérés/dédupliqués/dirigés ; nouveau `GET /api/github/graph/expand` (voisinage BFS, expand-on-click) ; option tags-en-nœuds.
+
+### Changed
+
+- Logique du graphe extraite en modules **purs et testés** (`src/lib/graph/*`) ; la route délègue à un service (handler <20 lignes). Résolution des wikilinks via `buildNoteLookupMap` (O(1)) au lieu du scan O(N·L).
+
+### Fixed
+
+- **ID de nœud** : le `.replace(".md", "")` non ancré (cassait `a.mdx.md`, `notes.md/x.md`) devient `/\.md$/i`.
+
 ## [2.2.2] - 2026-07-01
 
 ### Security

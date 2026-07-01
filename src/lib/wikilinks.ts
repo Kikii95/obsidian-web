@@ -75,6 +75,34 @@ export function buildNoteLookupMap(tree: VaultFile[]): NoteLookupMap {
   return map;
 }
 
+const VAULT_ASSET_EXTENSIONS = /\.(md|canvas|pdf|png|jpg|jpeg|gif|svg|webp|bmp|ico|avif)$/i;
+
+/**
+ * Build a note lookup map from a flat list of file paths (e.g. the vault index).
+ * Mirrors buildNoteLookupMap: keys by lowercase name and lowercase path
+ * (both without extension), preferring the shorter path on name collisions.
+ */
+export function buildNoteLookupMapFromPaths(paths: string[]): NoteLookupMap {
+  const map: NoteLookupMap = new Map();
+
+  for (const path of paths) {
+    const pathWithoutExt = path.replace(VAULT_ASSET_EXTENSIONS, "");
+    const name = pathWithoutExt.split("/").pop() ?? pathWithoutExt;
+
+    const nameKey = name.toLowerCase();
+    if (!map.has(nameKey) || pathWithoutExt.length < (map.get(nameKey)?.length ?? Infinity)) {
+      map.set(nameKey, pathWithoutExt);
+    }
+
+    const pathKey = pathWithoutExt.toLowerCase();
+    if (!map.has(pathKey)) {
+      map.set(pathKey, pathWithoutExt);
+    }
+  }
+
+  return map;
+}
+
 /**
  * Detect the file type from a wikilink target
  */

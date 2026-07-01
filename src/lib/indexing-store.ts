@@ -5,6 +5,7 @@ import { create } from "zustand";
 const BATCH_SIZE = 10;
 const POLL_INTERVAL_MS = 5000;
 const POLL_MAX_ATTEMPTS = 240; // 20 min ceiling for the "another tab is indexing" case
+const POLL_STALL_LIMIT = 12; // ~60s without progress → treat the run as dead
 const BATCH_RETRY_ATTEMPTS = 3;
 const BATCH_RETRY_BASE_MS = 800;
 
@@ -177,11 +178,19 @@ async function runBatches(
 }
 
 async function pollUntilDone(signal: AbortSignal, set: SetIndexing): Promise<void> {
+  let lastIndexed = -1;
+  let stalls = 0;
   for (let attempt = 0; attempt < POLL_MAX_ATTEMPTS; attempt += 1) {
     if (signal.aborted) return;
     const status = await fetchIndexStatus();
     if (!status || status.status !== "indexing") return;
     set({ progress: { indexed: status.indexedFiles, total: status.totalFiles } });
+    if (status.indexedFiles > lastIndexed) {
+      lastIndexed = status.indexedFiles;
+      stalls = 0;
+    } else if ((stalls += 1) >= POLL_STALL_LIMIT) {
+      return; // no progress for a while → dead run, stop polling
+    }
     await delay(POLL_INTERVAL_MS);
   }
 }
@@ -208,7 +217,15 @@ async function applyPlan(
   if (plan.kind === "already_indexing") {
     set({ progress: plan.progress });
     await pollUntilDone(signal, set);
-    finish(set, await refreshStatus());
+    if (signal.aborted) return;
+    const status = await refreshStatus();
+    if (status?.status === "indexing") {
+      // The concurrent run stalled — go idle so a retry can restart it via the
+      // server's stale-lock recovery, instead of faking a completion.
+      set({ isIndexing: false, phase: "idle" });
+      return;
+    }
+    finish(set, status);
     return;
   }
   if (plan.kind === "up_to_date") {
@@ -292,17 +309,11 @@ export const useIndexingStore = create<IndexingStore>((set, get) => ({
     hydrating = true;
     try {
       const status = await get().fetchStatus();
-      if (status?.status !== "indexing") return;
-      const controller = new AbortController();
-      abortController = controller;
-      set({
-        isIndexing: true,
-        phase: "indexing",
-        dismissed: false,
-        progress: { indexed: status.indexedFiles, total: status.totalFiles },
-      });
-      await pollUntilDone(controller.signal, set);
-      finish(set, await get().fetchStatus());
+      // A DB status still on "indexing" is either a live run elsewhere or a dead
+      // lock. Re-plan through start(): the server resumes a fresh run (we poll)
+      // or, if the lock is stale, restarts it — so a dead run never traps the
+      // vault (the old code just polled it forever, blocking the Refresh button).
+      if (status?.status === "indexing") await get().start(false);
     } finally {
       hydrating = false;
     }

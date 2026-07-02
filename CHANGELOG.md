@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.9.0] - 2026-07-02
+
+### Changed
+
+- **Nouvelle identité visuelle — logo « second cerveau ».** Remplacement de l'icône stock (livre ouvert Heroicons) par un mark original : un cerveau bullé dont les connexions internes forment un arbre de nœuds reliés (les notes = les neurones). Câblé partout depuis une seule définition : composant `<Logo>`, générateur d'icône PWA dynamique (`/api/pwa/icon`, donc adapté aux 18 thèmes), splash screen (`/api/pwa/splash`), `favicon.ico` multi-tailles (16/32/48) et tous les PNG/SVG statiques (`public/icons/*`, `apple-touch-icon`, `favicon`). Le mark reste blanc sur la tuile dégradée du thème actif → cohérent quel que soit le thème.
+- **Wordmark deux tons + nouveau tagline.** « Obsidian » (couleur du texte) + « Web » (couleur primaire du thème) dans le composant `<Logo>`. Tagline mis à jour partout (metadata, manifest statique + dynamique, splash) : « Ton second brain. Connecté partout. » (remplace « Ton vault Obsidian, accessible partout »).
+
 ## [2.8.2] - 2026-07-01
 
 ### Fixed

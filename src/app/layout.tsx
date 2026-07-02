@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Obsidian Web",
-  description: "Ton vault Obsidian, accessible partout",
+  description: "Ton second brain. Connecté partout.",
   // Manifest is dynamically set by DynamicPwaMeta component based on theme
   manifest: "/api/pwa/manifest?theme=magenta",
   appleWebApp: {

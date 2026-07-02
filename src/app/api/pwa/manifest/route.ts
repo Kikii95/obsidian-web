@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
   const manifest = {
     name: "Obsidian Web",
     short_name: "ObsidianWeb",
-    description: "Ton vault Obsidian, accessible partout",
+    description: "Ton second brain. Connecté partout.",
     start_url: "/",
     display: "standalone",
     background_color: colors.background,

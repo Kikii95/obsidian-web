@@ -13,6 +13,16 @@ export interface PatchNote {
 
 // Plus recent en premier
 export const patchNotes: PatchNote[] = [
+  // v2.9.0 - Nouvelle identité visuelle
+  {
+    version: "2.9.0",
+    date: "2026-07-02",
+    features: [
+      { title: "Nouveau logo", description: "Obsidian Web a enfin sa propre identité : un cerveau dont les connexions internes dessinent des notes reliées entre elles — ton second cerveau, littéralement. Il s'affiche partout (onglet du navigateur, écran d'accueil, icône installée) et prend automatiquement la couleur du thème que tu as choisi" },
+    ],
+    fixes: [],
+    improvements: [],
+  },
   // v2.8.2 - Graph godmode : fix sélection
   {
     version: "2.8.2",

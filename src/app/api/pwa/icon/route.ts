@@ -50,9 +50,21 @@ function generateIcon(size: number, primaryColor: string): string {
     </linearGradient>
   </defs>
   <rect width="${size}" height="${size}" rx="${Math.round(size * 0.18)}" fill="url(#grad)"/>
-  <g transform="translate(${size * 0.25}, ${size * 0.25})">
-    <svg width="${size * 0.5}" height="${size * 0.5}" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+  <g transform="translate(${size * 0.24}, ${size * 0.24})">
+    <svg width="${size * 0.52}" height="${size * 0.52}" viewBox="0 0 24 24">
+      <g fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M11.4 4.6C10.6 2.9 8.4 2.7 7.6 4.3C6 3.7 4.4 4.9 5 6.5C3.3 6.5 2.6 8.3 4 9.2C2.5 9.8 2.6 11.6 4.1 12.1C3.1 13.1 3.8 14.9 5.5 14.8C5.3 16.2 6.5 17.3 8 17C8.6 18 10 18.3 10.7 17.6C11.05 18.4 10.95 19 10.5 19.3"/>
+        <path d="M12.6 4.6C13.4 2.9 15.6 2.7 16.4 4.3C18 3.7 19.6 4.9 19 6.5C20.7 6.5 21.4 8.3 20 9.2C21.5 9.8 21.4 11.6 19.9 12.1C20.9 13.1 20.2 14.9 18.5 14.8C18.7 16.2 17.5 17.3 16 17C15.4 18 14 18.3 13.3 17.6C12.95 18.4 13.05 19 13.5 19.3"/>
+      </g>
+      <g stroke="white" stroke-width="1.8" stroke-linecap="round">
+        <path d="M12 5.6 12 9.8"/><path d="M12 9.8 7.7 12.7"/><path d="M12 9.8 16.3 12.7"/>
+        <path d="M7.7 12.7 8.5 16.7"/><path d="M16.3 12.7 15.5 16.7"/>
+      </g>
+      <g fill="white">
+        <circle cx="12" cy="5.6" r="1.55"/><circle cx="12" cy="9.8" r="1.95"/>
+        <circle cx="7.7" cy="12.7" r="1.5"/><circle cx="16.3" cy="12.7" r="1.5"/>
+        <circle cx="8.5" cy="16.7" r="1.5"/><circle cx="15.5" cy="16.7" r="1.5"/>
+      </g>
     </svg>
   </g>
 </svg>`;

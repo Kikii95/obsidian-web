@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Obsidian Web favicon">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F044E8"/>
+      <stop offset="55%" stop-color="#A855F7"/>
+      <stop offset="100%" stop-color="#3B0A90"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#g)"/>
+
+  <g fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M32 20C28 13 20 16 20 22C14 22 12 28 13 32C10 36 12 44 19 45C22 53 29 51 29 47"/>
+    <path d="M32 20C36 13 44 16 44 22C50 22 52 28 51 32C54 36 52 44 45 45C42 53 35 51 35 47"/>
+    <path d="M32 24V33M32 33L23 39M32 33L41 39M32 33V45"/>
+  </g>
+  <g fill="#FFFFFF">
+    <circle cx="32" cy="24" r="4.5"/>
+    <circle cx="32" cy="33" r="4.5"/>
+    <circle cx="23" cy="39" r="4.5"/>
+    <circle cx="41" cy="39" r="4.5"/>
+    <circle cx="32" cy="45" r="4"/>
+  </g>
+</svg>

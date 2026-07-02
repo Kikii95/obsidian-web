@@ -2,20 +2,34 @@ const fs = require('fs');
 const path = require('path');
 const sharp = require('sharp');
 
-// Simple SVG icon template - book icon matching the logo
+// SVG icon template - brain-network mark matching the <Logo> component
 const createSvgIcon = (size) => `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#d946ef;stop-opacity:1" />
-      <stop offset="50%" style="stop-color:#a855f7;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+      <stop offset="0%" style="stop-color:#ff79ff;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#d946ef;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#a613bc;stop-opacity:1" />
     </linearGradient>
   </defs>
-  <rect width="${size}" height="${size}" rx="${size * 0.18}" fill="url(#grad)"/>
-  <g transform="translate(${size * 0.25}, ${size * 0.25})">
-    <svg width="${size * 0.5}" height="${size * 0.5}" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+  <rect width="${size}" height="${size}" rx="${Math.round(size * 0.18)}" fill="url(#grad)"/>
+  <g transform="translate(${size * 0.24}, ${size * 0.24})">
+    <svg width="${size * 0.52}" height="${size * 0.52}" viewBox="0 0 512 512">
+      <g fill="none" stroke="white" stroke-width="36" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M256 149C235 107 171 128 171 171C128 171 107 213 107 235C85 256 85 299 107 320C85 363 128 405 171 405C192 448 235 427 235 405"/>
+        <path d="M256 149C277 107 341 128 341 171C384 171 405 213 405 235C427 256 427 299 405 320C427 363 384 405 341 405C320 448 277 427 277 405"/>
+      </g>
+      <g fill="none" stroke="white" stroke-width="30" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M256 171V235M256 235L192 277M256 235L320 277M192 277C192 299 192 320 213 341M320 277C320 299 320 320 299 341"/>
+      </g>
+      <g fill="white">
+        <circle cx="256" cy="171" r="31"/>
+        <circle cx="256" cy="235" r="28"/>
+        <circle cx="192" cy="277" r="30"/>
+        <circle cx="320" cy="277" r="30"/>
+        <circle cx="213" cy="341" r="22"/>
+        <circle cx="299" cy="341" r="22"/>
+      </g>
     </svg>
   </g>
 </svg>`;
@@ -45,6 +59,8 @@ async function generateIcons() {
 
   // Apple touch icon (180x180)
   const appleSvg = createSvgIcon(180);
+  fs.writeFileSync(path.join(iconsDir, 'apple-touch-icon.svg'), appleSvg);
+  console.log('Created apple-touch-icon.svg');
   const applePath = path.join(iconsDir, 'apple-touch-icon.png');
   await sharp(Buffer.from(appleSvg))
     .png()

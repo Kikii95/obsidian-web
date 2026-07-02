@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.9.1] - 2026-07-02
+
+### Changed
+
+- **Logo redessiné — nouveau dessin du mark « second cerveau ».** Le cerveau + réseau de nœuds a été redessiné dans une version plus ronde/organique (lobes bullés symétriques, réseau interne à 6 nœuds), issue d'une passe de raffinage. Câblé partout depuis les mêmes points d'ancrage que la 2.9.0 : composant `<Logo>` (`viewBox 0 0 512 512`, `currentColor`), générateur d'icône PWA dynamique (`/api/pwa/icon`), splash (`/api/pwa/splash`), tous les statiques `public/icons/*` + `apple-touch-icon` régénérés via `scripts/generate-icons.js`, et `favicon.ico` multi-tailles (16/32/48) issu d'une variante simplifiée dédiée. Le système de couleurs par thème est inchangé (mark blanc sur tuile dégradée du thème actif).
+- **`scripts/generate-icons.js` remis en phase.** Le template du script émettait encore l'ancienne icône livre (Heroicons) et n'écrivait pas `apple-touch-icon.svg` → il redevient la source unique correcte de tous les assets statiques.
+
 ## [2.9.0] - 2026-07-02
 
 ### Changed

@@ -13,6 +13,16 @@ export interface PatchNote {
 
 // Plus recent en premier
 export const patchNotes: PatchNote[] = [
+  // v2.9.1 - Logo redessiné
+  {
+    version: "2.9.1",
+    date: "2026-07-02",
+    features: [],
+    fixes: [],
+    improvements: [
+      { title: "Logo redessiné", description: "Le cerveau « second brain » a été redessiné dans une version plus ronde et organique, avec un réseau de neurones interne plus marqué. Nouvelle version câblée partout (onglet du navigateur, écran d'accueil, icône installée, écran de démarrage) et toujours à la couleur de ton thème" },
+    ],
+  },
   // v2.9.0 - Nouvelle identité visuelle
   {
     version: "2.9.0",

@@ -27,32 +27,34 @@ export function Logo({ className, showText = false, size = "sm" }: LogoProps) {
       >
         <svg
           className={cn(sizeClass.icon, "text-primary-foreground")}
-          viewBox="0 0 24 24"
+          viewBox="0 0 512 512"
         >
           <g
             fill="none"
             stroke="currentColor"
-            strokeWidth={1.6}
+            strokeWidth={36}
             strokeLinecap="round"
             strokeLinejoin="round"
           >
-            <path d="M11.4 4.6C10.6 2.9 8.4 2.7 7.6 4.3C6 3.7 4.4 4.9 5 6.5C3.3 6.5 2.6 8.3 4 9.2C2.5 9.8 2.6 11.6 4.1 12.1C3.1 13.1 3.8 14.9 5.5 14.8C5.3 16.2 6.5 17.3 8 17C8.6 18 10 18.3 10.7 17.6C11.05 18.4 10.95 19 10.5 19.3" />
-            <path d="M12.6 4.6C13.4 2.9 15.6 2.7 16.4 4.3C18 3.7 19.6 4.9 19 6.5C20.7 6.5 21.4 8.3 20 9.2C21.5 9.8 21.4 11.6 19.9 12.1C20.9 13.1 20.2 14.9 18.5 14.8C18.7 16.2 17.5 17.3 16 17C15.4 18 14 18.3 13.3 17.6C12.95 18.4 13.05 19 13.5 19.3" />
+            <path d="M256 149C235 107 171 128 171 171C128 171 107 213 107 235C85 256 85 299 107 320C85 363 128 405 171 405C192 448 235 427 235 405" />
+            <path d="M256 149C277 107 341 128 341 171C384 171 405 213 405 235C427 256 427 299 405 320C427 363 384 405 341 405C320 448 277 427 277 405" />
           </g>
-          <g stroke="currentColor" strokeWidth={1.8} strokeLinecap="round">
-            <path d="M12 5.6 12 9.8" />
-            <path d="M12 9.8 7.7 12.7" />
-            <path d="M12 9.8 16.3 12.7" />
-            <path d="M7.7 12.7 8.5 16.7" />
-            <path d="M16.3 12.7 15.5 16.7" />
+          <g
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={30}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M256 171V235M256 235L192 277M256 235L320 277M192 277C192 299 192 320 213 341M320 277C320 299 320 320 299 341" />
           </g>
           <g fill="currentColor">
-            <circle cx="12" cy="5.6" r="1.55" />
-            <circle cx="12" cy="9.8" r="1.95" />
-            <circle cx="7.7" cy="12.7" r="1.5" />
-            <circle cx="16.3" cy="12.7" r="1.5" />
-            <circle cx="8.5" cy="16.7" r="1.5" />
-            <circle cx="15.5" cy="16.7" r="1.5" />
+            <circle cx="256" cy="171" r="31" />
+            <circle cx="256" cy="235" r="28" />
+            <circle cx="192" cy="277" r="30" />
+            <circle cx="320" cy="277" r="30" />
+            <circle cx="213" cy="341" r="22" />
+            <circle cx="299" cy="341" r="22" />
           </g>
         </svg>
       </div>

@@ -8,8 +8,8 @@
     </linearGradient>
   </defs>
   <rect width="384" height="384" rx="69" fill="url(#grad)"/>
-  <g transform="translate(92.16, 92.16)">
-    <svg width="199.68" height="199.68" viewBox="0 0 512 512">
+  <g transform="translate(53.760000000000005, 53.760000000000005)">
+    <svg width="276.48" height="276.48" viewBox="50 75 410 410">
       <g fill="none" stroke="white" stroke-width="36" stroke-linecap="round" stroke-linejoin="round">
         <path d="M256 149C235 107 171 128 171 171C128 171 107 213 107 235C85 256 85 299 107 320C85 363 128 405 171 405C192 448 235 427 235 405"/>
         <path d="M256 149C277 107 341 128 341 171C384 171 405 213 405 235C427 256 427 299 405 320C427 363 384 405 341 405C320 448 277 427 277 405"/>

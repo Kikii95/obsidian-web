@@ -9,9 +9,9 @@ interface LogoProps {
 }
 
 const sizeClasses = {
-  sm: { container: "w-8 h-8 rounded-lg", icon: "w-4 h-4" },
-  md: { container: "w-12 h-12 rounded-xl", icon: "w-6 h-6" },
-  lg: { container: "w-16 h-16 rounded-2xl", icon: "w-8 h-8" },
+  sm: { container: "w-8 h-8 rounded-lg", icon: "w-6 h-6" },
+  md: { container: "w-12 h-12 rounded-xl", icon: "w-9 h-9" },
+  lg: { container: "w-16 h-16 rounded-2xl", icon: "w-12 h-12" },
 };
 
 export function Logo({ className, showText = false, size = "sm" }: LogoProps) {
@@ -27,7 +27,7 @@ export function Logo({ className, showText = false, size = "sm" }: LogoProps) {
       >
         <svg
           className={cn(sizeClass.icon, "text-primary-foreground")}
-          viewBox="0 0 512 512"
+          viewBox="50 75 410 410"
         >
           <g
             fill="none"

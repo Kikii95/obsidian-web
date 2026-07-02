@@ -13,8 +13,8 @@ const createSvgIcon = (size) => `<?xml version="1.0" encoding="UTF-8"?>
     </linearGradient>
   </defs>
   <rect width="${size}" height="${size}" rx="${Math.round(size * 0.18)}" fill="url(#grad)"/>
-  <g transform="translate(${size * 0.24}, ${size * 0.24})">
-    <svg width="${size * 0.52}" height="${size * 0.52}" viewBox="0 0 512 512">
+  <g transform="translate(${size * 0.14}, ${size * 0.14})">
+    <svg width="${size * 0.72}" height="${size * 0.72}" viewBox="50 75 410 410">
       <g fill="none" stroke="white" stroke-width="36" stroke-linecap="round" stroke-linejoin="round">
         <path d="M256 149C235 107 171 128 171 171C128 171 107 213 107 235C85 256 85 299 107 320C85 363 128 405 171 405C192 448 235 427 235 405"/>
         <path d="M256 149C277 107 341 128 341 171C384 171 405 213 405 235C427 256 427 299 405 320C427 363 384 405 341 405C320 448 277 427 277 405"/>

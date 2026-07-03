@@ -76,20 +76,10 @@ export function DynamicPwaMeta() {
       document.head.appendChild(manifestLink);
     }
 
-    // Update apple-touch-icon
-    let appleIcon = document.querySelector('link[rel="apple-touch-icon"]');
-    if (appleIcon) {
-      appleIcon.setAttribute("href", `/api/pwa/icon?theme=${theme}&size=192`);
-    }
-
-    // Update regular icons
-    const iconLinks = document.querySelectorAll('link[rel="icon"]');
-    iconLinks.forEach((link) => {
-      const sizes = link.getAttribute("sizes");
-      const size = sizes?.split("x")[0] || "192";
-      link.setAttribute("href", `/api/pwa/icon?theme=${theme}&size=${size}`);
-      link.setAttribute("type", "image/svg+xml");
-    });
+    // Icons (apple-touch-icon + rel="icon") stay as the static PNGs declared
+    // in the root layout metadata. iOS and Android ignore SVG install icons
+    // and fall back to a generated letter monogram, so they must not be
+    // rewritten to the dynamic SVG route here.
 
     // Update/create iOS splash screens
     // Remove old splash links first

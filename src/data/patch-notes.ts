@@ -13,6 +13,16 @@ export interface PatchNote {
 
 // Plus recent en premier
 export const patchNotes: PatchNote[] = [
+  // v2.9.2 - Icône home-screen réparée
+  {
+    version: "2.9.2",
+    date: "2026-07-03",
+    features: [],
+    fixes: [
+      { title: "Icône d'app cassée à l'installation", description: "En ajoutant Obsidian Web à l'écran d'accueil du téléphone, tu obtenais un simple « O » sur un carré rose au lieu du logo. La cause : l'icône installée était fournie en SVG, que ni iOS ni Android n'acceptent pour l'écran d'accueil — ils la remplaçaient donc par une initiale générée automatiquement. L'icône installée est désormais le vrai logo cerveau (image PNG), sur iOS comme sur Android" },
+    ],
+    improvements: [],
+  },
   // v2.9.1 - Logo redessiné
   {
     version: "2.9.1",

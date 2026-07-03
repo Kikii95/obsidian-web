@@ -25,13 +25,15 @@ export const metadata: Metadata = {
     title: "Obsidian Web",
   },
   icons: {
-    // Default icons (will be overridden by DynamicPwaMeta when theme loads)
+    // Raster PNGs — home-screen / install icons must be PNG (iOS + Android
+    // ignore SVG icons and fall back to a generated letter monogram).
     icon: [
-      { url: "/api/pwa/icon?theme=magenta&size=192", sizes: "192x192", type: "image/svg+xml" },
-      { url: "/api/pwa/icon?theme=magenta&size=512", sizes: "512x512", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
     ],
     apple: [
-      { url: "/api/pwa/icon?theme=magenta&size=192", sizes: "180x180", type: "image/svg+xml" },
+      { url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
     ],
   },
 };

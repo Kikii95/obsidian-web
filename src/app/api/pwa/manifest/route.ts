@@ -55,17 +55,21 @@ export async function GET(request: NextRequest) {
     background_color: colors.background,
     theme_color: colors.primary,
     orientation: "portrait-primary",
+    // Static PNGs: installed home-screen icons must be raster. SVG manifest
+    // icons are not used for the install target and get replaced by a
+    // generated letter monogram on both Android and iOS. The theme still
+    // shows through theme_color/background_color above.
     icons: [
       {
-        src: `/api/pwa/icon?theme=${theme}&size=192`,
+        src: "/icons/icon-192.png",
         sizes: "192x192",
-        type: "image/svg+xml",
+        type: "image/png",
         purpose: "any maskable",
       },
       {
-        src: `/api/pwa/icon?theme=${theme}&size=512`,
+        src: "/icons/icon-512.png",
         sizes: "512x512",
-        type: "image/svg+xml",
+        type: "image/png",
         purpose: "any maskable",
       },
     ],

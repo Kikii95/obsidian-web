@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.9.2] - 2026-07-03
+
+### Fixed
+
+- **Icône PWA cassée sur l'écran d'accueil (monogramme « O » sur tuile rose).** L'app installée n'affichait pas le logo mais une initiale générée par l'OS. Cause racine : tout le pipeline d'icônes d'install était servi en **SVG** — metadata `layout.tsx` (`icon`/`apple`), réécriture client `dynamic-pwa-meta.tsx`, et `icons[]` du manifest dynamique (`/api/pwa/manifest`) pointaient sur `/api/pwa/icon` en `image/svg+xml`. Or ni iOS (`apple-touch-icon`) ni Android (manifest) n'utilisent une icône SVG pour le raccourci home-screen → fallback monogramme sur la couleur du thème. **Fix** : manifest + `apple-touch-icon` + `icon` pointent désormais sur les **PNG statiques** déjà générés (`public/icons/icon-{192,512}.png`, `apple-touch-icon.png`, full-bleed → valides `maskable`). `dynamic-pwa-meta.tsx` ne réécrit plus les liens d'icône vers le SVG. Le `theme_color`/`background_color` du manifest reste dynamique par thème (splash + status-bar Android inchangés). L'icône installée est donc figée sur le mark cerveau magenta de la marque — comportement standard PWA (l'icône home-screen est un instantané au moment de l'install, non re-teintable ensuite).
+
 ## [2.9.1] - 2026-07-02
 
 ### Changed

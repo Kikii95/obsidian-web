@@ -134,15 +134,13 @@ tags: [capture]
         className={cn(
           "fixed bottom-6 right-6 z-40",
           "flex items-center justify-center",
-          "w-14 h-14 rounded-full",
-          "bg-primary text-primary-foreground",
-          "shadow-lg hover:shadow-xl",
-          "hover:scale-105 active:scale-95",
+          "fab-fiche w-14 h-14",
           "transition-all duration-200",
           "focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2",
           className
         )}
-        title="Quick Capture"
+        title="Tirer une fiche (capture rapide)"
+        aria-label="Tirer une fiche (capture rapide)"
       >
         <Plus className="h-6 w-6" />
 

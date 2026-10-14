@@ -234,6 +234,7 @@ html[data-theme="magenta-light"] .table-obsidienne {
 
 /* — Pile d'intercalaires (chemin) — */
 .intercalaires {
+  flex: 1 1 22rem;
   display: flex;
   align-items: flex-end;
   gap: 2px;
@@ -241,7 +242,7 @@ html[data-theme="magenta-light"] .table-obsidienne {
   overflow: hidden;
   border-bottom: 2px solid var(--bristol-bleu);
 }
-.intercalaires .intercalaire { display: block; line-height: 21px; flex-shrink: 1; min-width: 0; min-height: 30px; max-width: 14rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-decoration: none; opacity: 0.72; transition: opacity 0.15s, transform 0.18s cubic-bezier(0.3, 1.6, 0.5, 1); }
+.intercalaires .intercalaire { display: block; line-height: 21px; flex-shrink: 1; min-width: 3.5rem; min-height: 30px; max-width: 14rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-decoration: none; opacity: 0.72; transition: opacity 0.15s, transform 0.18s cubic-bezier(0.3, 1.6, 0.5, 1); }
 .intercalaires .intercalaire:hover { opacity: 1; transform: translateY(-2px); }
 .intercalaires .intercalaire:first-child { flex-shrink: 0; }
 .intercalaires .intercalaire-courant { opacity: 1; flex-shrink: 0; max-width: 18rem; background: var(--bristol); color: var(--encre); font-weight: 500; }

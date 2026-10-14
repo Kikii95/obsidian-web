@@ -41,15 +41,16 @@ const CATEGORY_ICONS: Record<FileCategory, LucideIcon> = {
   unknown: File,
 };
 
+// Teintes de la DA (§3.1) : bleu de lignage pour les fiches, irisation pour les autres matières.
 const CATEGORY_COLORS: Record<FileCategory, string> = {
-  markdown: "text-blue-500",
-  image: "text-green-500",
-  video: "text-purple-500",
-  audio: "text-pink-500",
-  pdf: "text-red-500",
-  canvas: "text-orange-500",
-  code: "text-yellow-500",
-  archive: "text-gray-500",
+  markdown: "text-[var(--lignage-clair)]",
+  image: "text-[var(--iris-2)]",
+  video: "text-[var(--iris-1)]",
+  audio: "text-[var(--iris-1)]",
+  pdf: "text-[var(--rature)]",
+  canvas: "text-[var(--iris-3)]",
+  code: "text-[var(--iris-3)]",
+  archive: "text-muted-foreground",
   unknown: "text-muted-foreground",
 };
 

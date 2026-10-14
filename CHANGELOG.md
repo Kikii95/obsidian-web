@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased] - Direction artistique
+
+### Changed
+
+- **Direction artistique « fiches bristol sur un éclat d'obsidienne »** (`docs/direction-artistique.md`, branche `design/da-refonte`). Une note s'affiche sur une fiche bristol lignée (ligne de tête magenta, lignage bleu calé sur l'interlignage, cote = chemin) ; le chrome devient du verre volcanique (ondes de cassure, arête irisée) ; les liens internes sont des renvois à l'encre ; un dossier est une fiche-index ; le chemin une pile d'intercalaires ; les tags des cavaliers (palette fermée de six, `src/lib/da/cavalier.ts`) ; la capture rapide une fiche à tirer. Polices Literata (lecture), IBM Plex Mono (cotes), Caveat (la main du lecteur), à la place de Geist. Le mark v2.9.1 est gardé tel quel, avec un reflet irisé. Thèmes « magenta » et « magenta-light » réécrits en Obsidienne et Bristol ; les autres thèmes gardent leurs teintes. Feuilles dans `src/styles/da/` ; effets coupés sous `prefers-reduced-motion`.
+- **Lint vert** : il échouait sur `main` (55 erreurs préexistantes). Entités JSX échappées, scripts CommonJS autorisés, règles du React Compiler passées en avertissement le temps de traiter la dette (voir BACKLOG).
+
 ## [2.9.2] - 2026-07-03
 
 ### Fixed

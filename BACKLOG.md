@@ -45,6 +45,17 @@ Current sprint planning and bug tracking.
 | F7 | Visible vertical scrollbar | ✅ | 🟢 Easy | Theme-aware scrollbar styles |
 | F8 | Scroll to top button | ✅ | 🟢 Easy | FAB with fade animation |
 
+### 🖋️ Direction artistique — points faibles restants
+
+| ID | Point | Status | Complexity | Notes |
+|----|-------|--------|------------|-------|
+| DA1 | Catalogue de 36 thèmes contraire à la DA | ⬜ | 🟡 Medium | Ne garder que Obsidienne + Bristol (migrer les réglages persistés) |
+| DA2 | Pages héritées > 300 lignes habillées par sélecteurs CSS | ⬜ | 🔴 Hard | Dashboard, dossier, modèles, réglages, rendu Markdown : découper puis passer aux composants de la DA |
+| DA3 | Graphe 3D et légendes pas encore dans la matière | ⬜ | 🟡 Medium | Nœuds = fiches, arêtes = fils de renvoi ; non vérifiable sans WebGL ni index |
+| DA4 | Variante C du canevas (plateau des renvois) seulement esquissée | ⬜ | 🟡 Medium | Renvois sortants en fiches satellites sous la note ; à porter en plein plateau |
+| DA5 | Lecteur public `/t` et pages de partage `/s` : traitement global seulement | ⬜ | 🟢 Easy | Fiche-index en place, en-tête et arbre à reprendre |
+| DA6 | Dette lint React Compiler (19 cas) passée en avertissement | ⬜ | 🟡 Medium | `set-state-in-effect`, `preserve-manual-memoization`, `immutability` ; 2 hooks conditionnels dans `s/[token]/file` |
+
 ### 📱 PWA
 
 | ID | Feature | Status | Complexity | Notes |

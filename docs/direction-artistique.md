@@ -1,5 +1,9 @@
 # Direction artistique
 
+Design System : https://claude.ai/artifact/Sb867tc9NkzxuLvuByKpVS  
+Canevas des variantes : https://claude.ai/artifact/QniLbUmgM9wzeY9z849PBh  
+Planche d'évolution : https://claude.ai/artifact/L7dns1oyKBbCgccLDRGZ1x
+
 > Établie le 14/10/2026 à partir de deux objets réels : la **fiche bristol lignée** (le support de la méthode
 > Zettelkasten : une idée par fiche, une cote, des renvois vers d'autres fiches) et l'**obsidienne**, le verre
 > volcanique qui donne son nom au logiciel (noir, cassure conchoïdale en écailles, reflet irisé sur les arêtes).

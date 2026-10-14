@@ -86,7 +86,7 @@ export const NoteWikilinks = memo(function NoteWikilinks({
   if (wikilinks.length === 0) return null;
 
   return (
-    <div className="mt-8 border border-border/50 rounded-lg overflow-hidden bg-card/50">
+    <div className="plateau-renvois eclat mt-8 overflow-hidden">
       {/* Header */}
       <button
         onClick={() => setIsOpen(!isOpen)}
@@ -94,7 +94,7 @@ export const NoteWikilinks = memo(function NoteWikilinks({
       >
         <div className="flex items-center gap-2 text-sm font-medium">
           <Link2 className="h-4 w-4 text-muted-foreground" />
-          <span>Liens dans cette note</span>
+          <span>Renvois sortants</span>
           <span className="text-muted-foreground font-normal">
             ({wikilinks.length})
           </span>
@@ -122,7 +122,7 @@ export const NoteWikilinks = memo(function NoteWikilinks({
                 <LinkComponent
                   key={link}
                   href={href}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                  className="fiche-satellite"
                 >
                   <LinkIcon type={linkType} />
                   {displayPath}

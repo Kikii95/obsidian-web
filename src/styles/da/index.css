@@ -1,4 +1,7 @@
+/* Feuilles de la DA, dans l ordre : tokens, matières, effets, chrome, listes, écrans. */
 @import "./tokens.css";
 @import "./matieres.css";
 @import "./effets.css";
 @import "./chrome.css";
+@import "./listes.css";
+@import "./ecrans.css";

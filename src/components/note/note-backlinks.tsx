@@ -64,7 +64,7 @@ export const NoteBacklinks = memo(function NoteBacklinks({
   const hasBacklinks = data && data.backlinks.length > 0;
 
   return (
-    <div className="mt-8 border border-border/50 rounded-lg overflow-hidden bg-card/50">
+    <div className="plateau-renvois eclat mt-4 overflow-hidden">
       {/* Header */}
       <button
         onClick={() => setIsOpen(!isOpen)}
@@ -72,7 +72,7 @@ export const NoteBacklinks = memo(function NoteBacklinks({
       >
         <div className="flex items-center gap-2 text-sm font-medium">
           <Link2 className="h-4 w-4 text-muted-foreground" />
-          <span>Backlinks</span>
+          <span>Renvois entrants</span>
           {!isLoading && data && (
             <span className="text-muted-foreground font-normal">
               ({data.count})

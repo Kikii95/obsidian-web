@@ -2,7 +2,7 @@
 
 import { memo } from "react";
 import Link from "next/link";
-import { ChevronRight, Home } from "lucide-react";
+import { Home } from "lucide-react";
 import { useSettingsStore } from "@/lib/settings-store";
 
 interface BreadcrumbItem {
@@ -34,32 +34,27 @@ export const NoteBreadcrumb = memo(function NoteBreadcrumb({
     ? `/folder/${vaultRootPath.split("/").map(encodeURIComponent).join("/")}`
     : "/folder";
 
+  // Le chemin = une pile d'intercalaires (fiches-guides à onglet), DA §5.
   return (
-    <nav className="flex items-center gap-1 text-sm text-muted-foreground flex-wrap min-w-0 overflow-hidden">
-      <Link
-        href={homeHref}
-        className="hover:text-foreground transition-colors shrink-0"
-        title="Vault Root"
-      >
+    <nav aria-label="Chemin de la note" className="intercalaires min-w-0">
+      <Link href={homeHref} className="intercalaire" title="Racine du coffre" aria-label="Racine du coffre">
         <Home className="h-3.5 w-3.5" />
       </Link>
-      {items.map((crumb, index) => (
-        <div key={crumb.path} className="flex items-center gap-1 min-w-0">
-          <ChevronRight className="h-3 w-3 shrink-0" />
-          {crumb.isLast ? (
-            <span className="text-foreground font-medium truncate">
-              {crumb.name}
-            </span>
-          ) : (
-            <Link
-              href={buildFolderUrl(items.slice(0, index + 1).map(i => i.name).join("/"))}
-              className="hover:text-foreground transition-colors truncate"
-            >
-              {crumb.name}
-            </Link>
-          )}
-        </div>
-      ))}
+      {items.map((crumb, index) =>
+        crumb.isLast ? (
+          <span key={crumb.path} className="intercalaire intercalaire-courant" aria-current="page">
+            {crumb.name}
+          </span>
+        ) : (
+          <Link
+            key={crumb.path}
+            href={buildFolderUrl(items.slice(0, index + 1).map(i => i.name).join("/"))}
+            className="intercalaire"
+          >
+            {crumb.name}
+          </Link>
+        )
+      )}
     </nav>
   );
 });

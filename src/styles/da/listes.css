@@ -1,0 +1,73 @@
+/* Listes de notes : une fiche-index (une seule fiche bristol, une entrée par ligne de lignage),
+   et les compteurs de l'accueil en liasses. */
+
+/* — Fiche-index : contenu d'un dossier, notes récentes, lecteur public — */
+#main-content .grid.gap-2:has(> a.rounded-lg),
+[data-slot="card"] .space-y-1:has(> a.rounded-lg) {
+  position: relative;
+  display: block;
+  padding: calc(var(--ligne) * 0.5 + 4px) clamp(0.75rem, 3vw, 1.5rem) 10px;
+  background:
+    linear-gradient(var(--magenta-encre), var(--magenta-encre)) 0 4px / 100% 2px no-repeat,
+    var(--bristol);
+  color: var(--encre);
+  border-radius: var(--radius-fiche);
+  box-shadow: 0 3px 0 -1px #c9cac3, 0 6px 0 -2px #aeafa9, var(--ombre-fiche);
+  max-width: 46rem;
+  animation: da-tirer 0.46s cubic-bezier(0.2, 0.9, 0.25, 1.12) both;
+}
+#main-content .grid.gap-2:has(> a.rounded-lg) > a.rounded-lg,
+[data-slot="card"] .space-y-1:has(> a.rounded-lg) > a.rounded-lg {
+  display: flex;
+  min-height: 44px;
+  margin: 0;
+  padding: 6px 4px;
+  border: 0;
+  border-bottom: 1px solid var(--lignage);
+  border-radius: 0;
+  background: transparent;
+  color: var(--encre);
+  animation: da-feuilleter 0.28s ease-out both;
+  transition: background-color 0.15s, padding-left 0.18s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+#main-content .grid.gap-2:has(> a.rounded-lg) > a.rounded-lg:hover,
+[data-slot="card"] .space-y-1:has(> a.rounded-lg) > a.rounded-lg:hover { background: rgba(59, 104, 148, 0.08); padding-left: 10px; }
+#main-content .grid.gap-2 > a.rounded-lg *,
+[data-slot="card"] .space-y-1 > a.rounded-lg * { color: var(--encre); }
+#main-content .grid.gap-2 > a.rounded-lg p.font-medium,
+[data-slot="card"] .space-y-1 > a.rounded-lg .truncate:first-child { font-weight: 500; }
+#main-content .grid.gap-2 > a.rounded-lg .text-xs,
+[data-slot="card"] .space-y-1 > a.rounded-lg .text-xs { font-family: var(--font-cote); font-size: 11px; color: var(--lignage-encre) !important; }
+#main-content .grid.gap-2 > a.rounded-lg > div:first-child { background: transparent !important; color: var(--lignage-encre); padding: 4px; }
+#main-content .grid.gap-2 > a.rounded-lg > div:first-child * { color: var(--lignage-encre); }
+#main-content .grid.gap-2 > a.rounded-lg:nth-child(2) { animation-delay: 35ms; }
+#main-content .grid.gap-2 > a.rounded-lg:nth-child(3) { animation-delay: 70ms; }
+#main-content .grid.gap-2 > a.rounded-lg:nth-child(4) { animation-delay: 105ms; }
+#main-content .grid.gap-2 > a.rounded-lg:nth-child(5) { animation-delay: 140ms; }
+#main-content .grid.gap-2 > a.rounded-lg:nth-child(n + 6) { animation-delay: 175ms; }
+
+/* — Compteurs de l'accueil : la liasse des notes en tête, les autres en tranches — */
+[data-slot="card"] .grid > .text-center.rounded-lg {
+  position: relative;
+  text-align: left;
+  padding: 10px 12px 12px;
+  border-radius: 3px;
+  background: var(--eclat-releve) !important;
+  border-left: 3px solid var(--bristol);
+  box-shadow: inset 3px 0 0 -1px #aeafa9;
+}
+[data-slot="card"] .grid > .text-center.rounded-lg svg { display: none; }
+[data-slot="card"] .grid > .text-center.rounded-lg > .font-bold { font: 600 1.25rem/1.1 var(--font-fiche); color: #EDE7F5; font-variant-numeric: tabular-nums; }
+[data-slot="card"] .grid > .text-center.rounded-lg > .text-xs { font: 500 11px/1.4 var(--font-cote); color: var(--graphite-doux); }
+[data-slot="card"] .grid > .text-center.rounded-lg:first-child {
+  grid-column: span 2;
+  padding: 14px 16px 22px;
+  background:
+    linear-gradient(var(--magenta-encre), var(--magenta-encre)) 0 0 / 100% 2px no-repeat,
+    repeating-linear-gradient(to bottom, transparent 0 22px, var(--lignage) 22px 23px),
+    var(--bristol) !important;
+  border-left: 0;
+  box-shadow: 0 3px 0 -1px #c9cac3, 0 6px 0 -2px #aeafa9, 0 9px 0 -3px #8f908a, 0 14px 18px -10px rgba(0, 0, 0, 0.8);
+}
+[data-slot="card"] .grid > .text-center.rounded-lg:first-child > .font-bold { font-size: 2.4rem; color: var(--encre); }
+[data-slot="card"] .grid > .text-center.rounded-lg:first-child > .text-xs { color: var(--lignage-encre); font-size: 12px; }

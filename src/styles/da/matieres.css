@@ -125,14 +125,14 @@ html[data-theme="magenta-light"] .table-obsidienne {
 .renvoi,
 .fiche a.wikilink {
   color: var(--magenta-encre);
-  font-weight: 600;
+  font-weight: 500;
   text-decoration: none;
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 6' preserveAspectRatio='none'%3E%3Cpath d='M1 4.2C18 1.6 34 5.4 52 3.1S84 1.9 99 3.6' fill='none' stroke='%23A324BC' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E") 0 100% / 0% 6px no-repeat;
   transition: background-size 0.32s ease-out;
   padding-bottom: 2px;
 }
 .renvoi::after,
-.fiche a.wikilink::after { content: "↗"; font-size: 0.7em; line-height: 0; vertical-align: super; margin-left: 1px; opacity: 0.7; }
+.fiche a.wikilink::after { content: "↗"; font-size: 0.6em; line-height: 0; vertical-align: super; margin-left: 1px; opacity: 0.45; }
 .renvoi:hover, .renvoi:focus-visible,
 .fiche a.wikilink:hover, .fiche a.wikilink:focus-visible { background-size: 100% 6px; text-decoration: none; }
 
@@ -231,3 +231,17 @@ html[data-theme="magenta-light"] .table-obsidienne {
 
 /* — La main du lecteur — */
 .main { font-family: var(--font-main); font-weight: 700; }
+
+/* — Pile d'intercalaires (chemin) — */
+.intercalaires {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 0;
+  overflow: hidden;
+  border-bottom: 2px solid var(--bristol-bleu);
+}
+.intercalaires .intercalaire { display: block; line-height: 21px; flex-shrink: 1; min-width: 0; min-height: 30px; max-width: 14rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-decoration: none; opacity: 0.72; transition: opacity 0.15s, transform 0.18s cubic-bezier(0.3, 1.6, 0.5, 1); }
+.intercalaires .intercalaire:hover { opacity: 1; transform: translateY(-2px); }
+.intercalaires .intercalaire:first-child { flex-shrink: 0; }
+.intercalaires .intercalaire-courant { opacity: 1; flex-shrink: 0; max-width: 18rem; background: var(--bristol); color: var(--encre); font-weight: 500; }

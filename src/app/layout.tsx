@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Caveat, IBM_Plex_Mono, Literata } from "next/font/google";
 import { SessionProvider } from "@/components/providers/session-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { RouteMarker } from "@/components/da/route-marker";
 import "./globals.css";
 import "@/styles/da/index.css";
 
@@ -52,6 +53,7 @@ export default function RootLayout({
         className={`${literata.variable} ${plexMono.variable} ${caveat.variable} table-obsidienne antialiased min-h-screen`}
       >
         <SessionProvider>
+          <RouteMarker />
           <ThemeProvider>{children}</ThemeProvider>
         </SessionProvider>
       </body>

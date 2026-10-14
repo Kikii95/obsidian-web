@@ -1,0 +1,86 @@
+/* Habillage par écran (body[data-route], posé par RouteMarker). */
+
+/* — Barre latérale : l'explorateur lisible — */
+aside.bg-sidebar :is(button, a) { font-size: 0.9rem; color: var(--graphite); }
+aside.bg-sidebar input { font-family: var(--font-fiche); }
+
+/* — Dossier : l'en-tête passe à la ligne sur téléphone ; l'icône devient un intercalaire — */
+body[data-route="folder"] #main-content .flex.items-center.gap-3.mb-6 { flex-wrap: wrap; }
+body[data-route="folder"] #main-content .flex.items-center.gap-3.mb-6 > .rounded-xl { background: var(--bristol-bleu); color: var(--intercalaire-encre); border-radius: 3px; clip-path: polygon(0 100%, 7px 0, calc(100% - 7px) 0, 100% 100%); }
+body[data-route="folder"] #main-content .flex.items-center.gap-3.mb-6 > .rounded-xl * { color: var(--intercalaire-encre); }
+
+/* — Modèles et réglages : des fiches (pré-imprimées, techniques), l'en-tête souligné de la ligne de tête — */
+body[data-route="templates"] #main-content .grid > [data-slot="card"],
+body[data-route="settings"] #main-content [data-slot="card"] {
+  --card-foreground: var(--encre);
+  --foreground: var(--encre);
+  --muted-foreground: var(--encre-douce);
+  --primary: var(--magenta-encre);
+  --border: rgba(59, 104, 148, 0.3);
+  --input: rgba(59, 104, 148, 0.4);
+  --muted: rgba(59, 104, 148, 0.1);
+  --accent: rgba(59, 104, 148, 0.12);
+  --accent-foreground: var(--encre);
+  --secondary: rgba(59, 104, 148, 0.12);
+  --secondary-foreground: var(--encre);
+  background: var(--bristol) !important;
+  color: var(--encre);
+  border: 0 !important;
+  border-radius: var(--radius-fiche);
+  box-shadow: var(--ombre-fiche);
+  animation: da-feuilleter 0.3s ease-out both;
+}
+body[data-route="templates"] #main-content .grid > [data-slot="card"]::before,
+body[data-route="settings"] #main-content [data-slot="card"]::before { display: none; }
+body[data-route="templates"] #main-content .grid > [data-slot="card"] [data-slot="card-header"],
+body[data-route="settings"] #main-content [data-slot="card"] [data-slot="card-header"] {
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--magenta-encre);
+}
+body[data-route="templates"] #main-content .grid > [data-slot="card"] [data-slot="card-content"],
+body[data-route="templates"] #main-content .grid > [data-slot="card"] > div:last-child {
+  background: repeating-linear-gradient(to bottom, transparent 0 27px, var(--lignage) 27px 28px);
+}
+body[data-route="templates"] #main-content .grid > [data-slot="card"] :is([data-slot="card-title"], .font-semibold),
+body[data-route="settings"] #main-content [data-slot="card"] [data-slot="card-title"] { color: var(--encre); }
+body[data-route="templates"] #main-content .grid > [data-slot="card"] svg,
+body[data-route="settings"] #main-content [data-slot="card"] [data-slot="card-title"] svg { color: var(--magenta-encre); }
+body[data-route="templates"] #main-content .grid > [data-slot="card"]:nth-child(2) { animation-delay: 40ms; }
+body[data-route="templates"] #main-content .grid > [data-slot="card"]:nth-child(3) { animation-delay: 80ms; }
+body[data-route="templates"] #main-content .grid > [data-slot="card"]:nth-child(n + 4) { animation-delay: 120ms; }
+
+/* — Chemin de la note sur téléphone : racine, dossier parent, fiche courante — */
+@media (max-width: 640px) {
+  .intercalaires .intercalaire:not(:first-child):not(.intercalaire-courant) { display: none; }
+  .intercalaires .intercalaire-courant { flex-shrink: 0; min-width: 6rem; max-width: 10rem; }
+}
+
+/* — La note : fiche lue, encarts en lignes de la fiche, plateau des renvois — */
+.fiche-note > div[class*="rounded-lg"][class*="border"] { border: 0 !important; border-bottom: 1px dashed var(--lignage) !important; border-radius: 0 !important; background: transparent !important; }
+.fiche-note > div[class*="rounded-lg"][class*="border"] button { padding-left: 0; font-family: var(--font-fiche); }
+.fiche-note > div.text-xs { font-family: var(--font-cote); color: var(--lignage-encre); }
+.fiche-note > div.text-xs * { color: var(--lignage-encre); }
+.plateau-renvois button { font-family: var(--font-fiche); }
+.plateau-renvois .flex-wrap { position: relative; padding-top: 18px; gap: 14px 12px !important; }
+.plateau-renvois .flex-wrap::before { content: ""; position: absolute; left: 8px; right: 8px; top: 6px; border-top: 1.5px dashed rgba(212, 51, 245, 0.55); }
+.fiche-satellite {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 8px 12px 7px;
+  background: var(--bristol);
+  color: var(--encre);
+  font: 500 0.875rem/1.2 var(--font-fiche);
+  border-top: 2px solid var(--magenta-encre);
+  border-radius: var(--radius-fiche);
+  box-shadow: 0 8px 14px -10px rgba(0, 0, 0, 0.8);
+  text-decoration: none;
+  transform: rotate(var(--penche, -0.8deg));
+  transition: transform 0.18s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+.fiche-satellite::before { content: ""; position: absolute; left: 50%; top: -14px; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: var(--magenta); }
+.fiche-satellite:nth-child(even) { --penche: 0.9deg; }
+.fiche-satellite:hover { transform: translateY(-3px) rotate(0deg); }
+.fiche-satellite svg { color: var(--lignage-encre); }

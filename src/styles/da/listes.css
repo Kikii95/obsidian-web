@@ -46,7 +46,9 @@
 #main-content .grid.gap-2 > a.rounded-lg:nth-child(5) { animation-delay: 140ms; }
 #main-content .grid.gap-2 > a.rounded-lg:nth-child(n + 6) { animation-delay: 175ms; }
 
-/* — Compteurs de l'accueil : la liasse des notes en tête, les autres en tranches — */
+/* — Compteurs de l'accueil : la liasse des notes en tête, les autres en tranches qui remplissent la ligne — */
+[data-slot="card"] .grid:has(> .text-center.rounded-lg) { display: flex; flex-wrap: wrap; gap: 10px; }
+[data-slot="card"] .grid > .text-center.rounded-lg { flex: 1 1 calc(25% - 10px); min-width: 6rem; }
 [data-slot="card"] .grid > .text-center.rounded-lg {
   position: relative;
   text-align: left;
@@ -60,7 +62,7 @@
 [data-slot="card"] .grid > .text-center.rounded-lg > .font-bold { font: 600 1.25rem/1.1 var(--font-fiche); color: #EDE7F5; font-variant-numeric: tabular-nums; }
 [data-slot="card"] .grid > .text-center.rounded-lg > .text-xs { font: 500 11px/1.4 var(--font-cote); color: var(--graphite-doux); }
 [data-slot="card"] .grid > .text-center.rounded-lg:first-child {
-  grid-column: span 2;
+  flex-basis: 100%;
   padding: 14px 16px 22px;
   background:
     linear-gradient(var(--magenta-encre), var(--magenta-encre)) 0 0 / 100% 2px no-repeat,

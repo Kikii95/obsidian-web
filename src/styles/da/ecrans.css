@@ -23,6 +23,7 @@ body[data-route="settings"] #main-content [data-slot="card"] {
   --accent-foreground: var(--encre);
   --secondary: rgba(59, 104, 148, 0.12);
   --secondary-foreground: var(--encre);
+  --background: var(--bristol);
   background: var(--bristol) !important;
   color: var(--encre);
   border: 0 !important;
@@ -30,16 +31,18 @@ body[data-route="settings"] #main-content [data-slot="card"] {
   box-shadow: var(--ombre-fiche);
   animation: da-feuilleter 0.3s ease-out both;
 }
+body[data-route="settings"] #main-content [data-slot="card"] [data-slot="switch"][data-state="checked"] { background: var(--magenta-encre); }
+body[data-route="settings"] #main-content [data-slot="card"] [data-slot="switch"][data-state="unchecked"] { background: #C6CBD2; }
+body[data-route="settings"] #main-content [data-slot="card"] [data-slot="switch-thumb"] { background: var(--bristol); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35); }
+body[data-route="settings"] #main-content [data-slot="card"] :is([data-slot="select-trigger"], input, button[role="combobox"]) { background: rgba(255, 255, 255, 0.55); border-color: rgba(59, 104, 148, 0.45); color: var(--encre); }
+body[data-route="templates"] #main-content .grid > [data-slot="card"] { padding-bottom: 14px; gap: 14px; }
+body[data-route="templates"] #main-content .grid > [data-slot="card"] [data-slot="badge"] { border: 1px solid rgba(59, 104, 148, 0.5); background: transparent; color: var(--lignage-encre); font-family: var(--font-cote); font-size: 10px; }
 body[data-route="templates"] #main-content .grid > [data-slot="card"]::before,
 body[data-route="settings"] #main-content [data-slot="card"]::before { display: none; }
 body[data-route="templates"] #main-content .grid > [data-slot="card"] [data-slot="card-header"],
 body[data-route="settings"] #main-content [data-slot="card"] [data-slot="card-header"] {
   padding-bottom: 12px;
   border-bottom: 2px solid var(--magenta-encre);
-}
-body[data-route="templates"] #main-content .grid > [data-slot="card"] [data-slot="card-content"],
-body[data-route="templates"] #main-content .grid > [data-slot="card"] > div:last-child {
-  background: repeating-linear-gradient(to bottom, transparent 0 27px, var(--lignage) 27px 28px);
 }
 body[data-route="templates"] #main-content .grid > [data-slot="card"] :is([data-slot="card-title"], .font-semibold),
 body[data-route="settings"] #main-content [data-slot="card"] [data-slot="card-title"] { color: var(--encre); }
@@ -85,26 +88,26 @@ body[data-route="templates"] #main-content .grid > [data-slot="card"]:nth-child(
 .fiche-satellite:hover { transform: translateY(-3px) rotate(0deg); }
 .fiche-satellite svg { color: var(--lignage-encre); }
 
-/* — Le bouton flottant : une fiche vierge qu'on tire, pas une pastille magenta — */
+/* — Le bouton flottant : la fiche du dessus d'une liasse, à l'encre magenta — */
 .fab-fiche {
   background:
-    linear-gradient(var(--magenta-encre), var(--magenta-encre)) 0 11px / 100% 2px no-repeat,
-    repeating-linear-gradient(to bottom, transparent 0 22px, var(--lignage) 22px 23px),
-    var(--bristol);
-  color: var(--magenta-encre);
+    linear-gradient(rgba(30, 26, 36, 0.35), rgba(30, 26, 36, 0.35)) 0 12px / 100% 2px no-repeat,
+    var(--magenta);
+  color: var(--sur-magenta);
   border-radius: var(--radius-fiche);
-  box-shadow: 3px 3px 0 -1px #c9cac3, 6px 6px 0 -2px #aeafa9, 0 16px 26px -12px rgba(0, 0, 0, 0.85);
+  box-shadow: 4px 4px 0 -1px var(--bristol), 8px 8px 0 -2px #aeafa9, 0 18px 28px -10px rgba(0, 0, 0, 0.9);
   transform: rotate(-3deg);
   transition: transform 0.2s cubic-bezier(0.3, 1.6, 0.5, 1);
 }
 .fab-fiche:hover { transform: rotate(0deg) translateY(-4px); }
-.fab-fiche svg { stroke-width: 2.5; }
+.fab-fiche svg { stroke-width: 2.75; }
+#main-content > div { padding-bottom: 104px; }
 
 /* — États vides de l'accueil : la main du lecteur — */
 [data-slot="card"] .text-center.py-6 > p:first-of-type { font: 700 1.35rem/1.3 var(--font-main); color: var(--graphite); }
 
 /* — Explorateur : la note ouverte est une fiche tirée de la liasse — */
 aside.bg-sidebar button.flex-1[class~="bg-primary/10"] { background: var(--bristol) !important; color: var(--encre) !important; border-left: 2px solid var(--magenta-encre); border-radius: 2px; }
-body[data-route="accueil"] #main-content h1 + p { font: 700 1.3rem/1.3 var(--font-main); color: var(--table-texte-doux); }
+body[data-route="accueil"] #main-content h1 + p { font: 700 1.35rem/1.3 var(--font-main); color: var(--graphite); }
 #main-content div.justify-between:has(> .intercalaires) { flex-wrap: wrap; row-gap: 10px; }
 #main-content div.justify-between:has(> .intercalaires) > :last-child { margin-left: auto; }

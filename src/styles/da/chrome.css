@@ -15,6 +15,7 @@ header[role="banner"] {
   border-image: linear-gradient(90deg, transparent, rgba(140, 107, 242, 0.22), rgba(63, 184, 164, 0.2), rgba(224, 176, 74, 0.18), transparent) 1;
   backdrop-filter: none !important;
 }
+aside.bg-sidebar { box-shadow: inset -1px 0 0 rgba(140, 107, 242, 0.18); border-right: 0 !important; }
 aside.bg-sidebar,
 [data-slot="sheet-content"] {
   background:
@@ -29,19 +30,27 @@ aside.bg-sidebar,
 [data-slot="card-title"], [data-slot="card"] .font-semibold.text-lg { font-family: var(--font-fiche); font-weight: 600; letter-spacing: -0.01em; color: #EDE7F5; }
 
 /* — Titres de page gravés sur la table — */
-#main-content h1.font-bold { font-family: var(--font-fiche); font-weight: 600; letter-spacing: -0.015em; color: var(--table-texte); }
+#main-content h1.font-bold { font-family: var(--font-fiche); font-weight: 600; letter-spacing: -0.015em; color: var(--titre-table); }
 #main-content nav.text-sm a, #main-content nav.text-sm span { font-family: var(--font-cote); font-size: 12px; }
 
 /* — La note sur sa fiche : texte calé sur le lignage — */
 .fiche-note { margin-top: 0.5rem; }
-.fiche-note .prose { color: var(--encre); font-family: var(--font-fiche); }
+.fiche-note::after { display: none; }
+.fiche-note .prose {
+  color: var(--encre);
+  font-family: var(--font-fiche);
+  padding-top: var(--ligne);
+  background: repeating-linear-gradient(to bottom, transparent 0 calc(var(--ligne) - 1px), var(--lignage) calc(var(--ligne) - 1px) var(--ligne));
+  animation: da-lignage 0.7s cubic-bezier(0.6, 0, 0.2, 1) 0.24s both;
+}
+.fiche-note .prose :is(p, li) { font-size: 1rem; }
 .fiche-note .prose :is(p, li) { line-height: var(--ligne) !important; margin-top: 0 !important; margin-bottom: var(--ligne) !important; color: var(--encre); }
 .fiche-note .prose li { margin-bottom: 0 !important; }
 .fiche-note .prose :is(ul, ol) { margin: 0 0 var(--ligne) !important; }
 .fiche-note .prose h1 { font: 600 1.6rem/calc(var(--ligne) * 2) var(--font-fiche); margin: 0 !important; color: var(--encre); }
 .fiche-note .prose h2 { font: 600 1.3rem/calc(var(--ligne) * 2) var(--font-fiche); margin: 0 !important; padding: 0 !important; border: 0 !important; color: var(--encre); }
 .fiche-note .prose h3 { font: 600 1.08rem/var(--ligne) var(--font-fiche); margin: 0 0 0 !important; color: var(--encre); }
-.fiche-note .prose code { background: rgba(59, 104, 148, 0.1) !important; color: var(--lignage-encre) !important; font-family: var(--font-cote); }
+.fiche-note .prose code { background: rgba(59, 104, 148, 0.12) !important; color: var(--intercalaire-encre) !important; font-family: var(--font-cote); font-size: 0.82em !important; padding: 0 0.3em !important; line-height: 1 !important; }
 .fiche-note .prose pre { background: var(--eclat) !important; color: var(--graphite); }
 .fiche-note .prose pre code { background: transparent !important; color: inherit !important; }
 .fiche-note .prose blockquote { border-left: 2px solid var(--magenta-encre) !important; background: transparent !important; font-style: italic; color: var(--encre-douce) !important; }

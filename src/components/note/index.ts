@@ -7,3 +7,5 @@ export { CopyLinkButton } from "./copy-link-button";
 export { TableOfContents } from "./table-of-contents";
 export { NoteStats } from "./note-stats";
 export { FrontmatterViewer } from "./frontmatter-viewer";
+export { NoteLoadingState, NoteErrorState, NoteNotFoundState } from "./note-states";
+export { NoteTagsRow } from "./note-tags-row";

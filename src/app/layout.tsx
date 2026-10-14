@@ -1,18 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Caveat, IBM_Plex_Mono, Literata } from "next/font/google";
 import { SessionProvider } from "@/components/providers/session-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import "./globals.css";
+import "@/styles/da/index.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+// Polices de la DA (docs/direction-artistique.md §4) : la fiche, la cote, la main du lecteur.
+const literata = Literata({ variable: "--font-literata", subsets: ["latin"], style: ["normal", "italic"] });
+const plexMono = IBM_Plex_Mono({ variable: "--font-plex-mono", subsets: ["latin"], weight: ["400", "500"] });
+const caveat = Caveat({ variable: "--font-caveat", subsets: ["latin"], weight: ["500", "700"] });
 
 export const metadata: Metadata = {
   title: "Obsidian Web",
@@ -39,7 +35,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#1a1019",
+  themeColor: "#100D13",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -53,7 +49,7 @@ export default function RootLayout({
   return (
     <html lang="fr" className="dark">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
+        className={`${literata.variable} ${plexMono.variable} ${caveat.variable} table-obsidienne antialiased min-h-screen`}
       >
         <SessionProvider>
           <ThemeProvider>{children}</ThemeProvider>

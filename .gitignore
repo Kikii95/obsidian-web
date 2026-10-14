@@ -42,3 +42,8 @@ next-env.d.ts
 .claude/
 !.claude/CLAUDE.md
 .env*.local
+
+# Direction artistique : sources Claude Design, captures et planche (lourdes, hors dépôt)
+design/claude-design/
+design/captures/
+design/planche/

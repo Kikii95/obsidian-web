@@ -1,0 +1,123 @@
+/* Direction artistique — fiches bristol sur un éclat d'obsidienne (docs/direction-artistique.md §3).
+   Matières communes à tous les thèmes ; les thèmes « magenta » (Obsidienne) et « magenta-light » (Bristol)
+   sont réécrits ici aux couleurs de la DA. Les 34 autres thèmes gardent leurs teintes. */
+:root,
+body {
+  /* Déclarées aussi sur body : next/font y pose --font-literata & co, et une variable se résout où elle est déclarée. */
+  --font-fiche: var(--font-literata), "Literata", Georgia, serif;
+  --font-cote: var(--font-plex-mono), "IBM Plex Mono", ui-monospace, monospace;
+  --font-main: var(--font-caveat), "Caveat", cursive;
+  --font-geist-sans: var(--font-fiche);
+  --font-geist-mono: var(--font-cote);
+}
+
+:root {
+  --ligne: 1.75rem;
+
+  --table: #100D13;
+  --table-texte: #BDB6C8;
+  --table-texte-doux: #958EA2;
+  --eclat: #18141C;
+  --eclat-releve: #231D29;
+  --arete: rgba(236, 226, 255, 0.1);
+  --graphite: #BDB6C8;
+  --graphite-doux: #958EA2;
+  --bristol: #E9EAE4;
+  --bristol-bleu: #CFE0EE;
+  --lignage: rgba(94, 143, 192, 0.32);
+  --lignage-encre: #3B6894;
+  --intercalaire-encre: #2E5A86;
+  --encre: #1E1A24;
+  --encre-douce: #4F4A58;
+  --magenta: #D433F5;
+  --magenta-encre: #A324BC;
+  --sur-magenta: #1E1A24;
+  --renvoi-table: #D433F5;
+  --iris-1: #8C6BF2;
+  --iris-2: #3FB8A4;
+  --iris-3: #E0B04A;
+  --a-jour: #3E9B6E;
+  --en-cours: #E3A13B;
+  --rature: #E5533D;
+  --rature-encre: #B8321C;
+  --cav-1: #F2C94C;
+  --cav-2: #4CAF7A;
+  --cav-3: #4A86D8;
+  --cav-4: #F08A3C;
+  --cav-5: #9B6BDF;
+  --cav-6: #E86AA8;
+  --ombre-fiche: 0 1px 0 rgba(0, 0, 0, 0.35), 0 18px 34px -16px rgba(0, 0, 0, 0.75);
+  --radius-eclat: 14px;
+  --radius-fiche: 3px;
+}
+
+html.dark:not([data-theme]),
+html.dark[data-theme="magenta"] {
+  --theme-hue: 320;
+  --background: var(--table);
+  --foreground: var(--table-texte);
+  --card: var(--eclat);
+  --card-foreground: var(--graphite);
+  --popover: var(--eclat);
+  --popover-foreground: var(--graphite);
+  --primary: var(--magenta);
+  --primary-foreground: var(--sur-magenta);
+  --secondary: var(--eclat-releve);
+  --secondary-foreground: var(--graphite);
+  --muted: var(--eclat-releve);
+  --muted-foreground: var(--graphite-doux);
+  --accent: var(--eclat-releve);
+  --accent-foreground: #EDE7F5;
+  --destructive: var(--rature);
+  --border: rgba(236, 226, 255, 0.1);
+  --input: rgba(236, 226, 255, 0.14);
+  --ring: var(--magenta);
+  --chart-1: var(--magenta);
+  --chart-2: var(--iris-1);
+  --chart-3: var(--iris-2);
+  --chart-4: var(--iris-3);
+  --chart-5: var(--lignage-encre);
+  --sidebar: var(--eclat);
+  --sidebar-foreground: var(--graphite);
+  --sidebar-primary: var(--magenta);
+  --sidebar-primary-foreground: var(--sur-magenta);
+  --sidebar-accent: var(--eclat-releve);
+  --sidebar-accent-foreground: #EDE7F5;
+  --sidebar-border: rgba(236, 226, 255, 0.08);
+  --sidebar-ring: var(--magenta);
+}
+
+html.dark[data-theme="magenta-light"] {
+  --table: #E3E4E7;
+  --table-texte: #1E1A24;
+  --table-texte-doux: #5A5466;
+  --bristol: #F5F6F2;
+  --renvoi-table: #A324BC;
+  --ombre-fiche: 0 1px 0 rgba(30, 26, 36, 0.18), 0 14px 26px -16px rgba(30, 26, 36, 0.45);
+  --background: var(--table);
+  --foreground: var(--table-texte);
+  --card: var(--bristol);
+  --card-foreground: var(--encre);
+  --popover: var(--bristol);
+  --popover-foreground: var(--encre);
+  --primary: var(--magenta-encre);
+  --primary-foreground: #FFFFFF;
+  --secondary: #D6D8DD;
+  --secondary-foreground: var(--encre);
+  --muted: #D6D8DD;
+  --muted-foreground: var(--table-texte-doux);
+  --accent: #D6D8DD;
+  --accent-foreground: var(--encre);
+  --destructive: var(--rature-encre);
+  --border: rgba(30, 26, 36, 0.14);
+  --input: rgba(30, 26, 36, 0.2);
+  --ring: var(--magenta-encre);
+  --sidebar: var(--eclat);
+  --sidebar-foreground: var(--graphite);
+  --sidebar-primary: var(--magenta);
+  --sidebar-primary-foreground: var(--sur-magenta);
+  --sidebar-accent: var(--eclat-releve);
+  --sidebar-accent-foreground: #EDE7F5;
+  --sidebar-border: rgba(236, 226, 255, 0.08);
+  --sidebar-ring: var(--magenta);
+}

@@ -1,0 +1,233 @@
+/* Matières de la DA : la table d'obsidienne, l'éclat, la fiche bristol et ses accessoires.
+   Composants signature : docs/direction-artistique.md §5. */
+
+/* — La table : verre volcanique, ondes de cassure conchoïdale (alpha ≤ 0,06), grain vitreux — */
+.table-obsidienne {
+  background-color: var(--table);
+  background-image:
+    radial-gradient(120% 70% at 100% -10%, rgba(140, 107, 242, 0.1), transparent 60%),
+    radial-gradient(90% 60% at -10% 110%, rgba(63, 184, 164, 0.07), transparent 60%),
+    repeating-radial-gradient(circle at 92% -18%, rgba(236, 226, 255, 0.045) 0 1px, transparent 1px 34px),
+    repeating-radial-gradient(circle at -12% 118%, rgba(236, 226, 255, 0.035) 0 1px, transparent 1px 41px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  background-attachment: fixed;
+}
+html[data-theme="magenta-light"] .table-obsidienne {
+  background-image:
+    radial-gradient(120% 70% at 100% -10%, rgba(140, 107, 242, 0.08), transparent 60%),
+    repeating-radial-gradient(circle at 92% -18%, rgba(30, 26, 36, 0.05) 0 1px, transparent 1px 34px),
+    repeating-radial-gradient(circle at -12% 118%, rgba(30, 26, 36, 0.04) 0 1px, transparent 1px 41px);
+}
+
+/* — L'éclat : chrome en verre noir, arête claire, bord irisé (alpha ≤ 0,22) — */
+.eclat {
+  position: relative;
+  isolation: isolate;
+  background:
+    linear-gradient(160deg, rgba(236, 226, 255, 0.06), transparent 38%),
+    repeating-radial-gradient(circle at 110% -30%, rgba(236, 226, 255, 0.03) 0 1px, transparent 1px 22px),
+    var(--eclat);
+  color: var(--graphite);
+  border: 1px solid var(--arete);
+  border-radius: 3px var(--radius-eclat) 3px var(--radius-eclat);
+}
+.eclat::before {
+  content: "";
+  position: absolute;
+  inset: -1px -1px auto -1px;
+  height: 1px;
+  border-radius: inherit;
+  background: linear-gradient(90deg, transparent, rgba(140, 107, 242, 0.22), rgba(63, 184, 164, 0.2), rgba(224, 176, 74, 0.18), transparent);
+  pointer-events: none;
+}
+.eclat-reflet::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(115deg, transparent 35%, rgba(140, 107, 242, 0.14) 45%, rgba(63, 184, 164, 0.12) 50%, rgba(224, 176, 74, 0.1) 55%, transparent 65%) 200% 0 / 250% 100% no-repeat;
+  pointer-events: none;
+  z-index: -1;
+}
+.eclat-reflet:hover::after { animation: da-iris 0.9s cubic-bezier(0.4, 0, 0.2, 1) 1; }
+
+/* — La fiche bristol : ligne de tête magenta, lignage bleu calé sur --ligne — */
+.fiche {
+  --foreground: var(--encre);
+  --card-foreground: var(--encre);
+  --muted-foreground: var(--encre-douce);
+  --primary: var(--magenta-encre);
+  --border: rgba(59, 104, 148, 0.25);
+  --muted: rgba(59, 104, 148, 0.08);
+  --accent: rgba(59, 104, 148, 0.1);
+  --accent-foreground: var(--encre);
+  position: relative;
+  isolation: isolate;
+  background: var(--bristol);
+  color: var(--encre);
+  border-radius: var(--radius-fiche);
+  box-shadow: var(--ombre-fiche);
+  padding: calc(var(--ligne) * 2 + 4px) clamp(1rem, 4vw, 2.25rem) var(--ligne);
+  font-family: var(--font-fiche);
+  animation: da-tirer 0.46s cubic-bezier(0.2, 0.9, 0.25, 1.12) both;
+}
+.fiche::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--ligne) * 2);
+  height: 2px;
+  background: var(--magenta-encre);
+  transform-origin: left;
+  animation: da-encre 0.52s cubic-bezier(0.6, 0, 0.2, 1) 0.16s both;
+  z-index: -1;
+}
+.fiche::after {
+  content: "";
+  position: absolute;
+  inset: calc(var(--ligne) * 2 + 2px) 0 0 0;
+  background: repeating-linear-gradient(to bottom, transparent 0 calc(var(--ligne) - 1px), var(--lignage) calc(var(--ligne) - 1px) var(--ligne));
+  border-radius: 0 0 var(--radius-fiche) var(--radius-fiche);
+  animation: da-lignage 0.7s cubic-bezier(0.6, 0, 0.2, 1) 0.24s both;
+  z-index: -2;
+  pointer-events: none;
+}
+.fiche-cote {
+  position: absolute;
+  top: calc(var(--ligne) * 0.3);
+  right: clamp(1rem, 4vw, 2.25rem);
+  left: clamp(1rem, 4vw, 2.25rem);
+  text-align: right;
+  font: 500 11px/1 var(--font-cote);
+  color: var(--lignage-encre);
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fiche-titre {
+  position: absolute;
+  top: calc(var(--ligne) * 0.9);
+  left: clamp(1rem, 4vw, 2.25rem);
+  right: clamp(1rem, 4vw, 2.25rem);
+  margin: 0;
+  font: 600 1.35rem/var(--ligne) var(--font-fiche);
+  color: var(--encre);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fiche-vierge { text-align: center; }
+.fiche-vierge .main { font: 700 1.5rem/var(--ligne) var(--font-main); color: var(--lignage-encre); }
+
+/* — Le renvoi : lien interne à l'encre magenta, soulignement à la main tracé au survol — */
+.renvoi,
+.fiche a.wikilink {
+  color: var(--magenta-encre);
+  font-weight: 600;
+  text-decoration: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 6' preserveAspectRatio='none'%3E%3Cpath d='M1 4.2C18 1.6 34 5.4 52 3.1S84 1.9 99 3.6' fill='none' stroke='%23A324BC' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E") 0 100% / 0% 6px no-repeat;
+  transition: background-size 0.32s ease-out;
+  padding-bottom: 2px;
+}
+.renvoi::after,
+.fiche a.wikilink::after { content: "↗"; font-size: 0.7em; line-height: 0; vertical-align: super; margin-left: 1px; opacity: 0.7; }
+.renvoi:hover, .renvoi:focus-visible,
+.fiche a.wikilink:hover, .fiche a.wikilink:focus-visible { background-size: 100% 6px; text-decoration: none; }
+
+/* — La liasse : fiches empilées, la suivante dépasse — */
+.liasse { display: flex; flex-direction: column; gap: 6px; }
+.liasse > * { animation: da-feuilleter 0.28s ease-out both; }
+.liasse > :nth-child(2) { animation-delay: 35ms; }
+.liasse > :nth-child(3) { animation-delay: 70ms; }
+.liasse > :nth-child(4) { animation-delay: 105ms; }
+.liasse > :nth-child(5) { animation-delay: 140ms; }
+.liasse > :nth-child(6) { animation-delay: 175ms; }
+.liasse > :nth-child(7) { animation-delay: 210ms; }
+.liasse > :nth-child(n + 8) { animation-delay: 245ms; }
+.fiche-liasse {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  min-height: 44px;
+  padding: 10px 14px 9px;
+  background: var(--bristol);
+  color: var(--encre);
+  border-radius: var(--radius-fiche);
+  border-top: 2px solid var(--magenta-encre);
+  text-decoration: none;
+  box-shadow: 0 3px 0 -1px color-mix(in srgb, var(--bristol) 82%, #000), 0 6px 0 -2px color-mix(in srgb, var(--bristol) 66%, #000), 0 10px 18px -10px rgba(0, 0, 0, 0.7);
+  font-family: var(--font-fiche);
+  transition: transform 0.18s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+.fiche-liasse:hover { transform: translateY(-2px) rotate(-0.3deg); }
+.fiche-liasse .cote { margin-left: auto; font: 11px/1 var(--font-cote); color: var(--lignage-encre); white-space: nowrap; }
+
+/* — L'intercalaire : fiche-guide à onglet qui sépare les dossiers — */
+.intercalaire {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 5px 18px 4px;
+  background: var(--bristol-bleu);
+  color: var(--intercalaire-encre);
+  font: 500 12px/1.2 var(--font-cote);
+  clip-path: polygon(0 100%, 9px 0, calc(100% - 9px) 0, 100% 100%);
+}
+
+/* — Le cavalier : étiquette clipsée sur la tranche, palette fermée de six — */
+.cavalier {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px 3px;
+  border-radius: 2px 2px 7px 7px;
+  background: var(--cav, var(--cav-1));
+  color: var(--encre);
+  font: 500 12px/1.2 var(--font-cote);
+  box-shadow: inset 0 3px 0 rgba(0, 0, 0, 0.22), inset 0 -1px 0 rgba(255, 255, 255, 0.35);
+  transition: transform 0.18s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+.cavalier:hover { transform: translateY(-3px); }
+.cavalier[data-c="2"] { --cav: var(--cav-2); }
+.cavalier[data-c="3"] { --cav: var(--cav-3); }
+.cavalier[data-c="4"] { --cav: var(--cav-4); }
+.cavalier[data-c="5"] { --cav: var(--cav-5); }
+.cavalier[data-c="6"] { --cav: var(--cav-6); }
+
+/* — Le tampon dateur — */
+.tampon {
+  display: inline-block;
+  padding: 3px 8px 2px;
+  border: 3px double currentColor;
+  border-radius: 3px;
+  color: var(--lignage-encre);
+  font: 500 11px/1.2 var(--font-cote);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transform: rotate(-2deg);
+  animation: da-tampon 0.24s cubic-bezier(0.3, 1.5, 0.5, 1) 0.3s both;
+}
+
+/* — Le sceau : la tuile du mark v2.9.1, reflet irisé qui balaie — */
+.sceau { position: relative; overflow: hidden; isolation: isolate; }
+.sceau::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.38) 45%, rgba(63, 184, 164, 0.3) 52%, rgba(224, 176, 74, 0.25) 58%, transparent 70%) 200% 0 / 260% 100% no-repeat;
+  animation: da-iris 2.8s cubic-bezier(0.4, 0, 0.2, 1) 1s infinite;
+  pointer-events: none;
+}
+.synapses circle { animation: da-synapse 1.2s ease-in-out infinite; }
+.synapses circle:nth-child(2) { animation-delay: 0.15s; }
+.synapses circle:nth-child(3) { animation-delay: 0.3s; }
+.synapses circle:nth-child(4) { animation-delay: 0.45s; }
+.synapses circle:nth-child(5) { animation-delay: 0.6s; }
+.synapses circle:nth-child(6) { animation-delay: 0.75s; }
+
+/* — La main du lecteur — */
+.main { font-family: var(--font-main); font-weight: 700; }

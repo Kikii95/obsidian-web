@@ -20,13 +20,13 @@ export function Logo({ className, showText = false, size = "sm" }: LogoProps) {
   return (
     <div className={cn("flex items-center gap-2", className)}>
       <div
-        className={cn(sizeClass.container, "flex items-center justify-center glow-soft")}
+        className={cn(sizeClass.container, "sceau flex items-center justify-center")}
         style={{
-          background: "linear-gradient(135deg, var(--primary) 0%, var(--accent) 50%, var(--ring) 100%)",
+          background: "linear-gradient(135deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 70%, #000) 100%)",
         }}
       >
         <svg
-          className={cn(sizeClass.icon, "text-primary-foreground")}
+          className={cn(sizeClass.icon, "relative z-[1] text-white")}
           viewBox="50 75 410 410"
         >
           <g
@@ -59,7 +59,7 @@ export function Logo({ className, showText = false, size = "sm" }: LogoProps) {
         </svg>
       </div>
       {showText && (
-        <span className="font-semibold text-lg tracking-tight">
+        <span className="font-semibold text-lg tracking-tight" style={{ fontFamily: "var(--font-fiche)" }}>
           Obsidian <span className="text-primary">Web</span>
         </span>
       )}

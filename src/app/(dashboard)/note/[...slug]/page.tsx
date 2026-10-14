@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useCallback } from "react";
 import { useParams } from "next/navigation";
-import Link from "next/link";
 import dynamic from "next/dynamic";
 import { MarkdownRenderer } from "@/components/viewer/markdown-renderer";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -23,10 +22,7 @@ const MarkdownEditor = dynamic(
     ssr: false,
   }
 );
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { AlertCircle, ChevronRight, FileText, RefreshCw } from "lucide-react";
-import { NoteBreadcrumb, NoteToolbar, NoteWikilinks, NoteBacklinks, TableOfContents, NoteStats, FrontmatterViewer } from "@/components/note";
+import { NoteBreadcrumb, NoteToolbar, NoteWikilinks, NoteBacklinks, TableOfContents, NoteStats, FrontmatterViewer, NoteLoadingState, NoteErrorState, NoteNotFoundState, NoteTagsRow } from "@/components/note";
 import { LockedNoteView } from "@/components/lock/locked-note-view";
 import { PinDialog } from "@/components/lock/pin-dialog";
 import { useOnlineStatus } from "@/hooks/use-online-status";
@@ -174,63 +170,9 @@ export default function NotePage() {
     return <LockedNoteView noteName={noteName || "Note"} />;
   }
 
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="p-6 max-w-4xl mx-auto">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-          <Skeleton className="h-4 w-20" />
-          <ChevronRight className="h-3 w-3" />
-          <Skeleton className="h-4 w-32" />
-        </div>
-        <Skeleton className="h-10 w-3/4 mb-4" />
-        <Skeleton className="h-4 w-full mb-2" />
-        <Skeleton className="h-4 w-5/6 mb-2" />
-        <Skeleton className="h-4 w-4/6 mb-2" />
-        <Skeleton className="h-32 w-full mt-6" />
-      </div>
-    );
-  }
-
-  // Error state
-  if (error) {
-    return (
-      <div className="p-6 max-w-4xl mx-auto">
-        <div className="flex flex-col items-center justify-center gap-4 py-16">
-          <AlertCircle className="h-12 w-12 text-destructive" />
-          <h2 className="text-xl font-semibold">Erreur de chargement</h2>
-          <p className="text-muted-foreground text-center max-w-md">{error}</p>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={refetch}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Réessayer
-            </Button>
-            <Button variant="ghost" asChild>
-              <Link href="/">Retour à l&apos;accueil</Link>
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Not found state
-  if (!note) {
-    return (
-      <div className="p-6 max-w-4xl mx-auto">
-        <div className="flex flex-col items-center justify-center gap-4 py-16">
-          <FileText className="h-12 w-12 text-muted-foreground" />
-          <h2 className="text-xl font-semibold">Note non trouvée</h2>
-          <p className="text-muted-foreground">
-            Le fichier demandé n&apos;existe pas.
-          </p>
-          <Button variant="ghost" asChild>
-            <Link href="/">Retour à l&apos;accueil</Link>
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <NoteLoadingState />;
+  if (error) return <NoteErrorState error={error} onRetry={refetch} />;
+  if (!note) return <NoteNotFoundState />;
 
   // Title from frontmatter or file name
   const title = (note.frontmatter?.title as string) || noteName || "Sans titre";
@@ -275,23 +217,15 @@ export default function NotePage() {
         </div>
       )}
 
+      {/* La fiche bristol (DA §5) : cote, titre, ligne de tête, lignage */}
+      <div className={editor.isEditing ? undefined : "fiche fiche-note"}>
+      {!editor.isEditing && <span className="fiche-cote" title={filePath}>{filePath.replace(/\.md$/, "")}</span>}
+      {!editor.isEditing && <h1 className="fiche-titre">{title}</h1>}
+
       {/* Quick frontmatter badges (status + tags) */}
       {(settings.showFrontmatter ?? true) && note.frontmatter && !editor.isEditing && (
         <>
-          {(note.frontmatter.status || Array.isArray(note.frontmatter.tags)) && (
-            <div className="flex flex-wrap gap-2 mb-4">
-              {note.frontmatter.status ? (
-                <Badge variant="outline">{String(note.frontmatter.status)}</Badge>
-              ) : null}
-              {Array.isArray(note.frontmatter.tags)
-                ? note.frontmatter.tags.map((tag) => (
-                    <Badge key={String(tag)} variant="secondary">
-                      #{String(tag)}
-                    </Badge>
-                  ))
-                : null}
-            </div>
-          )}
+          <NoteTagsRow status={note.frontmatter.status} tags={note.frontmatter.tags} />
           {/* Full frontmatter viewer (collapsible) */}
           {Object.keys(note.frontmatter).length > 0 && (
             <FrontmatterViewer frontmatter={note.frontmatter} className="mb-4" />
@@ -335,6 +269,7 @@ export default function NotePage() {
           </div>
         )}
       </article>
+      </div>
 
       {/* Wikilinks section */}
       {!editor.isEditing && note.wikilinks && (

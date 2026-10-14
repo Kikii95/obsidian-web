@@ -4,13 +4,13 @@ import { useCallback, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import {
-  AlertCircle,
   ArrowLeft,
   Loader2,
   Network,
   RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { FicheVierge } from "@/components/da/fiche-vierge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { githubClient } from "@/services/github-client";
@@ -123,15 +123,17 @@ export default function GraphPage() {
   if (error) {
     return (
       <GraphShell>
-        <div className="space-y-4 text-center">
-          <AlertCircle className="mx-auto h-12 w-12 text-destructive" />
-          <h2 className="text-xl font-semibold">Erreur</h2>
-          <p className="text-muted-foreground">{error}</p>
+        <FicheVierge
+          cote="graph"
+          titre="Le fil n'est pas tendu"
+          annotation="les renvois entre tes fiches n'ont pas pu être relevés."
+          detail={error}
+        >
           <Button variant="outline" onClick={fetchGraph}>
             <RefreshCw className="mr-2 h-4 w-4" />
             Réessayer
           </Button>
-        </div>
+        </FicheVierge>
       </GraphShell>
     );
   }

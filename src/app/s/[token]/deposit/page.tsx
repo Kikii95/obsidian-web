@@ -108,7 +108,7 @@ export default function DepositPage() {
           </h1>
           <p className="text-muted-foreground mb-6">{error}</p>
           <p className="text-sm text-muted-foreground">
-            Demandez un nouveau lien à la personne qui vous l'a partagé.
+            Demandez un nouveau lien à la personne qui vous l&apos;a partagé.
           </p>
         </div>
       </div>

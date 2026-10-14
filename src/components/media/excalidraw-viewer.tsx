@@ -183,12 +183,14 @@ export function ExcalidrawViewer({ src, className, title }: ExcalidrawViewerProp
         >
           <Excalidraw
             initialData={{
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dette préexistante (types Excalidraw), cf. BACKLOG
               elements: data.elements as any,
               appState: {
                 ...data.appState,
                 viewModeEnabled: true,
                 zenModeEnabled: true,
               },
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dette préexistante (types Excalidraw), cf. BACKLOG
               files: data.files as any,
             }}
             viewModeEnabled={true}

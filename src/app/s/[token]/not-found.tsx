@@ -7,10 +7,10 @@ export default function ShareNotFound() {
         <Clock className="h-16 w-16 mx-auto text-amber-500 mb-4" />
         <h1 className="text-2xl font-bold mb-2">Lien invalide</h1>
         <p className="text-muted-foreground mb-6">
-          Ce lien de partage n'existe pas ou a expiré.
+          Ce lien de partage n&apos;existe pas ou a expiré.
         </p>
         <p className="text-sm text-muted-foreground">
-          Demandez un nouveau lien à la personne qui vous l'a partagé.
+          Demandez un nouveau lien à la personne qui vous l&apos;a partagé.
         </p>
       </div>
     </div>

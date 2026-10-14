@@ -191,7 +191,7 @@ export function CopyToVaultDialog({
               disabled={loading}
             />
             <p className="text-xs text-muted-foreground">
-              Le dossier sera créé s'il n'existe pas.
+              Le dossier sera créé s&apos;il n&apos;existe pas.
             </p>
           </div>
 

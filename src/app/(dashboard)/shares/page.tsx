@@ -171,7 +171,7 @@ export default function SharesPage() {
             <Link2 className="h-16 w-16 text-muted-foreground/30 mb-4" />
             <p className="text-lg font-medium mb-2">Aucun lien de partage</p>
             <p className="text-muted-foreground text-center max-w-md">
-              Partagez un dossier ou une note depuis l'explorateur de fichiers
+              Partagez un dossier ou une note depuis l&apos;explorateur de fichiers
               pour créer votre premier lien.
             </p>
           </CardContent>

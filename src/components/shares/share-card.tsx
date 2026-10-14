@@ -107,7 +107,7 @@ export function ShareCard({ share, handlers, state, utils }: ShareCardProps) {
                 <DialogHeader>
                   <DialogTitle>Renommer ce lien</DialogTitle>
                   <DialogDescription>
-                    Changez le nom d'affichage de ce lien de partage
+                    Changez le nom d&apos;affichage de ce lien de partage
                   </DialogDescription>
                 </DialogHeader>
                 <div className="py-4">
@@ -190,7 +190,7 @@ export function ShareCard({ share, handlers, state, utils }: ShareCardProps) {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Supprimer ce lien ?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Le lien vers "{share.name}" sera définitivement supprimé.
+                    Le lien vers &quot;{share.name}&quot; sera définitivement supprimé.
                     Les personnes ayant ce lien ne pourront plus accéder au
                     contenu.
                   </AlertDialogDescription>

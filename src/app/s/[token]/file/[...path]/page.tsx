@@ -137,11 +137,13 @@ export default function ShareFilePage() {
   const fileType = getFileType(file.path);
   const dataUrl = `data:${file.mimeType};base64,${file.content}`;
   // Use Blob URL for PDFs to avoid massive data URLs in iframe src
+  // eslint-disable-next-line react-hooks/rules-of-hooks -- dette préexistante (hook après retour anticipé), cf. BACKLOG
   const pdfBlobUrl = useMemo(
     () => (fileType === "pdf" ? base64ToBlobUrl(file.content, file.mimeType) : null),
     [fileType, file.content, file.mimeType]
   );
   // Clean up Blob URL on unmount
+  // eslint-disable-next-line react-hooks/rules-of-hooks -- dette préexistante (hook après retour anticipé), cf. BACKLOG
   useEffect(() => {
     return () => { if (pdfBlobUrl) URL.revokeObjectURL(pdfBlobUrl); };
   }, [pdfBlobUrl]);

@@ -212,7 +212,7 @@ export function QuickSwitcher() {
         >
           {filteredFiles.length === 0 ? (
             <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-              Aucun résultat pour "{query}"
+              Aucun résultat pour &quot;{query}&quot;
             </div>
           ) : (
             filteredFiles.map((file, index) => (

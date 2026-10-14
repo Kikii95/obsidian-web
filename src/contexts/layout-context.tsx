@@ -238,6 +238,7 @@ export function useLayoutFeatures() {
 
   return useMemo(() => {
     // Import dynamically to avoid circular deps
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- dette préexistante (import circulaire), cf. BACKLOG
     const { LAYOUT_FEATURES } = require("@/types/layout");
     return LAYOUT_FEATURES[mode];
   }, [mode]);

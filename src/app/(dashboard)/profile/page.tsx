@@ -79,7 +79,7 @@ export default function ProfilePage() {
           <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
             <Shield className="h-5 w-5 text-muted-foreground" />
             <div className="flex-1">
-              <p className="text-sm text-muted-foreground">Niveau d'accès</p>
+              <p className="text-sm text-muted-foreground">Niveau d&apos;accès</p>
               <Badge className="mt-1 bg-green-500/20 text-green-400 border-green-500/30">
                 Propriétaire du Vault
               </Badge>

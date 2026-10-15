@@ -29,7 +29,7 @@ html[data-theme="magenta-light"] .table-obsidienne {
     var(--eclat);
   color: var(--graphite);
   border: 1px solid var(--arete);
-  border-radius: 3px var(--radius-eclat) 3px var(--radius-eclat);
+  border-radius: var(--radius-eclat);
 }
 .eclat::before {
   content: "";
@@ -57,14 +57,15 @@ html[data-theme="magenta-light"] .table-obsidienne {
   --card-foreground: var(--encre);
   --muted-foreground: var(--encre-douce);
   --primary: var(--magenta-encre);
-  --border: rgba(59, 104, 148, 0.25);
-  --muted: rgba(59, 104, 148, 0.08);
-  --accent: rgba(59, 104, 148, 0.1);
+  --border: color-mix(in srgb, var(--lignage-encre) 25%, transparent);
+  --muted: color-mix(in srgb, var(--lignage-encre) 8%, transparent);
+  --accent: color-mix(in srgb, var(--lignage-encre) 10%, transparent);
   --accent-foreground: var(--encre);
   position: relative;
   isolation: isolate;
   background: var(--bristol);
   color: var(--encre);
+  border: 1px solid var(--bord-fiche);
   border-radius: var(--radius-fiche);
   box-shadow: var(--ombre-fiche);
   padding: calc(var(--ligne) * 2 + 4px) clamp(1rem, 4vw, 2.25rem) var(--ligne);
@@ -78,7 +79,7 @@ html[data-theme="magenta-light"] .table-obsidienne {
   right: 0;
   top: calc(var(--ligne) * 2);
   height: 2px;
-  background: var(--magenta-encre);
+  background: linear-gradient(90deg, var(--magenta-encre), color-mix(in srgb, var(--magenta-encre) 35%, transparent));
   transform-origin: left;
   animation: da-encre 0.52s cubic-bezier(0.6, 0, 0.2, 1) 0.16s both;
   z-index: -1;
@@ -127,7 +128,7 @@ html[data-theme="magenta-light"] .table-obsidienne {
   color: var(--magenta-encre);
   font-weight: 500;
   text-decoration: none;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 6' preserveAspectRatio='none'%3E%3Cpath d='M1 4.2C18 1.6 34 5.4 52 3.1S84 1.9 99 3.6' fill='none' stroke='%23A324BC' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E") 0 100% / 0% 6px no-repeat;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 6' preserveAspectRatio='none'%3E%3Cpath d='M1 4.2C18 1.6 34 5.4 52 3.1S84 1.9 99 3.6' fill='none' stroke='%23D66AF2' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E") 0 100% / 0% 6px no-repeat;
   transition: background-size 0.32s ease-out;
   padding-bottom: 2px;
 }
@@ -158,11 +159,11 @@ html[data-theme="magenta-light"] .table-obsidienne {
   border-radius: var(--radius-fiche);
   border-top: 2px solid var(--magenta-encre);
   text-decoration: none;
-  box-shadow: 0 3px 0 -1px color-mix(in srgb, var(--bristol) 82%, #000), 0 6px 0 -2px color-mix(in srgb, var(--bristol) 66%, #000), 0 10px 18px -10px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 3px 0 -1px var(--tranche-1), 0 6px 0 -2px var(--tranche-2), 0 10px 18px -10px rgba(0, 0, 0, 0.7);
   font-family: var(--font-fiche);
   transition: transform 0.18s cubic-bezier(0.3, 1.4, 0.5, 1);
 }
-.fiche-liasse:hover { transform: translateY(-2px) rotate(-0.3deg); }
+.fiche-liasse:hover { transform: translateY(-2px); }
 .fiche-liasse .cote { margin-left: auto; font: 11px/1 var(--font-cote); color: var(--lignage-encre); white-space: nowrap; }
 
 /* — L'intercalaire : fiche-guide à onglet qui sépare les dossiers — */
@@ -175,7 +176,9 @@ html[data-theme="magenta-light"] .table-obsidienne {
   background: var(--bristol-bleu);
   color: var(--intercalaire-encre);
   font: 500 12px/1.2 var(--font-cote);
-  clip-path: polygon(0 100%, 9px 0, calc(100% - 9px) 0, 100% 100%);
+  border: 1px solid var(--bord-fiche);
+  border-bottom: 0;
+  border-radius: var(--radius-onglet) var(--radius-onglet) 0 0;
 }
 
 /* — Le cavalier : étiquette clipsée sur la tranche, palette fermée de six — */
@@ -240,9 +243,9 @@ html[data-theme="magenta-light"] .table-obsidienne {
   gap: 2px;
   min-width: 0;
   overflow: hidden;
-  border-bottom: 2px solid var(--bristol-bleu);
+  border-bottom: 1px solid var(--bord-fiche);
 }
-.intercalaires .intercalaire { display: block; line-height: 21px; flex-shrink: 1; min-width: 3.5rem; min-height: 30px; max-width: 14rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-decoration: none; opacity: 0.72; transition: opacity 0.15s, transform 0.18s cubic-bezier(0.3, 1.6, 0.5, 1); }
+.intercalaires .intercalaire { display: block; line-height: 21px; flex-shrink: 1; min-width: 3.5rem; min-height: 30px; max-width: 14rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-decoration: none; opacity: 0.85; transition: opacity 0.15s, transform 0.18s cubic-bezier(0.3, 1.6, 0.5, 1); }
 .intercalaires .intercalaire:hover { opacity: 1; transform: translateY(-2px); }
 .intercalaires .intercalaire:first-child { flex-shrink: 0; }
-.intercalaires .intercalaire-courant { opacity: 1; flex-shrink: 0; max-width: 18rem; background: var(--bristol); color: var(--encre); font-weight: 500; }
+.intercalaires .intercalaire-courant { opacity: 1; flex-shrink: 0; max-width: 18rem; background: var(--bristol); color: var(--encre); font-weight: 500; box-shadow: inset 0 2px 0 var(--magenta-encre); }

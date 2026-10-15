@@ -23,16 +23,24 @@ body {
   --arete: rgba(236, 226, 255, 0.1);
   --graphite: #BDB6C8;
   --graphite-doux: #958EA2;
-  --bristol: #E9EAE4;
-  --bristol-bleu: #CFE0EE;
-  --lignage: rgba(94, 143, 192, 0.32);
-  --lignage-encre: #3B6894;
+  /* Retouche du 15/10 : la fiche est un bristol NOIR écrit à l'encre claire (public développeur, lecture dans le noir). */
+  --bristol: #211D29;
+  --bord-fiche: rgba(236, 226, 255, 0.09);
+  --bristol-bleu: #2A2534;
+  --lignage: rgba(143, 180, 218, 0.085);
+  --lignage-encre: #8FB4DA;
   --lignage-clair: #8FB4DA;
-  --intercalaire-encre: #2E5A86;
-  --encre: #1E1A24;
-  --encre-douce: #4F4A58;
+  --intercalaire-encre: #A9C6E4;
+  --encre: #E8E3EF;
+  --encre-douce: #ABA4B8;
   --magenta: #D433F5;
-  --magenta-encre: #A324BC;
+  --magenta-encre: #DD5CF7;
+  --tranche-1: #2B2634;
+  --tranche-2: #1F1B26;
+  --tranche-3: #17141D;
+  --champ-fiche: rgba(16, 13, 19, 0.55);
+  --interrupteur-off: #3A3445;
+  --code-fiche: #15121A;
   --sur-magenta: #1E1A24;
   --renvoi-table: #D433F5;
   --iris-1: #8C6BF2;
@@ -50,7 +58,28 @@ body {
   --cav-6: #E86AA8;
   --ombre-fiche: 0 1px 0 rgba(0, 0, 0, 0.35), 0 18px 34px -16px rgba(0, 0, 0, 0.75);
   --radius-eclat: 14px;
-  --radius-fiche: 3px;
+  --radius-fiche: 12px;
+  --radius-onglet: 10px;
+}
+
+/* Les thèmes clairs (choisis explicitement) gardent la fiche bristol blanche de la v1. */
+html[data-theme$="-light"],
+html[data-theme="cloud"], html[data-theme="sage"], html[data-theme="peach"], html[data-theme="mist"], html[data-theme="sand"] {
+  --bristol: #F5F6F2;
+  --bord-fiche: rgba(30, 26, 36, 0.08);
+  --bristol-bleu: #CFE0EE;
+  --lignage: rgba(94, 143, 192, 0.2);
+  --lignage-encre: #3B6894;
+  --intercalaire-encre: #2E5A86;
+  --encre: #1E1A24;
+  --encre-douce: #4F4A58;
+  --magenta-encre: #A324BC;
+  --tranche-1: #C9CAC3;
+  --tranche-2: #AEAFA9;
+  --tranche-3: #8F908A;
+  --champ-fiche: rgba(255, 255, 255, 0.55);
+  --interrupteur-off: #C6CBD2;
+  --code-fiche: #18141C;
 }
 
 html.dark:not([data-theme]),
@@ -94,7 +123,6 @@ html.dark[data-theme="magenta-light"] {
   --table-texte: #1E1A24;
   --table-texte-doux: #5A5466;
   --titre-table: #1E1A24;
-  --bristol: #F5F6F2;
   --renvoi-table: #A324BC;
   --ombre-fiche: 0 1px 0 rgba(30, 26, 36, 0.18), 0 14px 26px -16px rgba(30, 26, 36, 0.45);
   --background: var(--table);

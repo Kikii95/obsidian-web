@@ -1,6 +1,6 @@
 /* Le chrome de l'app réécrit dans la matière de la DA, par sélecteurs sur la structure existante
    (pages héritées de plus de 300 lignes non retouchées). */
-:root { --radius: 0.25rem; }
+:root { --radius: 0.625rem; } /* retouche : rayons de l origine (icônes, boutons, champs arrondis) */
 
 body { font-family: var(--font-fiche); font-optical-sizing: auto; }
 code, kbd, pre, .font-mono { font-family: var(--font-cote); }
@@ -39,7 +39,7 @@ aside.bg-sidebar,
 .fiche-note .prose {
   color: var(--encre);
   font-family: var(--font-fiche);
-  padding-top: var(--ligne);
+  padding-top: 0;
   background: repeating-linear-gradient(to bottom, transparent 0 calc(var(--ligne) - 1px), var(--lignage) calc(var(--ligne) - 1px) var(--ligne));
   animation: da-lignage 0.7s cubic-bezier(0.6, 0, 0.2, 1) 0.24s both;
 }
@@ -50,8 +50,8 @@ aside.bg-sidebar,
 .fiche-note .prose h1 { font: 600 1.6rem/calc(var(--ligne) * 2) var(--font-fiche); margin: 0 !important; color: var(--encre); }
 .fiche-note .prose h2 { font: 600 1.3rem/calc(var(--ligne) * 2) var(--font-fiche); margin: 0 !important; padding: 0 !important; border: 0 !important; color: var(--encre); }
 .fiche-note .prose h3 { font: 600 1.08rem/var(--ligne) var(--font-fiche); margin: 0 0 0 !important; color: var(--encre); }
-.fiche-note .prose code { background: rgba(59, 104, 148, 0.12) !important; color: var(--intercalaire-encre) !important; font-family: var(--font-cote); font-size: 0.82em !important; padding: 0 0.3em !important; line-height: 1 !important; }
-.fiche-note .prose pre { background: var(--eclat) !important; color: var(--graphite); }
+.fiche-note .prose code { background: color-mix(in srgb, var(--lignage-encre) 12%, transparent) !important; color: var(--intercalaire-encre) !important; font-family: var(--font-cote); font-size: 0.82em !important; padding: 0 0.3em !important; line-height: 1 !important; }
+.fiche-note .prose pre { background: var(--code-fiche) !important; border: 1px solid var(--bord-fiche); border-radius: 8px; color: var(--graphite); }
 .fiche-note .prose pre code { background: transparent !important; color: inherit !important; }
 .fiche-note .prose blockquote { border-left: 2px solid var(--magenta-encre) !important; background: transparent !important; font-style: italic; color: var(--encre-douce) !important; }
 .fiche-note .prose a:not(.wikilink) { color: var(--lignage-encre); text-decoration: underline; text-underline-offset: 3px; }

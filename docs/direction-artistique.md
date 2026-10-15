@@ -11,6 +11,36 @@ Planche d'évolution : https://claude.ai/artifact/L7dns1oyKBbCgccLDRGZ1x
 > déjà validée : le mark « second cerveau » v2.9.1 (cerveau bullé + arbre de 6 nœuds, blanc sur tuile magenta).
 > Remplace le kit shadcn sombre teinté magenta (Geist, tuiles de statistiques à icônes, cartes `rounded-xl` partout).
 
+## 0. Fiche cible (ajoutée à la retouche du 15/10/2026)
+
+| Nature de l'app | Registre | Fond et lumière | À éviter |
+| --- | --- | --- | --- |
+| **Outil de développeur** : un lecteur et éditeur de coffre Obsidian (dépôt GitHub) dans le navigateur, utilisé par des développeurs, souvent le soir et sur téléphone | tech, net, récent ; la métaphore des fiches inspire le vocabulaire et quelques composants, elle ne déguise pas l'interface | **sombre partout, notes comprises** : fiche en bristol noir, encre claire, accents magenta | blanc aveuglant, carnet manuscrit trop présent, angles vifs qui régressent sur l'origine, jouet |
+
+Affordances de l'origine à garder : icônes et boutons arrondis (`--radius` 0,625 rem), bouton flottant rond,
+densité de l'explorateur, barre d'outils de la note.
+
+## Retouches
+
+### Retouche 1 — 15/10/2026 (`/da retour`, retours de Willem et Killian sur la v1)
+
+Verdict sur la v1 : « agréablement surpris », idée gardée (des fiches posées sur un éclat d'obsidienne). Corrigé :
+
+1. **La fiche devient un bristol noir** (`--bristol: #211D29`, arête `--bord-fiche`) écrit à l'encre claire
+   (`--encre: #E8E3EF`, 13,7:1). La ligne de tête magenta reste, en dégradé qui s'efface vers la droite. Les cotes et
+   métadonnées passent au bleu de lignage clair `#8FB4DA` (8:1), les renvois au magenta `#DD5CF7` (5,7:1). Les thèmes
+   clairs du sélecteur (Bristol et `*-light`) gardent la fiche blanche de la v1.
+2. **Les bords s'arrondissent** : `--radius` revient à 0,625 rem (celui de l'origine : logo, palette, Éditer,
+   champs), fiches 12 px, éclats 14 px réguliers (plus d'angle cassé), onglets 10 px, bouton flottant rond.
+3. **Les onglets du chemin** (accueil, dossiers, note courante) ne sont plus des trapèzes bleu pâle : onglets
+   arrondis en verre relevé `#2A2534`, l'onglet courant prend le fond de la fiche et sa ligne magenta.
+4. **Le carnet s'atténue** : lignage à alpha 0,085 (contre 0,32), plus de ligne vide en tête de note, plus de fiches
+   penchées (renvois satellites, bouton flottant), sous-titre de l'accueil en Literata italique au lieu de Caveat
+   (Caveat ne reste que dans les états vides). Le texte reste calé sur les lignes (`--ligne` 1,75 rem).
+
+Les sections ci-dessous décrivent la v1 ; là où elles parlent d'un bristol « blanc froid », lire « noir » pour le
+thème sombre (référence) et les tokens de `src/styles/da/tokens.css`.
+
 ## 1. Le principe : ce sont des fiches posées sur un éclat d'obsidienne, pas un tableau de bord
 
 Obsidian Web sert à **relire et relier ses notes** depuis un téléphone. Une note n'est pas une « donnée » dans un
@@ -161,10 +191,11 @@ taille 16–18 px ; les objets du sujet (fiche, liasse, renvoi, cavalier) ont le
 ## 8. Ce qu'il ne faut pas faire
 
 - Une note affichée hors d'une fiche, ou une fiche sans ligne de tête ni lignage.
+- Un grand aplat clair dans le thème sombre ; des angles vifs sur les icônes et boutons (régression sur l'origine) ; un lignage plus appuyé qu'alpha 0,1.
 - Le magenta en aplat, en halo néon ou en dégradé de fond ; plus d'un bouton plein magenta par écran.
 - Une tuile de statistique « grand chiffre + petite icône colorée » (le moule shadcn de l'origine).
 - Geist, Inter, ou la police système ; une étiquette mono en capitales au-dessus de chaque titre.
 - Bois, laiton, tiroirs à poignée, cartels épinglés (c'est le cabinet de Magpie) ; panneaux chanfreinés (HSR Lab) ;
-  crème `#F4F1EA` + terracotta (esthétique IA) ; le bristol reste blanc froid.
+  crème `#F4F1EA` + terracotta (esthétique IA) ; en sombre la fiche est un bristol noir, jamais un aplat blanc.
 - Toucher au dessin du mark v2.9.1 (5 copies synchronisées, cf. mémoire projet) : on l'entoure, on ne le redessine pas.
 - Promouvoir le catalogue de thèmes : le sélecteur montre d'abord Obsidienne et Bristol.

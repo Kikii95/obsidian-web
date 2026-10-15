@@ -6,7 +6,7 @@ aside.bg-sidebar input { font-family: var(--font-fiche); }
 
 /* — Dossier : l'en-tête passe à la ligne sur téléphone ; l'icône devient un intercalaire — */
 body[data-route="folder"] #main-content .flex.items-center.gap-3.mb-6 { flex-wrap: wrap; }
-body[data-route="folder"] #main-content .flex.items-center.gap-3.mb-6 > .rounded-xl { background: var(--bristol-bleu); color: var(--intercalaire-encre); border-radius: 3px; clip-path: polygon(0 100%, 7px 0, calc(100% - 7px) 0, 100% 100%); }
+body[data-route="folder"] #main-content .flex.items-center.gap-3.mb-6 > .rounded-xl { background: var(--bristol-bleu); color: var(--intercalaire-encre); border-radius: var(--radius-onglet); }
 body[data-route="folder"] #main-content .flex.items-center.gap-3.mb-6 > .rounded-xl * { color: var(--intercalaire-encre); }
 
 /* — Modèles et réglages : des fiches (pré-imprimées, techniques), l'en-tête souligné de la ligne de tête — */
@@ -16,12 +16,12 @@ body[data-route="settings"] #main-content [data-slot="card"] {
   --foreground: var(--encre);
   --muted-foreground: var(--encre-douce);
   --primary: var(--magenta-encre);
-  --border: rgba(59, 104, 148, 0.3);
-  --input: rgba(59, 104, 148, 0.4);
-  --muted: rgba(59, 104, 148, 0.1);
-  --accent: rgba(59, 104, 148, 0.12);
+  --border: color-mix(in srgb, var(--lignage-encre) 30%, transparent);
+  --input: color-mix(in srgb, var(--lignage-encre) 40%, transparent);
+  --muted: color-mix(in srgb, var(--lignage-encre) 10%, transparent);
+  --accent: color-mix(in srgb, var(--lignage-encre) 12%, transparent);
   --accent-foreground: var(--encre);
-  --secondary: rgba(59, 104, 148, 0.12);
+  --secondary: color-mix(in srgb, var(--lignage-encre) 12%, transparent);
   --secondary-foreground: var(--encre);
   --background: var(--bristol);
   background: var(--bristol) !important;
@@ -32,11 +32,11 @@ body[data-route="settings"] #main-content [data-slot="card"] {
   animation: da-feuilleter 0.3s ease-out both;
 }
 body[data-route="settings"] #main-content [data-slot="card"] [data-slot="switch"][data-state="checked"] { background: var(--magenta-encre); }
-body[data-route="settings"] #main-content [data-slot="card"] [data-slot="switch"][data-state="unchecked"] { background: #C6CBD2; }
+body[data-route="settings"] #main-content [data-slot="card"] [data-slot="switch"][data-state="unchecked"] { background: var(--interrupteur-off); }
 body[data-route="settings"] #main-content [data-slot="card"] [data-slot="switch-thumb"] { background: var(--bristol); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35); }
-body[data-route="settings"] #main-content [data-slot="card"] :is([data-slot="select-trigger"], input, button[role="combobox"]) { background: rgba(255, 255, 255, 0.55); border-color: rgba(59, 104, 148, 0.45); color: var(--encre); }
+body[data-route="settings"] #main-content [data-slot="card"] :is([data-slot="select-trigger"], input, button[role="combobox"]) { background: var(--champ-fiche); border-color: color-mix(in srgb, var(--lignage-encre) 45%, transparent); color: var(--encre); }
 body[data-route="templates"] #main-content .grid > [data-slot="card"] { padding-bottom: 14px; gap: 14px; }
-body[data-route="templates"] #main-content .grid > [data-slot="card"] [data-slot="badge"] { border: 1px solid rgba(59, 104, 148, 0.5); background: transparent; color: var(--lignage-encre); font-family: var(--font-cote); font-size: 10px; }
+body[data-route="templates"] #main-content .grid > [data-slot="card"] [data-slot="badge"] { border: 1px solid color-mix(in srgb, var(--lignage-encre) 50%, transparent); background: transparent; color: var(--lignage-encre); font-family: var(--font-cote); font-size: 10px; }
 body[data-route="templates"] #main-content .grid > [data-slot="card"]::before,
 body[data-route="settings"] #main-content [data-slot="card"]::before { display: none; }
 body[data-route="templates"] #main-content .grid > [data-slot="card"] [data-slot="card-header"],
@@ -77,29 +77,26 @@ body[data-route="templates"] #main-content .grid > [data-slot="card"]:nth-child(
   color: var(--encre);
   font: 500 0.875rem/1.2 var(--font-fiche);
   border-top: 2px solid var(--magenta-encre);
-  border-radius: var(--radius-fiche);
+  border-radius: 8px;
   box-shadow: 0 8px 14px -10px rgba(0, 0, 0, 0.8);
   text-decoration: none;
-  transform: rotate(var(--penche, -0.8deg));
+  border-left: 1px solid var(--bord-fiche);
+  border-right: 1px solid var(--bord-fiche);
   transition: transform 0.18s cubic-bezier(0.3, 1.6, 0.5, 1);
 }
 .fiche-satellite::before { content: ""; position: absolute; left: 50%; top: -14px; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: var(--magenta); }
-.fiche-satellite:nth-child(even) { --penche: 0.9deg; }
-.fiche-satellite:hover { transform: translateY(-3px) rotate(0deg); }
+.fiche-satellite:hover { transform: translateY(-3px); }
 .fiche-satellite svg { color: var(--lignage-encre); }
 
 /* — Le bouton flottant : la fiche du dessus d'une liasse, à l'encre magenta — */
 .fab-fiche {
-  background:
-    linear-gradient(rgba(30, 26, 36, 0.35), rgba(30, 26, 36, 0.35)) 0 12px / 100% 2px no-repeat,
-    var(--magenta);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--magenta) 82%, #fff), var(--magenta) 55%);
   color: var(--sur-magenta);
-  border-radius: var(--radius-fiche);
-  box-shadow: 4px 4px 0 -1px var(--bristol), 8px 8px 0 -2px #aeafa9, 0 18px 28px -10px rgba(0, 0, 0, 0.9);
-  transform: rotate(-3deg);
+  border-radius: 9999px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.14) inset, 0 10px 26px -8px rgba(212, 51, 245, 0.35), 0 18px 28px -10px rgba(0, 0, 0, 0.9);
   transition: transform 0.2s cubic-bezier(0.3, 1.6, 0.5, 1);
 }
-.fab-fiche:hover { transform: rotate(0deg) translateY(-4px); }
+.fab-fiche:hover { transform: translateY(-3px); }
 .fab-fiche svg { stroke-width: 2.75; }
 #main-content > div { padding-bottom: 104px; }
 
@@ -107,7 +104,7 @@ body[data-route="templates"] #main-content .grid > [data-slot="card"]:nth-child(
 [data-slot="card"] .text-center.py-6 > p:first-of-type { font: 700 1.35rem/1.3 var(--font-main); color: var(--graphite); }
 
 /* — Explorateur : la note ouverte est une fiche tirée de la liasse — */
-aside.bg-sidebar button.flex-1[class~="bg-primary/10"] { background: var(--bristol) !important; color: var(--encre) !important; border-left: 2px solid var(--magenta-encre); border-radius: 2px; }
-body[data-route="accueil"] #main-content h1 + p { font: 700 1.35rem/1.3 var(--font-main); color: var(--graphite); }
+aside.bg-sidebar button.flex-1[class~="bg-primary/10"] { background: var(--bristol) !important; color: var(--encre) !important; border-left: 2px solid var(--magenta-encre); border-radius: 8px; }
+body[data-route="accueil"] #main-content h1 + p { font: italic 400 1.05rem/1.4 var(--font-fiche); color: var(--graphite-doux); }
 #main-content div.justify-between:has(> .intercalaires) { flex-wrap: wrap; row-gap: 10px; }
 #main-content div.justify-between:has(> .intercalaires) > :last-child { margin-left: auto; }

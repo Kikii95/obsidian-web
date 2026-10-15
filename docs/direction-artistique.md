@@ -38,6 +38,15 @@ Verdict sur la v1 : « agréablement surpris », idée gardée (des fiches posé
    penchées (renvois satellites, bouton flottant), sous-titre de l'accueil en Literata italique au lieu de Caveat
    (Caveat ne reste que dans les états vides). Le texte reste calé sur les lignes (`--ligne` 1,75 rem).
 
+### Retouche 2 — 15/10/2026 (après le juge aveugle de la retouche 1 : v1 3/10, retouche 1 7/10, origine 7,5/10)
+
+Le juge trouvait encore « des restes de carnet » et un serif « un peu daté pour un outil de dev ». Donc :
+
+1. **Le chrome passe en IBM Plex Sans** (`--font-outil`, de la même famille que les cotes en Plex Mono) : en-tête,
+   explorateur, boutons, titres de page et de panneaux. **Literata reste la voix des fiches** (note, titre de fiche,
+   listes de fiches) : on lit sur du papier, on manipule un outil.
+2. Lignage encore plus discret (alpha 0,06) ; le compteur « Notes » de l'accueil perd ses lignes.
+
 Les sections ci-dessous décrivent la v1 ; là où elles parlent d'un bristol « blanc froid », lire « noir » pour le
 thème sombre (référence) et les tokens de `src/styles/da/tokens.css`.
 
@@ -142,7 +151,7 @@ vert `#4CAF7A`, bleu `#4A86D8`, orange `#F08A3C`, violet `#9B6BDF`, rose `#E86AA
 
 | Rôle | Police | Pourquoi celle-ci pour ce sujet |
 | --- | --- | --- |
-| Titres et texte de fiche, interface | **Literata** | dessinée pour la lecture longue sur écran (Google Play Livres) : une note se lit comme une page de livre, et sa version display donne des titres de fiche nets |
+| Titres et texte de fiche (interface : voir Retouche 2, Plex Sans) | **Literata** | dessinée pour la lecture longue sur écran (Google Play Livres) : une note se lit comme une page de livre, et sa version display donne des titres de fiche nets |
 | Cotes, chemins, compteurs, code | **IBM Plex Mono** | la cote d'une fiche se trace au normographe : chasse fixe, sobre, lisible petit |
 | Main du lecteur : annotations, états vides, astuces | **Caveat** | l'écriture à la main sur la fiche, comme Luhmann notait ses renvois |
 

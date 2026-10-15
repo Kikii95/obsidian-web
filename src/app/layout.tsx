@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Caveat, IBM_Plex_Mono, Literata } from "next/font/google";
+import { Caveat, IBM_Plex_Mono, IBM_Plex_Sans, Literata } from "next/font/google";
 import { SessionProvider } from "@/components/providers/session-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { RouteMarker } from "@/components/da/route-marker";
@@ -9,6 +9,7 @@ import "@/styles/da/index.css";
 // Polices de la DA (docs/direction-artistique.md §4) : la fiche, la cote, la main du lecteur.
 const literata = Literata({ variable: "--font-literata", subsets: ["latin"], style: ["normal", "italic"] });
 const plexMono = IBM_Plex_Mono({ variable: "--font-plex-mono", subsets: ["latin"], weight: ["400", "500"] });
+const plexSans = IBM_Plex_Sans({ variable: "--font-plex-sans", subsets: ["latin"], weight: ["400", "500", "600"] });
 const caveat = Caveat({ variable: "--font-caveat", subsets: ["latin"], weight: ["500", "700"] });
 
 export const metadata: Metadata = {
@@ -50,7 +51,7 @@ export default function RootLayout({
   return (
     <html lang="fr" className="dark">
       <body
-        className={`${literata.variable} ${plexMono.variable} ${caveat.variable} table-obsidienne antialiased min-h-screen`}
+        className={`${literata.variable} ${plexMono.variable} ${plexSans.variable} ${caveat.variable} table-obsidienne antialiased min-h-screen`}
       >
         <SessionProvider>
           <RouteMarker />

@@ -2,7 +2,7 @@
    (pages héritées de plus de 300 lignes non retouchées). */
 :root { --radius: 0.625rem; } /* retouche : rayons de l origine (icônes, boutons, champs arrondis) */
 
-body { font-family: var(--font-fiche); font-optical-sizing: auto; }
+body { font-family: var(--font-outil); font-optical-sizing: auto; }
 code, kbd, pre, .font-mono { font-family: var(--font-cote); }
 
 /* — En-tête et explorateur : éclats d'obsidienne — */
@@ -27,10 +27,10 @@ aside.bg-sidebar,
 /* — Les cartes d'interface sont des éclats : titres en Literata, pas de tuile à icône — */
 [data-slot="card"] { box-shadow: 0 12px 28px -18px rgba(0, 0, 0, 0.8); }
 [data-slot="card"][class*="bg-g"] { background-image: none; }
-[data-slot="card-title"], [data-slot="card"] .font-semibold.text-lg { font-family: var(--font-fiche); font-weight: 600; letter-spacing: -0.01em; color: #EDE7F5; }
+[data-slot="card-title"], [data-slot="card"] .font-semibold.text-lg { font-family: var(--font-outil); font-weight: 600; letter-spacing: -0.005em; color: #EDE7F5; }
 
 /* — Titres de page gravés sur la table — */
-#main-content h1.font-bold { font-family: var(--font-fiche); font-weight: 600; letter-spacing: -0.015em; color: var(--titre-table); }
+#main-content h1.font-bold { font-family: var(--font-outil); font-weight: 600; letter-spacing: -0.02em; color: var(--titre-table); }
 #main-content nav.text-sm a, #main-content nav.text-sm span { font-family: var(--font-cote); font-size: 12px; }
 
 /* — La note sur sa fiche : texte calé sur le lignage — */

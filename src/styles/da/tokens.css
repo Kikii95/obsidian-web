@@ -7,7 +7,9 @@ body {
   --font-fiche: var(--font-literata), "Literata", Georgia, serif;
   --font-cote: var(--font-plex-mono), "IBM Plex Mono", ui-monospace, monospace;
   --font-main: var(--font-caveat), "Caveat", cursive;
-  --font-geist-sans: var(--font-fiche);
+  /* Retouche 2 : le chrome d un outil de développeur en Plex Sans ; Literata reste la voix des fiches. */
+  --font-outil: var(--font-plex-sans), "IBM Plex Sans", system-ui, sans-serif;
+  --font-geist-sans: var(--font-outil);
   --font-geist-mono: var(--font-cote);
 }
 
@@ -27,7 +29,7 @@ body {
   --bristol: #211D29;
   --bord-fiche: rgba(236, 226, 255, 0.09);
   --bristol-bleu: #2A2534;
-  --lignage: rgba(143, 180, 218, 0.085);
+  --lignage: rgba(143, 180, 218, 0.06);
   --lignage-encre: #8FB4DA;
   --lignage-clair: #8FB4DA;
   --intercalaire-encre: #A9C6E4;

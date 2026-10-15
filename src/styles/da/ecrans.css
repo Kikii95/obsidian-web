@@ -2,7 +2,7 @@
 
 /* — Barre latérale : l'explorateur lisible — */
 aside.bg-sidebar :is(button, a) { font-size: 0.9rem; color: var(--graphite); }
-aside.bg-sidebar input { font-family: var(--font-fiche); }
+aside.bg-sidebar input { font-family: var(--font-outil); }
 
 /* — Dossier : l'en-tête passe à la ligne sur téléphone ; l'icône devient un intercalaire — */
 body[data-route="folder"] #main-content .flex.items-center.gap-3.mb-6 { flex-wrap: wrap; }
@@ -63,6 +63,8 @@ body[data-route="templates"] #main-content .grid > [data-slot="card"]:nth-child(
 .fiche-note > div[class*="rounded-lg"][class*="border"] button { padding-left: 0; font-family: var(--font-fiche); }
 .fiche-note > div.text-xs { font-family: var(--font-cote); color: var(--lignage-encre); }
 .fiche-note > div.text-xs * { color: var(--lignage-encre); }
+.fiche-note > div.text-xs { flex-wrap: wrap; column-gap: 1rem; row-gap: 4px; }
+.fiche-note > div.text-xs > * { white-space: nowrap; }
 .plateau-renvois button { font-family: var(--font-fiche); }
 .plateau-renvois .flex-wrap { position: relative; padding-top: 18px; gap: 14px 12px !important; }
 .plateau-renvois .flex-wrap::before { content: ""; position: absolute; left: 8px; right: 8px; top: 6px; border-top: 1.5px dashed rgba(212, 51, 245, 0.55); }

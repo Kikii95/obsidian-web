@@ -55,18 +55,16 @@
   padding: 10px 12px 12px;
   border-radius: 10px;
   background: var(--eclat-releve) !important;
-  border-left: 3px solid var(--bristol);
-  box-shadow: inset 3px 0 0 -1px var(--tranche-2);
+  border-left: 2px solid color-mix(in srgb, var(--lignage-encre) 55%, transparent);
 }
 [data-slot="card"] .grid > .text-center.rounded-lg svg { display: none; }
-[data-slot="card"] .grid > .text-center.rounded-lg > .font-bold { font: 600 1.25rem/1.1 var(--font-fiche); color: #EDE7F5; font-variant-numeric: tabular-nums; }
+[data-slot="card"] .grid > .text-center.rounded-lg > .font-bold { font: 600 1.25rem/1.1 var(--font-outil); color: #EDE7F5; font-variant-numeric: tabular-nums; }
 [data-slot="card"] .grid > .text-center.rounded-lg > .text-xs { font: 500 11px/1.4 var(--font-cote); color: var(--graphite-doux); }
 [data-slot="card"] .grid > .text-center.rounded-lg:first-child {
   flex-basis: 100%;
   padding: 14px 16px 22px;
   background:
     linear-gradient(var(--magenta-encre), var(--magenta-encre)) 0 0 / 100% 2px no-repeat,
-    repeating-linear-gradient(to bottom, transparent 0 22px, var(--lignage) 22px 23px),
     var(--bristol) !important;
   border-left: 0;
   box-shadow: 0 3px 0 -1px var(--tranche-1), 0 6px 0 -2px var(--tranche-2), 0 9px 0 -3px var(--tranche-3), 0 14px 18px -10px rgba(0, 0, 0, 0.8);

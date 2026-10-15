@@ -55,6 +55,8 @@ Current sprint planning and bug tracking.
 | DA4 | Variante C du canevas (plateau des renvois) seulement esquissée | ⬜ | 🟡 Medium | Renvois sortants en fiches satellites sous la note ; à porter en plein plateau |
 | DA5 | Lecteur public `/t` et pages de partage `/s` : traitement global seulement | ⬜ | 🟢 Easy | Fiche-index en place, en-tête et arbre à reprendre |
 | DA6 | Dette lint React Compiler (19 cas) passée en avertissement | ⬜ | 🟡 Medium | `set-state-in-effect`, `preserve-manual-memoization`, `immutability` ; 2 hooks conditionnels dans `s/[token]/file` |
+| DA7 | Retouche : filets du lignage encore perceptibles sur téléphone, bouton flottant sur la fin des renvois | ⬜ | 🟢 Easy | Juge du 15/10 ; envisager le lignage au survol seulement, réserver la marge basse au bouton |
+| DA8 | Retouche : compteurs « 24 items » et onglets tronqués peu contrastés (dossier, lecteur public, chemin) | ⬜ | 🟢 Easy | Passer en `graphite` plutôt que `graphite-doux` ; sous-titre d'accueil en italique à reconsidérer |
 
 ### 📱 PWA
 

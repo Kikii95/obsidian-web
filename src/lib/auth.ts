@@ -12,6 +12,9 @@ export const authOptions: NextAuthOptions = {
     GithubProvider({
       clientId: process.env.GITHUB_ID || process.env.GITHUB_CLIENT_ID!,
       clientSecret: process.env.GITHUB_SECRET || process.env.GITHUB_CLIENT_SECRET!,
+      // GitHub renvoie désormais `iss` au callback (RFC 9207) : sans issuer déclaré,
+      // openid-client rejette la connexion (« issuer must be configured »). Corrigé en amont dans next-auth 4.24.15.
+      issuer: "https://github.com/login/oauth",
       authorization: {
         params: {
           scope: "repo",

@@ -31,7 +31,7 @@ aside.bg-sidebar,
 
 /* — Titres de page gravés sur la table — */
 #main-content h1.font-bold { font-family: var(--font-outil); font-weight: 600; letter-spacing: -0.02em; color: var(--titre-table); }
-#main-content nav.text-sm a, #main-content nav.text-sm span { font-family: var(--font-cote); font-size: 12px; }
+#main-content nav.text-sm a, #main-content nav.text-sm span { font-family: var(--font-cote); font-size: 0.75rem; }
 
 /* — La note sur sa fiche : texte calé sur le lignage — */
 .fiche-note { margin-top: 0.5rem; }

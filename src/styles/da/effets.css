@@ -1,6 +1,6 @@
 /* Effets de la DA (§6) : tous coupés sous prefers-reduced-motion, la page est complète au repos. */
 @keyframes da-tirer {
-  from { opacity: 0; transform: translateY(22px) rotate(-0.8deg); }
+  from { opacity: 0; transform: translateY(1.375rem) rotate(-0.8deg); }
   to { opacity: 1; transform: none; }
 }
 @keyframes da-encre {
@@ -12,7 +12,7 @@
   to { clip-path: inset(0 0 0 0); }
 }
 @keyframes da-feuilleter {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(0.5rem); }
   to { opacity: 1; transform: none; }
 }
 @keyframes da-iris {

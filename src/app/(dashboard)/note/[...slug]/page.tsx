@@ -24,6 +24,7 @@ const MarkdownEditor = dynamic(
 );
 import { NoteBreadcrumb, NoteToolbar, NoteWikilinks, NoteBacklinks, TableOfContents, NoteStats, FrontmatterViewer, NoteLoadingState, NoteErrorState, NoteNotFoundState, NoteTagsRow } from "@/components/note";
 import { LockedNoteView } from "@/components/lock/locked-note-view";
+import { enRem } from "@/lib/da/unites";
 import { PinDialog } from "@/components/lock/pin-dialog";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { useLockStore, isPathLocked } from "@/lib/lock-store";
@@ -183,7 +184,7 @@ export default function NotePage() {
   return (
     <div
       className="p-4 sm:p-6 mx-auto"
-      style={{ maxWidth: containerMaxWidth }}
+      style={{ maxWidth: enRem(containerMaxWidth) }}
     >
       {/* Header with breadcrumb and actions */}
       <div className="flex items-start justify-between gap-2 sm:gap-4 mb-6">
@@ -246,7 +247,7 @@ export default function NotePage() {
       {/* Content - Editor or Viewer */}
       <article
         style={{
-          fontSize: editorFontSize,
+          fontSize: enRem(editorFontSize),
           lineHeight: editorLineHeight,
         }}
       >

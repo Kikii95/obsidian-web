@@ -154,3 +154,7 @@ html.dark[data-theme="magenta-light"] {
   --sidebar-border: rgba(236, 226, 255, 0.08);
   --sidebar-ring: var(--magenta);
 }
+
+/* Échelle fluide (16/10) : 16 px jusqu'au Full HD, puis l'interface grandit avec l'écran (≈ 18 px en 2K, 22 px en 4K)
+   au lieu de laisser un îlot au milieu. Tout le reste est en rem, donc suit. */
+html { font-size: clamp(100%, 0.5rem + 0.4vw, 137.5%); }

@@ -68,7 +68,7 @@ html[data-theme="magenta-light"] .table-obsidienne {
   border: 1px solid var(--bord-fiche);
   border-radius: var(--radius-fiche);
   box-shadow: var(--ombre-fiche);
-  padding: calc(var(--ligne) * 2 + 4px) clamp(1rem, 4vw, 2.25rem) var(--ligne);
+  padding: calc(var(--ligne) * 2 + 0.25rem) clamp(1rem, 4vw, 2.25rem) var(--ligne);
   font-family: var(--font-fiche);
   animation: da-tirer 0.46s cubic-bezier(0.2, 0.9, 0.25, 1.12) both;
 }
@@ -138,7 +138,7 @@ html[data-theme="magenta-light"] .table-obsidienne {
 .fiche a.wikilink:hover, .fiche a.wikilink:focus-visible { background-size: 100% 6px; text-decoration: none; }
 
 /* — La liasse : fiches empilées, la suivante dépasse — */
-.liasse { display: flex; flex-direction: column; gap: 6px; }
+.liasse { display: flex; flex-direction: column; gap: 0.375rem; }
 .liasse > * { animation: da-feuilleter 0.28s ease-out both; }
 .liasse > :nth-child(2) { animation-delay: 35ms; }
 .liasse > :nth-child(3) { animation-delay: 70ms; }
@@ -152,8 +152,8 @@ html[data-theme="magenta-light"] .table-obsidienne {
   display: flex;
   align-items: baseline;
   gap: 0.75rem;
-  min-height: 44px;
-  padding: 10px 14px 9px;
+  min-height: 2.75rem;
+  padding: 0.625rem 0.875rem 0.5625rem;
   background: var(--bristol);
   color: var(--encre);
   border-radius: var(--radius-fiche);
@@ -172,7 +172,7 @@ html[data-theme="magenta-light"] .table-obsidienne {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 5px 18px 4px;
+  padding: 0.3125rem 1.125rem 0.25rem;
   background: var(--bristol-bleu);
   color: var(--intercalaire-encre);
   font: 500 12px/1.2 var(--font-cote);
@@ -186,7 +186,7 @@ html[data-theme="magenta-light"] .table-obsidienne {
   position: relative;
   display: inline-flex;
   align-items: center;
-  padding: 4px 10px 3px;
+  padding: 0.25rem 0.625rem 0.1875rem;
   border-radius: 2px 2px 7px 7px;
   background: var(--cav, var(--cav-1));
   color: var(--encre);
@@ -204,7 +204,7 @@ html[data-theme="magenta-light"] .table-obsidienne {
 /* — Le tampon dateur — */
 .tampon {
   display: inline-block;
-  padding: 3px 8px 2px;
+  padding: 0.1875rem 0.5rem 2px;
   border: 3px double currentColor;
   border-radius: 3px;
   color: var(--lignage-encre);
@@ -245,7 +245,7 @@ html[data-theme="magenta-light"] .table-obsidienne {
   overflow: hidden;
   border-bottom: 1px solid var(--bord-fiche);
 }
-.intercalaires .intercalaire { display: block; line-height: 21px; flex-shrink: 1; min-width: 3.5rem; min-height: 30px; max-width: 14rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-decoration: none; opacity: 0.85; transition: opacity 0.15s, transform 0.18s cubic-bezier(0.3, 1.6, 0.5, 1); }
+.intercalaires .intercalaire { display: block; line-height: 1.3125rem; flex-shrink: 1; min-width: 3.5rem; min-height: 1.875rem; max-width: 14rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-decoration: none; opacity: 0.85; transition: opacity 0.15s, transform 0.18s cubic-bezier(0.3, 1.6, 0.5, 1); }
 .intercalaires .intercalaire:hover { opacity: 1; transform: translateY(-2px); }
 .intercalaires .intercalaire:first-child { flex-shrink: 0; }
 .intercalaires .intercalaire-courant { opacity: 1; flex-shrink: 0; max-width: 18rem; background: var(--bristol); color: var(--encre); font-weight: 500; box-shadow: inset 0 2px 0 var(--magenta-encre); }

@@ -6,7 +6,7 @@
 [data-slot="card"] .space-y-1:has(> a.rounded-lg) {
   position: relative;
   display: block;
-  padding: calc(var(--ligne) * 0.5 + 4px) clamp(0.75rem, 3vw, 1.5rem) 10px;
+  padding: calc(var(--ligne) * 0.5 + 0.25rem) clamp(0.75rem, 3vw, 1.5rem) 0.625rem;
   background:
     linear-gradient(var(--magenta-encre), var(--magenta-encre)) 0 4px / 100% 2px no-repeat,
     var(--bristol);
@@ -19,9 +19,9 @@
 #main-content .grid.gap-2:has(> a.rounded-lg) > a.rounded-lg,
 [data-slot="card"] .space-y-1:has(> a.rounded-lg) > a.rounded-lg {
   display: flex;
-  min-height: 44px;
+  min-height: 2.75rem;
   margin: 0;
-  padding: 6px 4px;
+  padding: 0.375rem 0.25rem;
   border: 0;
   border-bottom: 1px solid var(--lignage);
   border-radius: 0;
@@ -31,14 +31,14 @@
   transition: background-color 0.15s, padding-left 0.18s cubic-bezier(0.3, 1.4, 0.5, 1);
 }
 #main-content .grid.gap-2:has(> a.rounded-lg) > a.rounded-lg:hover,
-[data-slot="card"] .space-y-1:has(> a.rounded-lg) > a.rounded-lg:hover { background: color-mix(in srgb, var(--lignage-encre) 8%, transparent); padding-left: 10px; }
+[data-slot="card"] .space-y-1:has(> a.rounded-lg) > a.rounded-lg:hover { background: color-mix(in srgb, var(--lignage-encre) 8%, transparent); padding-left: 0.625rem; }
 #main-content .grid.gap-2 > a.rounded-lg *,
 [data-slot="card"] .space-y-1 > a.rounded-lg * { color: var(--encre); }
 #main-content .grid.gap-2 > a.rounded-lg p.font-medium,
 [data-slot="card"] .space-y-1 > a.rounded-lg .truncate:first-child { font-weight: 500; }
 #main-content .grid.gap-2 > a.rounded-lg .text-xs,
-[data-slot="card"] .space-y-1 > a.rounded-lg .text-xs { font-family: var(--font-cote); font-size: 11px; color: var(--lignage-encre) !important; }
-#main-content .grid.gap-2 > a.rounded-lg > div:first-child { background: transparent !important; color: var(--lignage-encre); padding: 4px; }
+[data-slot="card"] .space-y-1 > a.rounded-lg .text-xs { font-family: var(--font-cote); font-size: 0.6875rem; color: var(--lignage-encre) !important; }
+#main-content .grid.gap-2 > a.rounded-lg > div:first-child { background: transparent !important; color: var(--lignage-encre); padding: 0.25rem; }
 #main-content .grid.gap-2 > a.rounded-lg > div:first-child * { color: var(--lignage-encre); }
 #main-content .grid.gap-2 > a.rounded-lg:nth-child(2) { animation-delay: 35ms; }
 #main-content .grid.gap-2 > a.rounded-lg:nth-child(3) { animation-delay: 70ms; }
@@ -47,12 +47,12 @@
 #main-content .grid.gap-2 > a.rounded-lg:nth-child(n + 6) { animation-delay: 175ms; }
 
 /* — Compteurs de l'accueil : la liasse des notes en tête, les autres en tranches qui remplissent la ligne — */
-[data-slot="card"] .grid:has(> .text-center.rounded-lg) { display: flex; flex-wrap: wrap; gap: 10px; }
+[data-slot="card"] .grid:has(> .text-center.rounded-lg) { display: flex; flex-wrap: wrap; gap: 0.625rem; }
 [data-slot="card"] .grid > .text-center.rounded-lg { flex: 1 1 calc(25% - 10px); min-width: 6rem; }
 [data-slot="card"] .grid > .text-center.rounded-lg {
   position: relative;
   text-align: left;
-  padding: 10px 12px 12px;
+  padding: 0.625rem 0.75rem 0.75rem;
   border-radius: 10px;
   background: var(--eclat-releve) !important;
   border-left: 2px solid color-mix(in srgb, var(--lignage-encre) 55%, transparent);
@@ -62,7 +62,7 @@
 [data-slot="card"] .grid > .text-center.rounded-lg > .text-xs { font: 500 11px/1.4 var(--font-cote); color: var(--graphite-doux); }
 [data-slot="card"] .grid > .text-center.rounded-lg:first-child {
   flex-basis: 100%;
-  padding: 14px 16px 22px;
+  padding: 0.875rem 1rem 1.375rem;
   background:
     linear-gradient(var(--magenta-encre), var(--magenta-encre)) 0 0 / 100% 2px no-repeat,
     var(--bristol) !important;
@@ -70,4 +70,4 @@
   box-shadow: 0 3px 0 -1px var(--tranche-1), 0 6px 0 -2px var(--tranche-2), 0 9px 0 -3px var(--tranche-3), 0 14px 18px -10px rgba(0, 0, 0, 0.8);
 }
 [data-slot="card"] .grid > .text-center.rounded-lg:first-child > .font-bold { font-size: 2.4rem; color: var(--encre); }
-[data-slot="card"] .grid > .text-center.rounded-lg:first-child > .text-xs { color: var(--lignage-encre); font-size: 12px; }
+[data-slot="card"] .grid > .text-center.rounded-lg:first-child > .text-xs { color: var(--lignage-encre); font-size: 0.75rem; }

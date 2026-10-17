@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Direction artistique
 
+### Fixed
+
+- **Connexion GitHub sur mobile** (16/10) : GitHub renvoie désormais `iss` (RFC 9207) au retour OAuth ; l'issuer GitHub est déclaré, la connexion ne boucle plus sur `/login`.
+
+### Changed
+
+- **Responsive de 390 px à la 4K** (16/10) : onglets du chemin toujours sur leur ligne quelle que soit la largeur de lecture, 34 valeurs px de la DA passées en rem, largeur de lecture et police appliquées en rem, échelle fluide (≈ 18 px en 2K, 22 px en 4K).
+
 ### Changed
 
 - **Direction artistique « fiches bristol sur un éclat d'obsidienne »** (`docs/direction-artistique.md`, branche `design/da-refonte`). Une note s'affiche sur une fiche bristol lignée (ligne de tête magenta, lignage bleu calé sur l'interlignage, cote = chemin) ; le chrome devient du verre volcanique (ondes de cassure, arête irisée) ; les liens internes sont des renvois à l'encre ; un dossier est une fiche-index ; le chemin une pile d'intercalaires ; les tags des cavaliers (palette fermée de six, `src/lib/da/cavalier.ts`) ; la capture rapide une fiche à tirer. Polices Literata (lecture), IBM Plex Mono (cotes), Caveat (la main du lecteur), à la place de Geist. Le mark v2.9.1 est gardé tel quel, avec un reflet irisé. Thèmes « magenta » et « magenta-light » réécrits en Obsidienne et Bristol ; les autres thèmes gardent leurs teintes. Feuilles dans `src/styles/da/` ; effets coupés sous `prefers-reduced-motion`.
